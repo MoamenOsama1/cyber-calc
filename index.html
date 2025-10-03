@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>Bianco-Timer</title>
+  <style>
+    body { font-family: Arial, sans-serif; direction: rtl; text-align: center; padding: 20px; }
+    label, select, input { margin: 10px; font-size: 18px; }
+    button { margin-top: 20px; padding: 10px 20px; font-size: 18px; cursor: pointer; }
+    .result { margin-top: 20px; font-size: 20px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h2>💻 Bianco-Timer </h2>
+
+  <label>اختر الجهاز:</label>
+  <select id="device">
+    
+    <option value="ping">بنج</option>
+    <option value="ps4">بلايستيشن 4</option>
+    <option value="ps5">بلايستيشن 5</option>
+  </select>
+  <br>
+
+  <label>اختر النوع:</label>
+  <select id="type">
+    <option value="single">فردي</option>
+    <option value="double">زوجي</option>
+  </select>
+  <br>
+
+  <label>من (ساعة:دقيقة):</label>
+  <input type="time" id="start">
+  <br>
+
+  <label>إلى (ساعة:دقيقة):</label>
+  <input type="time" id="end">
+  <br>
+
+  <button onclick="calc()">احسب</button>
+
+  <div class="result" id="output"></div>
+
+  <script>
+    function calc() {
+      let device = document.getElementById("device").value;
+      let type = document.getElementById("type").value;
+      let start = document.getElementById("start").value;
+      let end = document.getElementById("end").value;
+      let output = document.getElementById("output");
+
+      if (!start || !end) {
+        output.innerHTML = "⚠️ من فضلك اختر وقت البداية والنهاية";
+        return;
+      }
+
+      // الأسعار
+      let prices = {
+        
+        ping: { single: 30, double: 40 },
+        ps4: { single: 30, double: 40 },
+        ps5: { single: 40, double: 50 }
+      };
+
+      // حساب الوقت
+      let [sh, sm] = start.split(":").map(Number);
+      let [eh, em] = end.split(":").map(Number);
+
+      let startDate = new Date(0, 0, 0, sh, sm);
+      let endDate = new Date(0, 0, 0, eh, em);
+
+      if (endDate <= startDate) {
+        endDate.setDate(endDate.getDate() + 1); // لو عبر منتصف الليل
+      }
+
+      let diffMs = endDate - startDate;
+      let diffMins = Math.floor(diffMs / 60000);
+      let hours = Math.floor(diffMins / 60);
+      let minutes = diffMins % 60;
+
+      // حساب السعر
+      let pricePerHour = prices[device][type];
+      let totalPrice = (diffMins / 60) * pricePerHour;
+
+      output.innerHTML = 
+        `⌛ المدة: ${hours} ساعة و ${minutes} دقيقة<br>` +
+        `💵 السعر: ${totalPrice.toFixed(2)} جنيه`;
+    }
+  </script>
+</body>
+</html>
