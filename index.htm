@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>حاسبة الجلسات</title>
+  <style>
+    body { font-family: Arial, sans-serif; direction: rtl; text-align: center; background: #f4f4f4; padding: 20px; }
+    h1 { color: #333; }
+    label { display: block; margin: 10px 0 5px; }
+    select, input, button { padding: 8px; margin: 5px; font-size: 16px; }
+    .result { margin-top: 20px; font-size: 20px; color: green; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>💻🎮 حاسبة الجلسات</h1>
+
+  <label>اختار الجهاز:</label>
+  <select id="device">
+    <option value="cyber">سايبر</option>
+    <option value="ping">بنج</option>
+    <option value="ps4">بلايستيشن 4</option>
+    <option value="ps5">بلايستيشن 5</option>
+  </select>
+
+  <label>اختار النوع:</label>
+  <select id="type">
+    <option value="single">فردي</option>
+    <option value="double">زوجي</option>
+  </select>
+
+  <label>من (ساعة:دقيقة):</label>
+  <input type="time" id="start">
+
+  <label>إلى (ساعة:دقيقة):</label>
+  <input type="time" id="end">
+
+  <button onclick="calculate()">احسب</button>
+
+  <div class="result" id="result"></div>
+
+  <script>
+    function calculate() {
+      const device = document.getElementById("device").value;
+      const type = document.getElementById("type").value;
+      const start = document.getElementById("start").value;
+      const end = document.getElementById("end").value;
+
+      if (!start || !end) {
+        document.getElementById("result").innerText = "⚠️ من فضلك اختر وقت البداية والنهاية";
+        return;
+      }
+
+      const [sh, sm] = start.split(":").map(Number);
+      const [eh, em] = end.split(":").map(Number);
+
+      let startMin = sh * 60 + sm;
+      let endMin = eh * 60 + em;
+
+      if (endMin <= startMin) {
+        document.getElementById("result").innerText = "⚠️ وقت النهاية لازم يكون بعد البداية";
+        return;
+      }
+
+      const durationHours = (endMin - startMin) / 60;
+
+      let pricePerHour = 0;
+      if (device === "cyber") pricePerHour = (type === "single") ? 30 : 40;
+      else if (device === "ping") pricePerHour = (type === "single") ? 30 : 40;
+      else if (device === "ps4") pricePerHour = (type === "single") ? 30 : 40;
+      else if (device === "ps5") pricePerHour = (type === "single") ? 40 : 50;
+
+      const total = pricePerHour * durationHours;
+
+      document.getElementById("result").innerText =
+        `⌛ المدة: ${durationHours.toFixed(2)} ساعة\n💰 السعر: ${total.toFixed(2)} جنيه`;
+    }
+  </script>
+</body>
+</html>
