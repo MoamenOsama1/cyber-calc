@@ -15,7 +15,7 @@
 
   <label>اختر الجهاز:</label>
   <select id="device">
-    <option value="cyber">سايبر</option>
+    
     <option value="ping">بنج</option>
     <option value="ps4">بلايستيشن 4</option>
     <option value="ps5">بلايستيشن 5</option>
@@ -56,7 +56,7 @@
 
       // الأسعار
       let prices = {
-        cyber: { single: 30, double: 40 },
+        
         ping: { single: 30, double: 40 },
         ps4: { single: 30, double: 40 },
         ps5: { single: 40, double: 50 }
