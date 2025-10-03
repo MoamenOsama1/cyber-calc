@@ -8,7 +8,6 @@
     label, select, input { margin: 10px; font-size: 18px; }
     button { margin-top: 20px; padding: 10px 20px; font-size: 18px; cursor: pointer; }
     .result { margin-top: 20px; font-size: 20px; font-weight: bold; }
-    input[type="time"]::-webkit-datetime-edit-ampm-field { display: none; } /* يخفي AM/PM */
   </style>
 </head>
 <body>
@@ -16,6 +15,7 @@
 
   <label>اختر الجهاز:</label>
   <select id="device">
+    
     <option value="ping">بنج</option>
     <option value="ps4">بلايستيشن 4</option>
     <option value="ps5">بلايستيشن 5</option>
@@ -30,11 +30,11 @@
   <br>
 
   <label>من (ساعة:دقيقة):</label>
-  <input type="time" id="start" step="60"> <!-- step=60 علشان يخليها بالدقايق بس -->
+  <input type="time" id="start">
   <br>
 
   <label>إلى (ساعة:دقيقة):</label>
-  <input type="time" id="end" step="60">
+  <input type="time" id="end">
   <br>
 
   <button onclick="calc()">احسب</button>
@@ -56,6 +56,7 @@
 
       // الأسعار
       let prices = {
+        
         ping: { single: 30, double: 40 },
         ps4: { single: 30, double: 40 },
         ps5: { single: 40, double: 50 }
