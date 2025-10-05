@@ -2,131 +2,167 @@
 <html lang="ar">
 <head>
   <meta charset="UTF-8">
-  <title>Bianco-Timer</title>
+  <title>🎮 Bianco Timer System</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       direction: rtl;
       text-align: center;
       padding: 20px;
-      color: white;
-      background-image: url('https://images.unsplash.com/photo-1606813902798-8c2a2d8de3db');
+      background-image: url('https://i.imgur.com/IRVvF8a.jpg'); /* صورة ذراع مؤقتة */
       background-size: cover;
       background-position: center;
+      color: #fff;
     }
-    label, select, input {
-      margin: 10px;
-      font-size: 18px;
+    h2 {
+      background-color: rgba(0,0,0,0.5);
+      display: inline-block;
+      padding: 10px 20px;
+      border-radius: 10px;
+    }
+    label, select, input, textarea {
+      margin: 5px;
+      font-size: 16px;
+      padding: 5px;
+      border-radius: 5px;
+      border: none;
     }
     button {
-      margin-top: 20px;
-      padding: 10px 20px;
-      font-size: 18px;
+      margin: 5px;
+      padding: 8px 15px;
+      font-size: 16px;
       cursor: pointer;
-      background-color: #00bcd4;
-      color: white;
       border: none;
-      border-radius: 5px;
+      border-radius: 8px;
+      background-color: #007bff;
+      color: white;
     }
     button:hover {
-      background-color: #0097a7;
-    }
-    .result {
-      margin-top: 20px;
-      font-size: 20px;
-      font-weight: bold;
+      background-color: #0056b3;
     }
     table {
-      margin: 30px auto;
+      width: 100%;
       border-collapse: collapse;
-      width: 90%;
-      background-color: rgba(0, 0, 0, 0.7);
+      margin-top: 20px;
+      background-color: rgba(0,0,0,0.6);
     }
     th, td {
       border: 1px solid #ccc;
       padding: 10px;
+      font-size: 16px;
     }
     th {
-      background-color: #00bcd4;
-      color: white;
+      background-color: rgba(255,255,255,0.2);
     }
   </style>
 </head>
 <body>
-  <h2>💻 Bianco-Timer </h2>
+  <h2>💻 نظام تسجيل الجلسات - Bianco Timer</h2>
 
-  <label>اختر الجهاز:</label>
-  <select id="device">
-    <option value="ping">بنج</option>
-    <option value="ps4">بلايستيشن 4</option>
-    <option value="ps5">بلايستيشن 5</option>
-  </select>
-  <br>
+  <div>
+    <label>اختر الجهاز:</label>
+    <select id="device">
+      <option value="ping">بنج</option>
+      <option value="ps4">بلايستيشن 4</option>
+      <option value="ps5">بلايستيشن 5</option>
+    </select>
 
-  <label>اختر النوع:</label>
-  <select id="type">
-    <option value="single">فردي</option>
-    <option value="double">زوجي</option>
-  </select>
-  <br>
+    <label>النوع:</label>
+    <select id="type">
+      <option value="single">فردي</option>
+      <option value="double">زوجي</option>
+    </select>
 
-  <label>من (ساعة:دقيقة):</label>
-  <input type="time" id="start">
-  <br>
+    <label>من:</label>
+    <input type="time" id="start">
 
-  <label>إلى (ساعة:دقيقة):</label>
-  <input type="time" id="end">
-  <br>
+    <label>إلى:</label>
+    <input type="time" id="end">
 
-  <label>المشروبات:</label>
-  <input type="text" id="drinks" placeholder="مثلاً: بيبسي + نسكافيه">
-  <br>
+    <label>المشروبات:</label>
+    <input type="text" id="drinks" placeholder="اكتب المشروبات هنا">
 
-  <button onclick="calc()">احسب</button>
+    <button onclick="addSession()">➕ إضافة جلسة</button>
+  </div>
 
-  <div class="result" id="output"></div>
-
-  <h3>📋 السجلات</h3>
-  <table id="records">
+  <table id="sessionTable">
     <thead>
       <tr>
         <th>الجهاز</th>
         <th>النوع</th>
+        <th>من</th>
+        <th>إلى</th>
         <th>المدة</th>
         <th>السعر</th>
         <th>المشروبات</th>
+        <th>خيارات</th>
       </tr>
     </thead>
     <tbody></tbody>
   </table>
 
   <script>
-    function calc() {
-      let device = document.getElementById("device").value;
-      let type = document.getElementById("type").value;
-      let start = document.getElementById("start").value;
-      let end = document.getElementById("end").value;
-      let drinks = document.getElementById("drinks").value.trim();
-      let output = document.getElementById("output");
+    let sessions = JSON.parse(localStorage.getItem("sessions")) || [];
+
+    const prices = {
+      ping: { single: 30, double: 40 },
+      ps4: { single: 30, double: 40 },
+      ps5: { single: 40, double: 50 }
+    };
+
+    function saveSessions() {
+      localStorage.setItem("sessions", JSON.stringify(sessions));
+    }
+
+    function renderTable() {
+      const tbody = document.querySelector("#sessionTable tbody");
+      tbody.innerHTML = "";
+
+      sessions.forEach((s, index) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${s.device}</td>
+          <td>${s.type === "single" ? "فردي" : "زوجي"}</td>
+          <td>${s.start}</td>
+          <td>${s.end}</td>
+          <td>${s.duration}</td>
+          <td>${s.price.toFixed(2)} جنيه</td>
+          <td>${s.drinks}</td>
+          <td>
+            <button onclick="editSession(${index})">✏️ تعديل</button>
+            <button onclick="deleteSession(${index})">❌ حذف</button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function addSession() {
+      const device = document.getElementById("device").value;
+      const type = document.getElementById("type").value;
+      const start = document.getElementById("start").value;
+      const end = document.getElementById("end").value;
+      const drinks = document.getElementById("drinks").value;
 
       if (!start || !end) {
-        output.innerHTML = "⚠️ من فضلك اختر وقت البداية والنهاية";
+        alert("من فضلك أدخل وقت البداية والنهاية");
         return;
       }
 
-      // الأسعار
-      let prices = {
-        ping: { single: 30, double: 40 },
-        ps4: { single: 30, double: 40 },
-        ps5: { single: 40, double: 50 }
-      };
+      const { duration, totalPrice } = calculatePrice(device, type, start, end);
 
-      // حساب الوقت
+      const session = { device, type, start, end, duration, price: totalPrice, drinks };
+      sessions.push(session);
+      saveSessions();
+      renderTable();
+    }
+
+    function calculatePrice(device, type, start, end) {
       let [sh, sm] = start.split(":").map(Number);
       let [eh, em] = end.split(":").map(Number);
+
       let startDate = new Date(0, 0, 0, sh, sm);
       let endDate = new Date(0, 0, 0, eh, em);
-
       if (endDate <= startDate) endDate.setDate(endDate.getDate() + 1);
 
       let diffMs = endDate - startDate;
@@ -136,23 +172,34 @@
 
       let pricePerHour = prices[device][type];
       let totalPrice = (diffMins / 60) * pricePerHour;
+      let duration = `${hours} س ${minutes} د`;
 
-      output.innerHTML =
-        `⌛ المدة: ${hours} ساعة و ${minutes} دقيقة<br>` +
-        `💵 السعر: ${totalPrice.toFixed(2)} جنيه`;
-
-      // تسجيل البيانات في الجدول
-      let table = document.querySelector("#records tbody");
-      let row = document.createElement("tr");
-      row.innerHTML = `
-        <td>${device}</td>
-        <td>${type === "single" ? "فردي" : "زوجي"}</td>
-        <td>${hours} س و ${minutes} د</td>
-        <td>${totalPrice.toFixed(2)} جنيه</td>
-        <td>${drinks || "-"}</td>
-      `;
-      table.appendChild(row);
+      return { duration, totalPrice };
     }
+
+    function deleteSession(index) {
+      if (confirm("هل أنت متأكد من حذف هذه الجلسة؟")) {
+        sessions.splice(index, 1);
+        saveSessions();
+        renderTable();
+      }
+    }
+
+    function editSession(index) {
+      const s = sessions[index];
+      const newStart = prompt("تعديل وقت البداية:", s.start);
+      const newEnd = prompt("تعديل وقت النهاية:", s.end);
+      const newDrinks = prompt("تعديل المشروبات:", s.drinks);
+
+      if (newStart && newEnd) {
+        const { duration, totalPrice } = calculatePrice(s.device, s.type, newStart, newEnd);
+        sessions[index] = { ...s, start: newStart, end: newEnd, drinks: newDrinks, duration, price: totalPrice };
+        saveSessions();
+        renderTable();
+      }
+    }
+
+    renderTable();
   </script>
 </body>
 </html>
