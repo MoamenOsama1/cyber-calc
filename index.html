@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>Bianco-Timer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      direction: rtl;
+      text-align: center;
+      padding: 20px;
+      color: white;
+      background-image: url('https://images.unsplash.com/photo-1606813902798-8c2a2d8de3db');
+      background-size: cover;
+      background-position: center;
+    }
+    label, select, input {
+      margin: 10px;
+      font-size: 18px;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 18px;
+      cursor: pointer;
+      background-color: #00bcd4;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+    button:hover {
+      background-color: #0097a7;
+    }
+    .result {
+      margin-top: 20px;
+      font-size: 20px;
+      font-weight: bold;
+    }
+    table {
+      margin: 30px auto;
+      border-collapse: collapse;
+      width: 90%;
+      background-color: rgba(0, 0, 0, 0.7);
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+    }
+    th {
+      background-color: #00bcd4;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <h2>💻 Bianco-Timer </h2>
+
+  <label>اختر الجهاز:</label>
+  <select id="device">
+    <option value="ping">بنج</option>
+    <option value="ps4">بلايستيشن 4</option>
+    <option value="ps5">بلايستيشن 5</option>
+  </select>
+  <br>
+
+  <label>اختر النوع:</label>
+  <select id="type">
+    <option value="single">فردي</option>
+    <option value="double">زوجي</option>
+  </select>
+  <br>
+
+  <label>من (ساعة:دقيقة):</label>
+  <input type="time" id="start">
+  <br>
+
+  <label>إلى (ساعة:دقيقة):</label>
+  <input type="time" id="end">
+  <br>
+
+  <label>المشروبات:</label>
+  <input type="text" id="drinks" placeholder="مثلاً: بيبسي + نسكافيه">
+  <br>
+
+  <button onclick="calc()">احسب</button>
+
+  <div class="result" id="output"></div>
+
+  <h3>📋 السجلات</h3>
+  <table id="records">
+    <thead>
+      <tr>
+        <th>الجهاز</th>
+        <th>النوع</th>
+        <th>المدة</th>
+        <th>السعر</th>
+        <th>المشروبات</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    function calc() {
+      let device = document.getElementById("device").value;
+      let type = document.getElementById("type").value;
+      let start = document.getElementById("start").value;
+      let end = document.getElementById("end").value;
+      let drinks = document.getElementById("drinks").value.trim();
+      let output = document.getElementById("output");
+
+      if (!start || !end) {
+        output.innerHTML = "⚠️ من فضلك اختر وقت البداية والنهاية";
+        return;
+      }
+
+      // الأسعار
+      let prices = {
+        ping: { single: 30, double: 40 },
+        ps4: { single: 30, double: 40 },
+        ps5: { single: 40, double: 50 }
+      };
+
+      // حساب الوقت
+      let [sh, sm] = start.split(":").map(Number);
+      let [eh, em] = end.split(":").map(Number);
+      let startDate = new Date(0, 0, 0, sh, sm);
+      let endDate = new Date(0, 0, 0, eh, em);
+
+      if (endDate <= startDate) endDate.setDate(endDate.getDate() + 1);
+
+      let diffMs = endDate - startDate;
+      let diffMins = Math.floor(diffMs / 60000);
+      let hours = Math.floor(diffMins / 60);
+      let minutes = diffMins % 60;
+
+      let pricePerHour = prices[device][type];
+      let totalPrice = (diffMins / 60) * pricePerHour;
+
+      output.innerHTML =
+        `⌛ المدة: ${hours} ساعة و ${minutes} دقيقة<br>` +
+        `💵 السعر: ${totalPrice.toFixed(2)} جنيه`;
+
+      // تسجيل البيانات في الجدول
+      let table = document.querySelector("#records tbody");
+      let row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${device}</td>
+        <td>${type === "single" ? "فردي" : "زوجي"}</td>
+        <td>${hours} س و ${minutes} د</td>
+        <td>${totalPrice.toFixed(2)} جنيه</td>
+        <td>${drinks || "-"}</td>
+      `;
+      table.appendChild(row);
+    }
+  </script>
+</body>
+</html>
