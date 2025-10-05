@@ -20,7 +20,7 @@
       padding: 10px 20px;
       border-radius: 10px;
     }
-    label, select, input, textarea {
+    label, select, input {
       margin: 5px;
       font-size: 16px;
       padding: 5px;
@@ -90,8 +90,7 @@
       <tr>
         <th>الجهاز</th>
         <th>النوع</th>
-        <th>من</th>
-        <th>إلى</th>
+        <th>من → إلى</th>
         <th>المدة</th>
         <th>السعر</th>
         <th>المشروبات</th>
@@ -114,6 +113,13 @@
       localStorage.setItem("sessions", JSON.stringify(sessions));
     }
 
+    function formatTime(timeStr) {
+      const [h, m] = timeStr.split(":").map(Number);
+      const suffix = h >= 12 ? "مساءً" : "صباحًا";
+      let hour = h % 12 || 12;
+      return `${hour}:${m.toString().padStart(2, "0")} ${suffix}`;
+    }
+
     function renderTable() {
       const tbody = document.querySelector("#sessionTable tbody");
       tbody.innerHTML = "";
@@ -123,8 +129,7 @@
         row.innerHTML = `
           <td>${s.device}</td>
           <td>${s.type === "single" ? "فردي" : "زوجي"}</td>
-          <td>${s.start}</td>
-          <td>${s.end}</td>
+          <td>${formatTime(s.start)} → ${formatTime(s.end)}</td>
           <td>${s.duration}</td>
           <td>${s.price.toFixed(2)} جنيه</td>
           <td>${s.drinks}</td>
