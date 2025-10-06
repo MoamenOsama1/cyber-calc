@@ -2,209 +2,90 @@
 <html lang="ar">
 <head>
   <meta charset="UTF-8">
-  <title>🎮 Bianco Timer System</title>
+  <title>Bianco-Timer</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      direction: rtl;
-      text-align: center;
-      padding: 20px;
-      background-image: url('https://i.imgur.com/IRVvF8a.jpg'); /* صورة ذراع مؤقتة */
-      background-size: cover;
-      background-position: center;
-      color: #fff;
-    }
-    h2 {
-      background-color: rgba(0,0,0,0.5);
-      display: inline-block;
-      padding: 10px 20px;
-      border-radius: 10px;
-    }
-    label, select, input {
-      margin: 5px;
-      font-size: 16px;
-      padding: 5px;
-      border-radius: 5px;
-      border: none;
-    }
-    button {
-      margin: 5px;
-      padding: 8px 15px;
-      font-size: 16px;
-      cursor: pointer;
-      border: none;
-      border-radius: 8px;
-      background-color: #007bff;
-      color: white;
-    }
-    button:hover {
-      background-color: #0056b3;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-      background-color: rgba(0,0,0,0.6);
-    }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 10px;
-      font-size: 16px;
-    }
-    th {
-      background-color: rgba(255,255,255,0.2);
-    }
+    body { font-family: Arial, sans-serif; direction: rtl; text-align: center; padding: 20px; }
+    label, select, input { margin: 10px; font-size: 18px; }
+    button { margin-top: 20px; padding: 10px 20px; font-size: 18px; cursor: pointer; }
+    .result { margin-top: 20px; font-size: 20px; font-weight: bold; }
   </style>
 </head>
 <body>
-  <h2>💻 نظام تسجيل الجلسات - Bianco Timer</h2>
+  <h2>💻 Bianco-Timer </h2>
 
-  <div>
-    <label>اختر الجهاز:</label>
-    <select id="device">
-      <option value="ping">بنج</option>
-      <option value="ps4">بلايستيشن 4</option>
-      <option value="ps5">بلايستيشن 5</option>
-    </select>
+  <label>اختر الجهاز:</label>
+  <select id="device">
+    
+    <option value="ping">بنج</option>
+    <option value="ps4">بلايستيشن 4</option>
+    <option value="ps5">بلايستيشن 5</option>
+  </select>
+  <br>
 
-    <label>النوع:</label>
-    <select id="type">
-      <option value="single">فردي</option>
-      <option value="double">زوجي</option>
-    </select>
+  <label>اختر النوع:</label>
+  <select id="type">
+    <option value="single">فردي</option>
+    <option value="double">زوجي</option>
+  </select>
+  <br>
 
-    <label>من:</label>
-    <input type="time" id="start">
+  <label>من (ساعة:دقيقة):</label>
+  <input type="time" id="start">
+  <br>
 
-    <label>إلى:</label>
-    <input type="time" id="end">
+  <label>إلى (ساعة:دقيقة):</label>
+  <input type="time" id="end">
+  <br>
 
-    <label>المشروبات:</label>
-    <input type="text" id="drinks" placeholder="اكتب المشروبات هنا">
+  <button onclick="calc()">احسب</button>
 
-    <button onclick="addSession()">➕ إضافة جلسة</button>
-  </div>
-
-  <table id="sessionTable">
-    <thead>
-      <tr>
-        <th>الجهاز</th>
-        <th>النوع</th>
-        <th>من → إلى</th>
-        <th>المدة</th>
-        <th>السعر</th>
-        <th>المشروبات</th>
-        <th>خيارات</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  <div class="result" id="output"></div>
 
   <script>
-    let sessions = JSON.parse(localStorage.getItem("sessions")) || [];
-
-    const prices = {
-      ping: { single: 30, double: 40 },
-      ps4: { single: 30, double: 40 },
-      ps5: { single: 40, double: 50 }
-    };
-
-    function saveSessions() {
-      localStorage.setItem("sessions", JSON.stringify(sessions));
-    }
-
-    function formatTime(timeStr) {
-      const [h, m] = timeStr.split(":").map(Number);
-      const suffix = h >= 12 ? "مساءً" : "صباحًا";
-      let hour = h % 12 || 12;
-      return `${hour}:${m.toString().padStart(2, "0")} ${suffix}`;
-    }
-
-    function renderTable() {
-      const tbody = document.querySelector("#sessionTable tbody");
-      tbody.innerHTML = "";
-
-      sessions.forEach((s, index) => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${s.device}</td>
-          <td>${s.type === "single" ? "فردي" : "زوجي"}</td>
-          <td>${formatTime(s.start)} → ${formatTime(s.end)}</td>
-          <td>${s.duration}</td>
-          <td>${s.price.toFixed(2)} جنيه</td>
-          <td>${s.drinks}</td>
-          <td>
-            <button onclick="editSession(${index})">✏️ تعديل</button>
-            <button onclick="deleteSession(${index})">❌ حذف</button>
-          </td>
-        `;
-        tbody.appendChild(row);
-      });
-    }
-
-    function addSession() {
-      const device = document.getElementById("device").value;
-      const type = document.getElementById("type").value;
-      const start = document.getElementById("start").value;
-      const end = document.getElementById("end").value;
-      const drinks = document.getElementById("drinks").value;
+    function calc() {
+      let device = document.getElementById("device").value;
+      let type = document.getElementById("type").value;
+      let start = document.getElementById("start").value;
+      let end = document.getElementById("end").value;
+      let output = document.getElementById("output");
 
       if (!start || !end) {
-        alert("من فضلك أدخل وقت البداية والنهاية");
+        output.innerHTML = "⚠️ من فضلك اختر وقت البداية والنهاية";
         return;
       }
 
-      const { duration, totalPrice } = calculatePrice(device, type, start, end);
+      // الأسعار
+      let prices = {
+        
+        ping: { single: 30, double: 40 },
+        ps4: { single: 30, double: 40 },
+        ps5: { single: 40, double: 50 }
+      };
 
-      const session = { device, type, start, end, duration, price: totalPrice, drinks };
-      sessions.push(session);
-      saveSessions();
-      renderTable();
-    }
-
-    function calculatePrice(device, type, start, end) {
+      // حساب الوقت
       let [sh, sm] = start.split(":").map(Number);
       let [eh, em] = end.split(":").map(Number);
 
       let startDate = new Date(0, 0, 0, sh, sm);
       let endDate = new Date(0, 0, 0, eh, em);
-      if (endDate <= startDate) endDate.setDate(endDate.getDate() + 1);
+
+      if (endDate <= startDate) {
+        endDate.setDate(endDate.getDate() + 1); // لو عبر منتصف الليل
+      }
 
       let diffMs = endDate - startDate;
       let diffMins = Math.floor(diffMs / 60000);
       let hours = Math.floor(diffMins / 60);
       let minutes = diffMins % 60;
 
+      // حساب السعر
       let pricePerHour = prices[device][type];
       let totalPrice = (diffMins / 60) * pricePerHour;
-      let duration = `${hours} س ${minutes} د`;
 
-      return { duration, totalPrice };
+      output.innerHTML = 
+        `⌛ المدة: ${hours} ساعة و ${minutes} دقيقة<br>` +
+        `💵 السعر: ${totalPrice.toFixed(2)} جنيه`;
     }
-
-    function deleteSession(index) {
-      if (confirm("هل أنت متأكد من حذف هذه الجلسة؟")) {
-        sessions.splice(index, 1);
-        saveSessions();
-        renderTable();
-      }
-    }
-
-    function editSession(index) {
-      const s = sessions[index];
-      const newStart = prompt("تعديل وقت البداية:", s.start);
-      const newEnd = prompt("تعديل وقت النهاية:", s.end);
-      const newDrinks = prompt("تعديل المشروبات:", s.drinks);
-
-      if (newStart && newEnd) {
-        const { duration, totalPrice } = calculatePrice(s.device, s.type, newStart, newEnd);
-        sessions[index] = { ...s, start: newStart, end: newEnd, drinks: newDrinks, duration, price: totalPrice };
-        saveSessions();
-        renderTable();
-      }
-    }
-
-    renderTable();
   </script>
 </body>
 </html>
