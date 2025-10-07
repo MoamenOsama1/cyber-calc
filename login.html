@@ -24,19 +24,15 @@
       <button id="registerBtn">إنشاء حساب جديد</button>
     </div>
 
-    <p class="small">لو أنت أحد الثلاثة اللى تحب تدير النظام: استعمل الإيميل والباسورد اللي حطتهم على Firebase Console.</p>
+    <p class="small">لو أنت أحد المشرفين (Admins) هتُعين إيميلك في الكود أو تستخدم Custom Claims لاحقًا.</p>
     <p id="msg" class="small"></p>
   </div>
 
-  <!-- Firebase SDK -->
   <script type="module">
-    // -------------------------
-    // ضع هنا الـ firebaseConfig من مشروعك
-    // -------------------------
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
-    const firebaseConfig = {
+      const firebaseConfig = {
   apiKey: "AIzaSyBFI6W1mCbFsG8MfcGxWL0JonZtJ_7P6W0",
   authDomain: "bianco-playstation.firebaseapp.com",
   projectId: "bianco-playstation",
@@ -58,9 +54,9 @@
     loginBtn.onclick = async () => {
       msg.textContent = "";
       try {
-        const cred = await signInWithEmailAndPassword(auth, emailInput.value, passInput.value);
-        // نجاح → نوجه لصفحة التطبيق
-        window.location.href = "app.html";
+        await signInWithEmailAndPassword(auth, emailInput.value, passInput.value);
+        // النجاح -> توجيه حسب الدور في الصفحات (server-side role check in app/admin)
+        window.location.href = "index.html";
       } catch (e) {
         msg.textContent = "فشل تسجيل الدخول: " + e.message;
       }
@@ -69,13 +65,19 @@
     registerBtn.onclick = async () => {
       msg.textContent = "";
       try {
-        // لو أنت هتضيف حسابات بنفسك من الكونسل فمش لازم يفعل هنا؛ هذا خيار للمستخدمين
-        const user = await createUserWithEmailAndPassword(auth, emailInput.value, passInput.value);
+        await createUserWithEmailAndPassword(auth, emailInput.value, passInput.value);
         msg.textContent = "تم إنشاء الحساب. الآن سجل الدخول.";
       } catch (e) {
         msg.textContent = "خطأ: " + e.message;
       }
     };
+
+    // لو المستخدم مُسجل بالفعل نوجّهه تلقائياً
+    onAuthStateChanged(auth, user => {
+      if (user) {
+        window.location.href = "index.html";
+      }
+    });
   </script>
 </body>
 </html>
