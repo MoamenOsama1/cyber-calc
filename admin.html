@@ -5,71 +5,94 @@
   <title>Bianco Timer - Admin</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
+    * {
+      box-sizing: border-box;
+    }
+    
     body { 
       font-family: Arial, sans-serif; 
       direction: rtl; 
-      padding: 18px; 
+      padding: 12px; 
       background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
       color: #fff;
       margin: 0;
       min-height: 100vh;
+      font-size: 14px;
     }
+    
     .panel { 
-      max-width: 1400px; 
-      margin: 12px auto; 
+      max-width: 100%; 
+      margin: 8px auto; 
       background: rgba(255,255,255,0.1); 
-      padding: 20px; 
-      border-radius: 12px; 
+      padding: 15px; 
+      border-radius: 10px; 
       backdrop-filter: blur(10px);
       border: 1px solid rgba(255,255,255,0.2);
     }
+    
     table { 
       width: 100%; 
       border-collapse: collapse; 
-      margin-top: 20px; 
+      margin-top: 15px; 
       background: rgba(255,255,255,0.08); 
       border-radius: 8px;
       overflow: hidden;
+      font-size: 12px;
     }
+    
     th, td { 
-      padding: 12px 8px; 
+      padding: 8px 4px; 
       border: 1px solid rgba(255,255,255,0.1); 
-      font-size: 14px; 
       text-align: center;
+      word-break: break-word;
     }
+    
     th {
       background: rgba(255,255,255,0.15);
       font-weight: bold;
+      font-size: 11px;
     }
+    
     tr:nth-child(even) {
       background: rgba(255,255,255,0.05);
     }
+    
     button { 
-      padding: 8px 12px; 
-      border-radius: 6px; 
+      padding: 6px 8px; 
+      border-radius: 5px; 
       cursor: pointer; 
       border: none; 
-      font-size: 13px;
+      font-size: 11px;
       transition: all 0.3s ease;
+      margin: 2px;
     }
+    
     button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     }
+    
     .danger { background: #e74c3c; color: #fff; }
     .editBtn { background: #f39c12; color: #fff; }
-    .muted { color: #bdc3c7; }
+    .muted { color: #bdc3c7; font-size: 12px; }
+    
     .topbar { 
       display: flex; 
       justify-content: space-between; 
       align-items: center; 
-      gap: 15px; 
-      margin-bottom: 20px;
-      padding-bottom: 15px;
+      flex-wrap: wrap;
+      gap: 10px; 
+      margin-bottom: 15px;
+      padding-bottom: 10px;
       border-bottom: 1px solid rgba(255,255,255,0.1);
     }
     
-    /* نمط نافذة التعديل */
+    .topbar h2 {
+      font-size: 16px;
+      margin: 0;
+    }
+    
+    /* نمط نافذة التعديل للموبايل */
     .modal { 
       display: none; 
       position: fixed; 
@@ -78,134 +101,211 @@
       top: 0; 
       width: 100%; 
       height: 100%; 
-      background-color: rgba(0,0,0,0.8); 
+      background-color: rgba(0,0,0,0.9); 
+      overflow-y: auto;
     }
+    
     .modal-content { 
       background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-      margin: 5% auto; 
-      padding: 25px; 
-      border-radius: 12px; 
-      width: 90%; 
-      max-width: 500px; 
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      margin: 10px auto; 
+      padding: 15px; 
+      border-radius: 10px; 
+      width: 95%; 
+      max-width: 400px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.5);
       border: 1px solid rgba(255,255,255,0.1);
     }
+    
     .modal-header { 
       display: flex; 
       justify-content: space-between; 
       align-items: center; 
-      margin-bottom: 20px; 
+      margin-bottom: 15px; 
     }
+    
+    .modal-header h3 {
+      font-size: 16px;
+      margin: 0;
+    }
+    
     .close { 
       color: #fff; 
-      font-size: 28px; 
+      font-size: 24px; 
       font-weight: bold; 
       cursor: pointer; 
       transition: color 0.3s;
+      padding: 5px;
     }
+    
     .close:hover {
       color: #e74c3c;
     }
+    
     .form-group { 
-      margin-bottom: 18px; 
+      margin-bottom: 12px; 
     }
+    
     .form-group label { 
       display: block; 
-      margin-bottom: 8px; 
+      margin-bottom: 6px; 
       font-weight: bold;
+      font-size: 13px;
     }
+    
     .form-group input, .form-group select { 
       width: 100%; 
-      padding: 10px; 
-      border-radius: 6px; 
+      padding: 8px; 
+      border-radius: 5px; 
       border: 1px solid #555; 
       background: #2c3e50; 
       color: #fff; 
-      font-size: 14px;
-      box-sizing: border-box;
+      font-size: 13px;
     }
+    
     .time-inputs { 
       display: flex; 
-      gap: 10px; 
+      gap: 5px; 
     }
+    
     .time-inputs select { 
       flex: 1; 
+      font-size: 12px;
+      padding: 6px;
     }
+    
     .drinks-container { 
-      margin-top: 12px; 
-      max-height: 200px;
+      margin-top: 10px; 
+      max-height: 120px;
       overflow-y: auto;
     }
+    
     .drink-item { 
       display: flex; 
-      gap: 10px; 
-      margin-bottom: 10px; 
+      gap: 5px; 
+      margin-bottom: 8px; 
       align-items: center; 
     }
+    
     .drink-item input { 
       flex: 1; 
+      font-size: 12px;
+      padding: 6px;
     }
+    
     .add-drink { 
       background: #27ae60; 
       color: white; 
       border: none; 
-      padding: 8px 15px; 
-      border-radius: 6px; 
+      padding: 6px 10px; 
+      border-radius: 5px; 
       cursor: pointer; 
       width: 100%;
-      margin-top: 10px;
+      margin-top: 8px;
+      font-size: 12px;
     }
+    
     .remove-drink { 
       background: #c0392b; 
       color: white; 
       border: none; 
-      padding: 8px 12px; 
-      border-radius: 6px; 
+      padding: 6px 8px; 
+      border-radius: 5px; 
       cursor: pointer; 
+      font-size: 10px;
     }
+    
     .btn-group {
       display: flex;
-      gap: 10px;
-      margin-top: 20px;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 15px;
     }
+    
     .btn-group button {
-      flex: 1;
-      padding: 12px;
+      padding: 10px;
+      font-size: 13px;
     }
+    
     #calculationResult {
-      margin-top: 15px; 
-      padding: 15px; 
+      margin-top: 12px; 
+      padding: 10px; 
       background: rgba(52, 73, 94, 0.8); 
-      border-radius: 8px; 
+      border-radius: 6px; 
       display: none;
-      border-left: 4px solid #3498db;
+      border-left: 3px solid #3498db;
+      font-size: 12px;
     }
+    
     .stats {
       display: flex;
-      gap: 15px;
-      margin: 15px 0;
+      gap: 8px;
+      margin: 12px 0;
       flex-wrap: wrap;
+      justify-content: center;
     }
+    
     .stat-card {
       flex: 1;
-      min-width: 150px;
+      min-width: 100px;
       background: rgba(255,255,255,0.1);
-      padding: 15px;
-      border-radius: 8px;
+      padding: 10px;
+      border-radius: 6px;
       text-align: center;
     }
+    
     .stat-value {
-      font-size: 24px;
+      font-size: 16px;
       font-weight: bold;
       color: #3498db;
+    }
+    
+    .session-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    
+    /* تحسينات للشاشات الصغيرة جداً */
+    @media (max-width: 360px) {
+      body {
+        padding: 8px;
+        font-size: 12px;
+      }
+      
+      .panel {
+        padding: 10px;
+      }
+      
+      th, td {
+        padding: 4px 2px;
+        font-size: 10px;
+      }
+      
+      button {
+        padding: 4px 6px;
+        font-size: 10px;
+      }
+      
+      .topbar h2 {
+        font-size: 14px;
+      }
+    }
+    
+    /* تحسينات للوضع الأفقي */
+    @media (max-height: 500px) and (orientation: landscape) {
+      .modal-content {
+        margin: 5px auto;
+        max-height: 90vh;
+        overflow-y: auto;
+      }
     }
   </style>
 </head>
 <body>
   <div class="panel">
     <div class="topbar">
-      <h2>🔑 واجهة المشرف - Bianco Timer</h2>
-      <div style="display: flex; align-items: center; gap: 15px;">
+      <h2>🔑 Bianco Timer - Admin</h2>
+      <div style="display: flex; align-items: center; gap: 8px;">
         <span id="userEmail" class="muted"></span>
         <button id="logoutBtn" style="background:#e67e22">تسجيل خروج</button>
       </div>
@@ -226,19 +326,16 @@
       </div>
     </div>
 
-    <p class="muted">هنا ترى كل الجلسات (Realtime). يمكنك تعديل أو حذف أي جلسة.</p>
+    <p class="muted">إدارة الجلسات - اضغط على أي جلسة للتعديل</p>
 
     <table id="sessionsTable">
       <thead>
         <tr>
           <th>الجهاز</th>
           <th>النوع</th>
-          <th>من → إلى</th>
+          <th>الوقت</th>
           <th>المدة</th>
           <th>السعر</th>
-          <th>المشروبات</th>
-          <th>إنشأ بواسطة</th>
-          <th>التاريخ</th>
           <th>العمليات</th>
         </tr>
       </thead>
@@ -246,7 +343,7 @@
     </table>
   </div>
 
-  <!-- نافذة التعديل -->
+  <!-- نافذة التعديل المصغرة -->
   <div id="editModal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -287,8 +384,8 @@
               <option value="45">45</option><option value="50">50</option><option value="55">55</option>
             </select>
             <select id="editStartPeriod">
-              <option value="AM">صباحًا</option>
-              <option value="PM">مساءً</option>
+              <option value="AM">ص</option>
+              <option value="PM">م</option>
             </select>
           </div>
         </div>
@@ -309,8 +406,8 @@
               <option value="45">45</option><option value="50">50</option><option value="55">55</option>
             </select>
             <select id="editEndPeriod">
-              <option value="AM">صباحًا</option>
-              <option value="PM">مساءً</option>
+              <option value="AM">ص</option>
+              <option value="PM">م</option>
             </select>
           </div>
         </div>
@@ -432,20 +529,9 @@
     function formatTimeArabic(timeStr) {
       if (!timeStr) return '';
       const [h, m] = timeStr.split(':').map(Number);
-      const suffix = h >= 12 ? 'مساءً' : 'صباحًا';
+      const suffix = h >= 12 ? 'م' : 'ص';
       let hh = h % 12 || 12;
       return `${hh}:${m.toString().padStart(2,'0')} ${suffix}`;
-    }
-
-    // تنسيق التاريخ
-    function formatDate(dateStr) {
-      if (!dateStr) return '';
-      const date = new Date(dateStr);
-      return date.toLocaleDateString('ar-EG', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      });
     }
 
     // تحديث الإحصائيات
@@ -455,7 +541,7 @@
       
       // إجمالي الإيرادات
       const revenue = sessions.reduce((sum, session) => sum + (session.price || 0), 0);
-      totalRevenue.textContent = revenue.toFixed(2) + ' ج';
+      totalRevenue.textContent = revenue.toFixed(0) + ' ج';
       
       // جلسات اليوم
       const today = new Date().toDateString();
@@ -480,18 +566,20 @@
           
           const tr = document.createElement('tr');
           const fromTo = `${formatTimeArabic(s.start)} → ${formatTimeArabic(s.end)}`;
+          
+          // جعل الصف قابلاً للنقر للتعديل
+          tr.style.cursor = 'pointer';
+          tr.onclick = () => editDoc(id);
+          
           tr.innerHTML = `
             <td>${getDeviceName(s.device)}</td>
             <td>${s.type === 'single' ? 'فردي' : 'زوجي'}</td>
             <td>${fromTo}</td>
-            <td>${s.duration || '0 س 0 د'}</td>
-            <td>${(s.price || 0).toFixed(2)} ج</td>
-            <td>${s.drinks || '-'}</td>
-            <td>${s.createdBy || '-'}</td>
-            <td>${formatDate(s.createdAt)}</td>
-            <td>
-              <button class="editBtn" onclick="editDoc('${id}')">✏️ تعديل</button>
-              <button class="danger" onclick="deleteDocById('${id}')">❌ حذف</button>
+            <td>${s.duration || '0 س'}</td>
+            <td>${(s.price || 0).toFixed(0)} ج</td>
+            <td class="session-actions">
+              <button class="editBtn" onclick="event.stopPropagation(); editDoc('${id}')">تعديل</button>
+              <button class="danger" onclick="event.stopPropagation(); deleteDocById('${id}')">حذف</button>
             </td>`;
           sessionsTbody.appendChild(tr);
         });
@@ -507,15 +595,15 @@
     function getDeviceName(device) {
       const devices = {
         'ping': 'بنج',
-        'ps4': 'بلايستيشن 4',
-        'ps5': 'بلايستيشن 5'
+        'ps4': 'PS4',
+        'ps5': 'PS5'
       };
       return devices[device] || device;
     }
 
     // حذف الجلسة
     window.deleteDocById = async (id) => {
-      if (!confirm('هل أنت متأكد من حذف هذه الجلسة؟')) return;
+      if (!confirm('هل تريد حذف هذه الجلسة؟')) return;
       try {
         await deleteDoc(doc(db, 'sessions', id));
         alert('تم الحذف بنجاح');
@@ -584,7 +672,7 @@
       const drinkDiv = document.createElement('div');
       drinkDiv.className = 'drink-item';
       drinkDiv.innerHTML = `
-        <input type="text" class="drink-name" placeholder="اسم المشروب والسعر (مثال: بيبسي 25ج)" value="${value}">
+        <input type="text" class="drink-name" placeholder="مشروب + سعر" value="${value}">
         <button type="button" class="remove-drink">-</button>
       `;
       drinksContainer.appendChild(drinkDiv);
@@ -637,7 +725,7 @@
         
         // عرض النتيجة
         durationResult.textContent = `المدة: ${duration}`;
-        priceResult.textContent = `السعر الإجمالي: ${totalPrice.toFixed(2)} ج (${price.toFixed(2)} ج للجلسة + ${drinksTotal.toFixed(2)} ج للمشروبات)`;
+        priceResult.textContent = `السعر: ${totalPrice.toFixed(0)} ج`;
         calculationResult.style.display = 'block';
         
         return { 
