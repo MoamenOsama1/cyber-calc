@@ -5,7 +5,7 @@
   <title>Bianco Timer - Add Session</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
-    body { font-family: Arial, sans-serif; direction: rtl; padding: 18px; background-image:url('https://i.pinimg.com/1200x/54/64/f6/5464f6d79e4441f7d413dbbc0cfe0449.jpg'); background-size:cover; color:#fff; }
+    body { font-family: Arial, sans-serif; direction: rtl; padding: 18px; background-image:url('https://res.cloudinary.com/dznsjdvcf/image/upload/v1759876281/PS30TH_16x9_WALLPAPER-DARK_kepzvd.webp'); background-size:cover; color:#fff; }
     .panel { max-width:1100px; margin:12px auto; background: rgba(0,0,0,0.6); padding:14px; border-radius:8px; }
     label {margin:6px;}
     input, select { padding:8px; font-size:15px; margin:4px; border-radius:6px; border:none;}
@@ -69,7 +69,7 @@
 
     <div id="msg" class="muted" style="margin-top:8px"></div>
 
-    <h3 style="margin-top:14px">📋 الجلسات الخاصة بك</h3>
+    <h3 style="margin-top:14px">📋 الجلسات</h3>
     <table id="localTable">
       <thead>
         <tr><th>الجهاز</th><th>النوع</th><th>من → إلى</th><th>المدة</th><th>السعر</th><th>المشروبات</th></tr>
@@ -81,7 +81,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBFI6W1mCbFsG8MfcGxWL0JonZtJ_7P6W0",
@@ -112,44 +112,23 @@
     const localTbody = document.querySelector('#localTable tbody');
     const msg = document.getElementById('msg');
 
+    const admins = ["moosama@gmail.com", "ahmed@gmail.com", "mahmoud@gmail.com"];
+
     const prices = {
       ping: { single: 30, double: 40 },
       ps4: { single: 30, double: 40 },
       ps5: { single: 40, double: 50 },
-      drinks: {
-        "بيبسي": 25,
-        "شاي": 10,
-        "قهوة": 15,
-        "اندومي كبير": 25,
-        "اندومي صغير": 15
-      }
+      drinks: { "بيبسي": 25, "شاي": 10, "قهوة": 15, "اندومي كبير": 25, "اندومي صغير": 15 }
     };
 
     let currentUser = null;
 
-    onAuthStateChanged(auth, user => {
-      if (!user) {
-        window.location.href = 'login.html';
-        return;
-      }
+    onAuthStateChanged(auth, async user => {
+      if (!user) return window.location.href = 'login.html';
       currentUser = user;
       userEmailSpan.textContent = user.email;
-      loadSessions(user.email); // تحميل الجلسات الخاصة بالمستخدم
+      await loadSessions();
     });
-
-    async function loadSessions(email) {
-      try {
-        const q = query(collection(db, 'sessions'), where('createdBy', '==', email));
-        const snap = await getDocs(q);
-        localTbody.innerHTML = "";
-        snap.forEach(doc => {
-          appendLocalRow(doc.data());
-        });
-        msg.textContent = "✅ تم تحميل الجلسات السابقة.";
-      } catch (e) {
-        msg.textContent = "❌ خطأ أثناء تحميل الجلسات: " + e.message;
-      }
-    }
 
     logoutBtn.onclick = () => signOut(auth).then(() => window.location.href='login.html');
     goAdminBtn.onclick = () => window.location.href = 'admin.html';
@@ -169,8 +148,7 @@
       const diffMins = Math.floor(diffMs / 60000);
       const h = Math.floor(diffMins / 60);
       const m = diffMins % 60;
-      const priceHour = prices[device][type];
-      const total = (diffMins / 60) * priceHour;
+      const total = (diffMins / 60) * prices[device][type];
       return { hours: h, minutes: m, total };
     }
 
@@ -183,6 +161,24 @@
                       <td>${obj.price.toFixed(2)} ج</td>
                       <td>${obj.drinks || '-'}</td>`;
       localTbody.prepend(tr);
+    }
+
+    async function loadSessions() {
+      localTbody.innerHTML = '';
+      msg.textContent = 'جارٍ تحميل الجلسات...';
+      try {
+        let q;
+        if (admins.includes(currentUser.email)) {
+          q = query(collection(db, "sessions"), orderBy("createdAt", "desc"));
+        } else {
+          q = query(collection(db, "sessions"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"));
+        }
+        const snapshot = await getDocs(q);
+        snapshot.forEach(doc => appendLocalRow(doc.data()));
+        msg.textContent = '✅ تم تحميل الجلسات.';
+      } catch (e) {
+        msg.textContent = '❌ خطأ أثناء تحميل الجلسات: ' + e.message;
+      }
     }
 
     addBtn.onclick = async () => {
@@ -211,24 +207,26 @@
       const duration = `${hours} س ${minutes} د`;
       const totalPrice = total + drinksTotal;
 
-      const obj = { device, type, start, end, duration, price: Number(totalPrice.toFixed(2)), drinks: drinksList.join(", ") };
+      const obj = { 
+        device, type, start, end, duration, 
+        price: Number(totalPrice.toFixed(2)), 
+        drinks: drinksList.join(", "), 
+        userId: currentUser.uid,
+        createdBy: currentUser.email,
+        createdAt: new Date().toISOString()
+      };
 
       appendLocalRow(obj);
 
       try {
-        await addDoc(collection(db, 'sessions'), {
-          ...obj,
-          createdBy: currentUser.email,
-          createdAt: new Date().toISOString()
-        });
-        msg.textContent = '✅ تم إضافة الجلسة وحساب المشروبات بنجاح.';
+        await addDoc(collection(db, 'sessions'), obj);
+        msg.textContent = '✅ تم إضافة الجلسة بنجاح.';
       } catch (e) {
         msg.textContent = '❌ خطأ أثناء الحفظ: ' + e.message;
       }
 
       startEl.value=''; endEl.value='';
-      drinksSelect.value='';
-      customName.value=''; customPrice.value='';
+      drinksSelect.value=''; customName.value=''; customPrice.value='';
       customDrinkDiv.style.display='none';
     };
   </script>
