@@ -5,11 +5,35 @@
   <title>تسجيل الدخول - Bianco Timer</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
-    body { font-family: Arial, sans-serif; direction: rtl; text-align: center; padding: 30px; background:#f4f7fb; color:#222;}
-    .card { max-width:420px; margin:40px auto; padding:20px; border-radius:8px; background:#fff; box-shadow:0 4px 12px rgba(0,0,0,0.08); }
-    input { width:100%; padding:10px; margin:8px 0; font-size:16px; }
-    button { padding:10px 16px; margin:6px; font-size:16px; cursor:pointer; }
-    .small { font-size:14px; color:#666; }
+    body {
+      font-family: Arial, sans-serif;
+      direction: rtl;
+      text-align: center;
+      padding: 30px;
+      background: #f4f7fb;
+      color: #222;
+    }
+    .card {
+      max-width: 420px;
+      margin: 40px auto;
+      padding: 20px;
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      font-size: 16px;
+    }
+    button {
+      padding: 10px 16px;
+      margin: 6px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .small { font-size: 14px; color: #666; }
   </style>
 </head>
 <body>
@@ -30,17 +54,24 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import {
+      getAuth,
+      setPersistence,
+      browserLocalPersistence,
+      signInWithEmailAndPassword,
+      createUserWithEmailAndPassword,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
-      const firebaseConfig = {
-  apiKey: "AIzaSyBFI6W1mCbFsG8MfcGxWL0JonZtJ_7P6W0",
-  authDomain: "bianco-playstation.firebaseapp.com",
-  projectId: "bianco-playstation",
-  storageBucket: "bianco-playstation.firebasestorage.app",
-  messagingSenderId: "699813217029",
-  appId: "1:699813217029:web:568e169371a2361358ad6c",
-  measurementId: "G-YE9S5421FR"
-};
+    const firebaseConfig = {
+      apiKey: "AIzaSyBFI6W1mCbFsG8MfcGxWL0JonZtJ_7P6W0",
+      authDomain: "bianco-playstation.firebaseapp.com",
+      projectId: "bianco-playstation",
+      storageBucket: "bianco-playstation.firebasestorage.app",
+      messagingSenderId: "699813217029",
+      appId: "1:699813217029:web:568e169371a2361358ad6c",
+      measurementId: "G-YE9S5421FR"
+    };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
@@ -51,12 +82,14 @@
     const registerBtn = document.getElementById('registerBtn');
     const msg = document.getElementById('msg');
 
+    // حفظ الجلسة حتى بعد الـ Refresh
+    setPersistence(auth, browserLocalPersistence);
+
     loginBtn.onclick = async () => {
       msg.textContent = "";
       try {
         await signInWithEmailAndPassword(auth, emailInput.value, passInput.value);
-        // النجاح -> توجيه حسب الدور في الصفحات (server-side role check in app/admin)
-        window.location.href = "index.html";
+        window.location.href = "index.html"; // توجيه للصفحة الرئيسية
       } catch (e) {
         msg.textContent = "فشل تسجيل الدخول: " + e.message;
       }
@@ -72,7 +105,7 @@
       }
     };
 
-    // لو المستخدم مُسجل بالفعل نوجّهه تلقائياً
+    // لو المستخدم مسجل بالفعل نوجهه تلقائياً
     onAuthStateChanged(auth, user => {
       if (user) {
         window.location.href = "index.html";
