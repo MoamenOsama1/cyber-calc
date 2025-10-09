@@ -69,7 +69,7 @@
 
     <div id="msg" class="muted" style="margin-top:8px"></div>
 
-    <h3 style="margin-top:14px">📋 الجلسات المحلية</h3>
+    <h3 style="margin-top:14px">📋 الجلسات</h3>
     <table id="localTable">
       <thead>
         <tr><th>الجهاز</th><th>النوع</th><th>من → إلى</th><th>المدة</th><th>السعر</th><th>المشروبات</th></tr>
@@ -81,7 +81,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBFI6W1mCbFsG8MfcGxWL0JonZtJ_7P6W0",
@@ -127,13 +127,14 @@
 
     let currentUser = null;
 
-    onAuthStateChanged(auth, user => {
+    onAuthStateChanged(auth, async user => {
       if (!user) {
         window.location.href = 'login.html';
         return;
       }
       currentUser = user;
       userEmailSpan.textContent = user.email;
+      await loadSessions(); // تحميل الجلسات عند الدخول
     });
 
     logoutBtn.onclick = () => signOut(auth).then(() => window.location.href='login.html');
@@ -168,6 +169,12 @@
                       <td>${obj.price.toFixed(2)} ج</td>
                       <td>${obj.drinks || '-'}</td>`;
       localTbody.prepend(tr);
+    }
+
+    async function loadSessions() {
+      localTbody.innerHTML = "";
+      const snapshot = await getDocs(collection(db, "sessions"));
+      snapshot.forEach(docSnap => appendLocalRow(docSnap.data()));
     }
 
     addBtn.onclick = async () => {
@@ -206,7 +213,7 @@
           createdBy: currentUser.email,
           createdAt: new Date().toISOString()
         });
-        msg.textContent = '✅ تم إضافة الجلسة وحساب المشروبات بنجاح.';
+        msg.textContent = '✅ تم إضافة الجلسة بنجاح.';
       } catch (e) {
         msg.textContent = '❌ خطأ أثناء الحفظ: ' + e.message;
       }
