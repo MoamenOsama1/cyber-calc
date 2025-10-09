@@ -14,6 +14,22 @@
     .editBtn { background:#ffc107; }
     .muted { color:#ddd; }
     .topbar { display:flex; justify-content:space-between; align-items:center; gap:10px; }
+    
+    /* نمط نافذة التعديل */
+    .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); }
+    .modal-content { background-color: #2c3e50; margin: 5% auto; padding: 20px; border-radius: 8px; width: 90%; max-width: 500px; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .close { color: #fff; font-size: 28px; font-weight: bold; cursor: pointer; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 5px; }
+    .form-group input, .form-group select { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #555; background: #34495e; color: #fff; }
+    .time-inputs { display: flex; gap: 10px; }
+    .time-inputs select { flex: 1; }
+    .drinks-container { margin-top: 10px; }
+    .drink-item { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
+    .drink-item input { flex: 1; }
+    .add-drink { background: #27ae60; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+    .remove-drink { background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -38,22 +54,114 @@
     </table>
   </div>
 
+  <!-- نافذة التعديل -->
+  <div id="editModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>تعديل الجلسة</h3>
+        <span class="close">&times;</span>
+      </div>
+      <form id="editForm">
+        <div class="form-group">
+          <label>الجهاز:</label>
+          <select id="editDevice">
+            <option value="ping">بنج</option>
+            <option value="ps4">بلايستيشن 4</option>
+            <option value="ps5">بلايستيشن 5</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label>النوع:</label>
+          <select id="editType">
+            <option value="single">فردي</option>
+            <option value="double">زوجي</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label>من:</label>
+          <div class="time-inputs">
+            <select id="editStartHour">
+              <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+              <option value="4">4</option><option value="5">5</option><option value="6">6</option>
+              <option value="7">7</option><option value="8">8</option><option value="9">9</option>
+              <option value="10">10</option><option value="11">11</option><option value="12">12</option>
+            </select>
+            <select id="editStartMinute">
+              <option value="00">00</option><option value="05">05</option><option value="10">10</option>
+              <option value="15">15</option><option value="20">20</option><option value="25">25</option>
+              <option value="30">30</option><option value="35">35</option><option value="40">40</option>
+              <option value="45">45</option><option value="50">50</option><option value="55">55</option>
+            </select>
+            <select id="editStartPeriod">
+              <option value="AM">صباحًا</option>
+              <option value="PM">مساءً</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label>إلى:</label>
+          <div class="time-inputs">
+            <select id="editEndHour">
+              <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+              <option value="4">4</option><option value="5">5</option><option value="6">6</option>
+              <option value="7">7</option><option value="8">8</option><option value="9">9</option>
+              <option value="10">10</option><option value="11">11</option><option value="12">12</option>
+            </select>
+            <select id="editEndMinute">
+              <option value="00">00</option><option value="05">05</option><option value="10">10</option>
+              <option value="15">15</option><option value="20">20</option><option value="25">25</option>
+              <option value="30">30</option><option value="35">35</option><option value="40">40</option>
+              <option value="45">45</option><option value="50">50</option><option value="55">55</option>
+            </select>
+            <select id="editEndPeriod">
+              <option value="AM">صباحًا</option>
+              <option value="PM">مساءً</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label>المشروبات:</label>
+          <div id="drinksContainer" class="drinks-container">
+            <!-- المشروبات ستضاف هنا ديناميكياً -->
+          </div>
+          <button type="button" class="add-drink" id="addDrinkBtn">+ إضافة مشروب</button>
+        </div>
+        
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+          <button type="button" id="calculateBtn" style="background: #3498db; color: white; flex: 1;">حساب السعر</button>
+          <button type="submit" style="background: #27ae60; color: white; flex: 1;">حفظ التعديلات</button>
+          <button type="button" id="cancelBtn" style="background: #e74c3c; color: white; flex: 1;">إلغاء</button>
+        </div>
+        
+        <div id="calculationResult" style="margin-top: 15px; padding: 10px; background: #34495e; border-radius: 4px; display: none;">
+          <strong>نتيجة الحساب:</strong>
+          <div id="durationResult"></div>
+          <div id="priceResult"></div>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
     import {
-      getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc, onSnapshot, query, orderBy
+      getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc, onSnapshot, query, orderBy, getDoc
     } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-   const firebaseConfig = {
-  apiKey: "AIzaSyBFI6W1mCbFsG8MfcGxWL0JonZtJ_7P6W0",
-  authDomain: "bianco-playstation.firebaseapp.com",
-  projectId: "bianco-playstation",
-  storageBucket: "bianco-playstation.firebasestorage.app",
-  messagingSenderId: "699813217029",
-  appId: "1:699813217029:web:568e169371a2361358ad6c",
-  measurementId: "G-YE9S5421FR"
-};
+    const firebaseConfig = {
+      apiKey: "AIzaSyBFI6W1mCbFsG8MfcGxWL0JonZtJ_7P6W0",
+      authDomain: "bianco-playstation.firebaseapp.com",
+      projectId: "bianco-playstation",
+      storageBucket: "bianco-playstation.firebasestorage.app",
+      messagingSenderId: "699813217029",
+      appId: "1:699813217029:web:568e169371a2361358ad6c",
+      measurementId: "G-YE9S5421FR"
+    };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
@@ -62,14 +170,24 @@
     const userEmailSpan = document.getElementById('userEmail');
     const logoutBtn = document.getElementById('logoutBtn');
     const sessionsTbody = document.querySelector('#sessionsTable tbody');
+    const editModal = document.getElementById('editModal');
+    const closeBtn = document.querySelector('.close');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const editForm = document.getElementById('editForm');
+    const addDrinkBtn = document.getElementById('addDrinkBtn');
+    const calculateBtn = document.getElementById('calculateBtn');
+    const calculationResult = document.getElementById('calculationResult');
+    const durationResult = document.getElementById('durationResult');
+    const priceResult = document.getElementById('priceResult');
 
     // قائمة الايميلات اللي تعتبر admin (يمكنك تعديلها)
     const adminEmails = [
-  "moosama@gmail.com",
-  "ahmed@gmail.com",
-  "mahmoud@gmail.com"
-];
+      "moosama@gmail.com",
+      "ahmed@gmail.com",
+      "mahmoud@gmail.com"
+    ];
 
+    let currentEditId = null;
 
     onAuthStateChanged(auth, user => {
       if (!user) {
@@ -87,6 +205,26 @@
     });
 
     logoutBtn.onclick = () => signOut(auth).then(()=> window.location.href='login.html');
+
+    // تحويل الوقت من 24 ساعة إلى 12 ساعة مع تحديد AM/PM
+    function parseTimeTo12H(timeStr) {
+      const [h, m] = timeStr.split(':').map(Number);
+      const period = h >= 12 ? 'PM' : 'AM';
+      let hour12 = h % 12 || 12;
+      return {
+        hour: hour12,
+        minute: m.toString().padStart(2, '0'),
+        period: period
+      };
+    }
+
+    // تحويل الوقت من 12 ساعة إلى 24 ساعة
+    function convertTo24H(hour, minute, period) {
+      let h = parseInt(hour);
+      if (period === 'PM' && h !== 12) h += 12;
+      if (period === 'AM' && h === 12) h = 0;
+      return `${h.toString().padStart(2, '0')}:${minute}`;
+    }
 
     function formatTimeArabic(timeStr) {
       const [h, m] = timeStr.split(':').map(Number);
@@ -134,36 +272,179 @@
     };
 
     window.editDoc = async (id) => {
+      currentEditId = id;
+      
       // جلب المستند
       const dRef = doc(db, 'sessions', id);
-      const imported = await import("https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js");
-      const snap = await imported.getDoc(dRef);
+      const snap = await getDoc(dRef);
       if (!snap.exists()) return alert('غير موجود');
+      
       const data = snap.data();
-      const newStart = prompt('تعديل وقت البداية (HH:MM):', data.start);
-      const newEnd = prompt('تعديل وقت النهاية (HH:MM):', data.end);
-      const newDrinks = prompt('تعديل المشروبات:', data.drinks || '');
-      if (!newStart || !newEnd) return;
-      // إعادة حساب السعر والمدة على السرفر (client-side هنا)
-      function compute(start, end, device, type) {
-        const [sh, sm] = start.split(':').map(Number);
-        const [eh, em] = end.split(':').map(Number);
-        let s = new Date(0,0,0, sh, sm);
-        let e = new Date(0,0,0, eh, em);
-        if (e <= s) e.setDate(e.getDate() + 1);
-        const diffMs = e - s;
-        const diffMins = Math.floor(diffMs / 60000);
-        const h = Math.floor(diffMins / 60);
-        const m = diffMins % 60;
-        const priceHour = { ping:{single:30,double:40}, ps4:{single:30,double:40}, ps5:{single:40,double:50} }[device][type];
-        const total = (diffMins / 60) * priceHour;
-        return { duration: `${h} س ${m} د`, price: Number(total.toFixed(2)) };
+      
+      // تعبئة البيانات في النموذج
+      document.getElementById('editDevice').value = data.device;
+      document.getElementById('editType').value = data.type;
+      
+      // تحليل الوقت من 24 ساعة إلى 12 ساعة
+      const startTime = parseTimeTo12H(data.start);
+      const endTime = parseTimeTo12H(data.end);
+      
+      document.getElementById('editStartHour').value = startTime.hour;
+      document.getElementById('editStartMinute').value = startTime.minute;
+      document.getElementById('editStartPeriod').value = startTime.period;
+      
+      document.getElementById('editEndHour').value = endTime.hour;
+      document.getElementById('editEndMinute').value = endTime.minute;
+      document.getElementById('editEndPeriod').value = endTime.period;
+      
+      // تعبئة المشروبات
+      const drinksContainer = document.getElementById('drinksContainer');
+      drinksContainer.innerHTML = '';
+      
+      if (data.drinks && data.drinks !== '-') {
+        const drinks = data.drinks.split(', ');
+        drinks.forEach(drink => {
+          addDrinkInput(drink);
+        });
       }
-      const { duration, price } = compute(newStart, newEnd, data.device, data.type);
+      
+      // إظهار النافذة
+      editModal.style.display = 'block';
+      calculationResult.style.display = 'none';
+    };
+
+    // إضافة حقل مشروب جديد
+    function addDrinkInput(value = '') {
+      const drinksContainer = document.getElementById('drinksContainer');
+      const drinkDiv = document.createElement('div');
+      drinkDiv.className = 'drink-item';
+      drinkDiv.innerHTML = `
+        <input type="text" class="drink-name" placeholder="اسم المشروب" value="${value}">
+        <button type="button" class="remove-drink">-</button>
+      `;
+      drinksContainer.appendChild(drinkDiv);
+      
+      // إضافة حدث لحذف المشروب
+      drinkDiv.querySelector('.remove-drink').addEventListener('click', function() {
+        drinksContainer.removeChild(drinkDiv);
+      });
+    }
+
+    // حساب السعر والمدة
+    function calculatePrice() {
+      const device = document.getElementById('editDevice').value;
+      const type = document.getElementById('editType').value;
+      
+      // تحويل الأوقات إلى 24 ساعة
+      const startHour = document.getElementById('editStartHour').value;
+      const startMinute = document.getElementById('editStartMinute').value;
+      const startPeriod = document.getElementById('editStartPeriod').value;
+      const startTime24 = convertTo24H(startHour, startMinute, startPeriod);
+      
+      const endHour = document.getElementById('editEndHour').value;
+      const endMinute = document.getElementById('editEndMinute').value;
+      const endPeriod = document.getElementById('editEndPeriod').value;
+      const endTime24 = convertTo24H(endHour, endMinute, endPeriod);
+      
+      // حساب المدة والسعر
+      const { duration, price } = compute(startTime24, endTime24, device, type);
+      
+      // حساب سعر المشروبات
+      let drinksTotal = 0;
+      const drinkInputs = document.querySelectorAll('.drink-name');
+      drinkInputs.forEach(input => {
+        if (input.value.trim()) {
+          // يمكنك هنا إضافة منطق لحساب سعر كل مشروب إذا كان لديك قائمة أسعار
+          // حالياً سنعتبر أن كل مشروب بقيمة 10 (يمكن تعديل هذا)
+          drinksTotal += 10;
+        }
+      });
+      
+      const totalPrice = price + drinksTotal;
+      
+      // عرض النتيجة
+      durationResult.textContent = `المدة: ${duration}`;
+      priceResult.textContent = `السعر الإجمالي: ${totalPrice.toFixed(2)} ج (${price.toFixed(2)} ج للجلسة + ${drinksTotal.toFixed(2)} ج للمشروبات)`;
+      calculationResult.style.display = 'block';
+      
+      return { duration, price: totalPrice, drinksTotal };
+    }
+
+    function compute(start, end, device, type) {
+      const [sh, sm] = start.split(':').map(Number);
+      const [eh, em] = end.split(':').map(Number);
+      let s = new Date(0,0,0, sh, sm);
+      let e = new Date(0,0,0, eh, em);
+      if (e <= s) e.setDate(e.getDate() + 1);
+      const diffMs = e - s;
+      const diffMins = Math.floor(diffMs / 60000);
+      const h = Math.floor(diffMins / 60);
+      const m = diffMins % 60;
+      const priceHour = { ping:{single:30,double:40}, ps4:{single:30,double:40}, ps5:{single:40,double:50} }[device][type];
+      const total = (diffMins / 60) * priceHour;
+      return { duration: `${h} س ${m} د`, price: Number(total.toFixed(2)) };
+    }
+
+    // أحداث النافذة
+    closeBtn.onclick = () => editModal.style.display = 'none';
+    cancelBtn.onclick = () => editModal.style.display = 'none';
+    
+    addDrinkBtn.onclick = () => addDrinkInput();
+    
+    calculateBtn.onclick = () => calculatePrice();
+    
+    editForm.onsubmit = async (e) => {
+      e.preventDefault();
+      
+      const device = document.getElementById('editDevice').value;
+      const type = document.getElementById('editType').value;
+      
+      // تحويل الأوقات إلى 24 ساعة
+      const startHour = document.getElementById('editStartHour').value;
+      const startMinute = document.getElementById('editStartMinute').value;
+      const startPeriod = document.getElementById('editStartPeriod').value;
+      const startTime24 = convertTo24H(startHour, startMinute, startPeriod);
+      
+      const endHour = document.getElementById('editEndHour').value;
+      const endMinute = document.getElementById('editEndMinute').value;
+      const endPeriod = document.getElementById('editEndPeriod').value;
+      const endTime24 = convertTo24H(endHour, endMinute, endPeriod);
+      
+      // حساب السعر والمدة
+      const { duration, price } = calculatePrice();
+      
+      // تجميع المشروبات
+      const drinkInputs = document.querySelectorAll('.drink-name');
+      let drinksList = [];
+      drinkInputs.forEach(input => {
+        if (input.value.trim()) {
+          drinksList.push(input.value.trim());
+        }
+      });
+      const drinks = drinksList.length > 0 ? drinksList.join(', ') : '-';
+      
       try {
-        await updateDoc(dRef, { start:newStart, end:newEnd, drinks:newDrinks, duration, price });
-        alert('تم التعديل');
-      } catch (e) { alert('خطأ: ' + e.message); }
+        await updateDoc(doc(db, 'sessions', currentEditId), { 
+          device, 
+          type, 
+          start: startTime24, 
+          end: endTime24, 
+          drinks, 
+          duration, 
+          price 
+        });
+        alert('تم التعديل بنجاح');
+        editModal.style.display = 'none';
+      } catch (e) { 
+        alert('خطأ: ' + e.message); 
+      }
+    };
+
+    // إغلاق النافذة عند النقر خارجها
+    window.onclick = (event) => {
+      if (event.target == editModal) {
+        editModal.style.display = 'none';
+      }
     };
   </script>
 </body>
