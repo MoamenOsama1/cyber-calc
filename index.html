@@ -1,79 +1,51 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ar">
 <head>
-  <meta charset="UTF-8">
-  <title>Bianco Timer - Add Session</title>
+  <meta charset="utf-8" />
+  <title>Bianco Timer - Admin</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
-    body { font-family: Arial, sans-serif; direction: rtl; padding: 18px; background-image:url('https://res.cloudinary.com/dznsjdvcf/image/upload/v1759876281/PS30TH_16x9_WALLPAPER-DARK_kepzvd.webp'); background-size:cover; color:#fff; }
-    .panel { max-width:1100px; margin:12px auto; background: rgba(0,0,0,0.6); padding:14px; border-radius:8px; }
-    label {margin:6px;}
-    input, select { padding:8px; font-size:15px; margin:4px; border-radius:6px; border:none;}
-    input[type="time"]{ background:#fff; color:#000; }
-    button { padding:8px 12px; margin:6px; border-radius:6px; cursor:pointer; border:none; background:#28a745; color:#fff;}
+    body { font-family: Arial, sans-serif; direction: rtl; padding: 18px; background-image:url('https://console.cloudinary.com/app/c-6cdc290d4e33f5cc4781b7cdc1b15c/assets/media_library/folders/cb2a60452a09180a7d25a122b53e2bad42/asset/cc9d2f608502c70b78a7c3d89c492b1f/manage/summary?view_mode=mosaic&context=manage'); background-size:cover; color:#fff;}
+    .panel { max-width:1200px; margin:12px auto; background: rgba(0,0,0,0.65); padding:14px; border-radius:8px; }
     table { width:100%; border-collapse:collapse; margin-top:12px; background:rgba(255,255,255,0.06); }
     th, td { padding:8px; border:1px solid rgba(255,255,255,0.08); font-size:14px; text-align:center;}
+    button { padding:6px 10px; border-radius:6px; cursor:pointer; border:none; }
+    .danger { background:#dc3545; color:#fff; }
+    .editBtn { background:#ffc107; }
+    .muted { color:#ddd; }
     .topbar { display:flex; justify-content:space-between; align-items:center; gap:10px; }
-    .muted { color:#ddd; font-size:13px; }
   </style>
 </head>
 <body>
   <div class="panel">
     <div class="topbar">
-      <h2>🎮 Bianco Timer - إضافة جلسة</h2>
+      <h2>🔑 واجهة المشرف - Bianco Timer</h2>
       <div>
         <span id="userEmail" class="muted"></span>
         <button id="logoutBtn" style="background:#ff9800">تسجيل خروج</button>
-        <button id="goAdminBtn" style="background:#007bff">صفحة المشرف</button>
       </div>
     </div>
 
-    <div style="margin-top:10px;">
-      <label>الجهاز:</label>
-      <select id="device">
-        <option value="ping">بنج</option>
-        <option value="ps4">بلايستيشن 4</option>
-        <option value="ps5">بلايستيشن 5</option>
-      </select>
+    <p class="muted">هنا ترى كل الجلسات (Realtime). يمكنك تعديل أو حذف أي جلسة.</p>
 
-      <label>النوع:</label>
-      <select id="type">
-        <option value="single">فردي</option>
-        <option value="double">زوجي</option>
-      </select>
-
-      <label>من:</label>
-      <input type="time" id="start">
-
-      <label>إلى:</label>
-      <input type="time" id="end">
-
-      <label>مشروبات:</label>
-      <input type="text" id="drinks" placeholder="بيبسي، نسكافيه ...">
-
-      <button id="addBtn">➕ إضافة جلسة</button>
-    </div>
-
-    <div id="msg" class="muted" style="margin-top:8px"></div>
-
-    <h3 style="margin-top:14px">📋 جلسات محلية (غير محفوظة بالسحابة)</h3>
-    <table id="localTable">
+    <table id="sessionsTable">
       <thead>
-        <tr><th>الجهاز</th><th>النوع</th><th>من → إلى</th><th>المدة</th><th>السعر</th><th>المشروبات</th></tr>
+        <tr>
+          <th>الجهاز</th><th>النوع</th><th>من → إلى</th><th>المدة</th><th>السعر</th><th>المشروبات</th><th>إنشأ بواسطة</th><th>العمليات</th>
+        </tr>
       </thead>
       <tbody></tbody>
     </table>
-
-    <p class="muted" style="margin-top:8px">اضغط "رفع للسحابة" من جدول المشرف لحفظ في قاعدة البيانات أو استخدم زر "Add" ليُخزن مباشرة (هذا الملف يقوم بالحفظ في Firestore كما في admin page).</p>
-
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import {
+      getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc, onSnapshot, query, orderBy
+    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-     const firebaseConfig = {
+   const firebaseConfig = {
   apiKey: "AIzaSyBFI6W1mCbFsG8MfcGxWL0JonZtJ_7P6W0",
   authDomain: "bianco-playstation.firebaseapp.com",
   projectId: "bianco-playstation",
@@ -89,53 +61,32 @@
 
     const userEmailSpan = document.getElementById('userEmail');
     const logoutBtn = document.getElementById('logoutBtn');
-    const goAdminBtn = document.getElementById('goAdminBtn');
-    const deviceEl = document.getElementById('device');
-    const typeEl = document.getElementById('type');
-    const startEl = document.getElementById('start');
-    const endEl = document.getElementById('end');
-    const drinksEl = document.getElementById('drinks');
-    const addBtn = document.getElementById('addBtn');
-    const localTbody = document.querySelector('#localTable tbody');
-    const msg = document.getElementById('msg');
+    const sessionsTbody = document.querySelector('#sessionsTable tbody');
 
-    // أسعار
-    const prices = {
-      ping: { single: 30, double: 40 },
-      ps4: { single: 30, double: 40 },
-      ps5: { single: 40, double: 50 }
-    };
+    // قائمة الايميلات اللي تعتبر admin (يمكنك تعديلها)
+    const adminEmails = [
+  "moosama@gmail.com",
+  "ahmed@gmail.com",
+  "mahmoud@gmail.com"
+];
 
-    let currentUser = null;
 
     onAuthStateChanged(auth, user => {
       if (!user) {
         window.location.href = 'login.html';
         return;
       }
-      currentUser = user;
       userEmailSpan.textContent = user.email;
+      // تحقق إن هذا المستخدم Admin (قائمة بسيطة)
+      if (!adminEmails.includes(user.email)) {
+        alert('ليس لديك صلاحية مشرف. سيتم تحويلك لصفحة الإضافة.');
+        window.location.href = 'index.html';
+        return;
+      }
+      startRealtime();
     });
 
-    logoutBtn.onclick = () => signOut(auth).then(() => window.location.href='login.html');
-
-    // زر يفتح صفحة الادمن (الادمن لازم يتحقق عليه لاحقًا في admin.html)
-    goAdminBtn.onclick = () => window.location.href = 'admin.html';
-
-    function compute(start, end, device, type) {
-      const [sh, sm] = start.split(':').map(Number);
-      const [eh, em] = end.split(':').map(Number);
-      let s = new Date(0,0,0, sh, sm);
-      let e = new Date(0,0,0, eh, em);
-      if (e <= s) e.setDate(e.getDate() + 1);
-      const diffMs = e - s;
-      const diffMins = Math.floor(diffMs / 60000);
-      const h = Math.floor(diffMins / 60);
-      const m = diffMins % 60;
-      const priceHour = prices[device][type];
-      const total = (diffMins / 60) * priceHour;
-      return { hours: h, minutes: m, total };
-    }
+    logoutBtn.onclick = () => signOut(auth).then(()=> window.location.href='login.html');
 
     function formatTimeArabic(timeStr) {
       const [h, m] = timeStr.split(':').map(Number);
@@ -144,46 +95,75 @@
       return `${hh}:${m.toString().padStart(2,'0')} ${suffix}`;
     }
 
-    // عرض سطر محلياً (لنفس الجلسة) — مفيد لو عايز تتأكد قبل رفع للسحابة
-    function appendLocalRow(obj) {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${obj.device}</td>
-                      <td>${obj.type === 'single' ? 'فردي':'زوجي'}</td>
-                      <td>${formatTimeArabic(obj.start)} → ${formatTimeArabic(obj.end)}</td>
-                      <td>${obj.duration}</td>
-                      <td>${obj.price.toFixed(2)} ج</td>
-                      <td>${obj.drinks || '-'}</td>`;
-      localTbody.prepend(tr);
+    // استماع realtime لـ collection sessions
+    function startRealtime() {
+      const q = query(collection(db, 'sessions'), orderBy('createdAt', 'desc'));
+      onSnapshot(q, snapshot => {
+        sessionsTbody.innerHTML = '';
+        snapshot.forEach(docSnap => {
+          const s = docSnap.data();
+          const id = docSnap.id;
+          const tr = document.createElement('tr');
+          const fromTo = `${formatTimeArabic(s.start)} → ${formatTimeArabic(s.end)}`;
+          tr.innerHTML = `
+            <td>${s.device}</td>
+            <td>${s.type === 'single' ? 'فردي':'زوجي'}</td>
+            <td>${fromTo}</td>
+            <td>${s.duration}</td>
+            <td>${s.price.toFixed(2)} ج</td>
+            <td>${s.drinks || '-'}</td>
+            <td>${s.createdBy || '-'}</td>
+            <td>
+              <button class="editBtn" onclick="editDoc('${id}')">✏️</button>
+              <button class="danger" onclick="deleteDocById('${id}')">❌</button>
+            </td>`;
+          sessionsTbody.appendChild(tr);
+        });
+      }, err => {
+        console.error(err);
+        alert('خطأ في جلب البيانات: ' + err.message);
+      });
     }
 
-    addBtn.onclick = async () => {
-      if (!startEl.value || !endEl.value) { msg.textContent='أدخل وقت البداية والنهاية'; return; }
-      const device = deviceEl.value;
-      const type = typeEl.value;
-      const start = startEl.value;
-      const end = endEl.value;
-      const drinks = drinksEl.value || '';
-      const { hours, minutes, total } = compute(start, end, device, type);
-      const duration = `${hours} س ${minutes} د`;
-      const obj = { device, type, start, end, duration, price: Number(total.toFixed(2)), drinks };
-
-      // 1) عرض محلياً
-      appendLocalRow(obj);
-
-      // 2) حفظ للسحابة (Firestore) — مجموعة "sessions"
+    window.deleteDocById = async (id) => {
+      if (!confirm('هل أنت متأكد من الحذف؟')) return;
       try {
-        await addDoc(collection(db, 'sessions'), {
-          ...obj,
-          createdBy: currentUser.email,
-          createdAt: new Date().toISOString()
-        });
-        msg.textContent = 'تم إضافة الجلسة وحفظها في السحابة.';
-      } catch (e) {
-        msg.textContent = 'خطأ أثناء الحفظ: ' + e.message;
-      }
+        await deleteDoc(doc(db, 'sessions', id));
+        alert('تم الحذف');
+      } catch (e) { alert('خطأ: ' + e.message); }
+    };
 
-      // تفريغ الحقول
-      startEl.value=''; endEl.value=''; drinksEl.value='';
+    window.editDoc = async (id) => {
+      // جلب المستند
+      const dRef = doc(db, 'sessions', id);
+      const imported = await import("https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js");
+      const snap = await imported.getDoc(dRef);
+      if (!snap.exists()) return alert('غير موجود');
+      const data = snap.data();
+      const newStart = prompt('تعديل وقت البداية (HH:MM):', data.start);
+      const newEnd = prompt('تعديل وقت النهاية (HH:MM):', data.end);
+      const newDrinks = prompt('تعديل المشروبات:', data.drinks || '');
+      if (!newStart || !newEnd) return;
+      // إعادة حساب السعر والمدة على السرفر (client-side هنا)
+      function compute(start, end, device, type) {
+        const [sh, sm] = start.split(':').map(Number);
+        const [eh, em] = end.split(':').map(Number);
+        let s = new Date(0,0,0, sh, sm);
+        let e = new Date(0,0,0, eh, em);
+        if (e <= s) e.setDate(e.getDate() + 1);
+        const diffMs = e - s;
+        const diffMins = Math.floor(diffMs / 60000);
+        const h = Math.floor(diffMins / 60);
+        const m = diffMins % 60;
+        const priceHour = { ping:{single:30,double:40}, ps4:{single:30,double:40}, ps5:{single:40,double:50} }[device][type];
+        const total = (diffMins / 60) * priceHour;
+        return { duration: `${h} س ${m} د`, price: Number(total.toFixed(2)) };
+      }
+      const { duration, price } = compute(newStart, newEnd, data.device, data.type);
+      try {
+        await updateDoc(dRef, { start:newStart, end:newEnd, drinks:newDrinks, duration, price });
+        alert('تم التعديل');
+      } catch (e) { alert('خطأ: ' + e.message); }
     };
   </script>
 </body>
