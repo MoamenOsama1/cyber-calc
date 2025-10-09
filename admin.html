@@ -5,14 +5,12 @@
   <title>Bianco Timer - Admin</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
     
     body { 
       font-family: Arial, sans-serif; 
       direction: rtl; 
-      padding: 12px; 
+      padding: 10px; 
       background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
       color: #fff;
       margin: 0;
@@ -22,10 +20,10 @@
     
     .panel { 
       max-width: 100%; 
-      margin: 8px auto; 
+      margin: 5px auto; 
       background: rgba(255,255,255,0.1); 
-      padding: 15px; 
-      border-radius: 10px; 
+      padding: 12px; 
+      border-radius: 8px; 
       backdrop-filter: blur(10px);
       border: 1px solid rgba(255,255,255,0.2);
     }
@@ -33,18 +31,17 @@
     table { 
       width: 100%; 
       border-collapse: collapse; 
-      margin-top: 15px; 
+      margin-top: 10px; 
       background: rgba(255,255,255,0.08); 
-      border-radius: 8px;
+      border-radius: 6px;
       overflow: hidden;
       font-size: 12px;
     }
     
     th, td { 
-      padding: 8px 4px; 
+      padding: 6px 3px; 
       border: 1px solid rgba(255,255,255,0.1); 
       text-align: center;
-      word-break: break-word;
     }
     
     th {
@@ -53,23 +50,13 @@
       font-size: 11px;
     }
     
-    tr:nth-child(even) {
-      background: rgba(255,255,255,0.05);
-    }
-    
     button { 
-      padding: 6px 8px; 
-      border-radius: 5px; 
+      padding: 5px 8px; 
+      border-radius: 4px; 
       cursor: pointer; 
       border: none; 
       font-size: 11px;
-      transition: all 0.3s ease;
-      margin: 2px;
-    }
-    
-    button:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      margin: 1px;
     }
     
     .danger { background: #e74c3c; color: #fff; }
@@ -80,11 +67,7 @@
       display: flex; 
       justify-content: space-between; 
       align-items: center; 
-      flex-wrap: wrap;
-      gap: 10px; 
-      margin-bottom: 15px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
+      margin-bottom: 10px;
     }
     
     .topbar h2 {
@@ -92,7 +75,6 @@
       margin: 0;
     }
     
-    /* نمط نافذة التعديل للموبايل */
     .modal { 
       display: none; 
       position: fixed; 
@@ -102,105 +84,59 @@
       width: 100%; 
       height: 100%; 
       background-color: rgba(0,0,0,0.9); 
-      overflow-y: auto;
     }
     
     .modal-content { 
-      background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-      margin: 10px auto; 
+      background: #2c3e50;
+      margin: 20px auto; 
       padding: 15px; 
-      border-radius: 10px; 
+      border-radius: 8px; 
       width: 95%; 
-      max-width: 400px;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-      border: 1px solid rgba(255,255,255,0.1);
+      max-width: 350px;
     }
     
     .modal-header { 
       display: flex; 
       justify-content: space-between; 
       align-items: center; 
-      margin-bottom: 15px; 
-    }
-    
-    .modal-header h3 {
-      font-size: 16px;
-      margin: 0;
+      margin-bottom: 12px; 
     }
     
     .close { 
       color: #fff; 
-      font-size: 24px; 
+      font-size: 22px; 
       font-weight: bold; 
       cursor: pointer; 
-      transition: color 0.3s;
-      padding: 5px;
     }
     
-    .close:hover {
-      color: #e74c3c;
-    }
-    
-    .form-group { 
-      margin-bottom: 12px; 
-    }
-    
-    .form-group label { 
-      display: block; 
-      margin-bottom: 6px; 
-      font-weight: bold;
-      font-size: 13px;
-    }
-    
+    .form-group { margin-bottom: 10px; }
+    .form-group label { display: block; margin-bottom: 5px; font-size: 13px; }
     .form-group input, .form-group select { 
       width: 100%; 
-      padding: 8px; 
-      border-radius: 5px; 
+      padding: 6px; 
+      border-radius: 4px; 
       border: 1px solid #555; 
-      background: #2c3e50; 
+      background: #34495e; 
       color: #fff; 
       font-size: 13px;
     }
     
-    .time-inputs { 
-      display: flex; 
-      gap: 5px; 
-    }
+    .time-inputs { display: flex; gap: 5px; }
+    .time-inputs select { flex: 1; font-size: 12px; padding: 5px; }
     
-    .time-inputs select { 
-      flex: 1; 
-      font-size: 12px;
-      padding: 6px;
-    }
-    
-    .drinks-container { 
-      margin-top: 10px; 
-      max-height: 120px;
-      overflow-y: auto;
-    }
-    
-    .drink-item { 
-      display: flex; 
-      gap: 5px; 
-      margin-bottom: 8px; 
-      align-items: center; 
-    }
-    
-    .drink-item input { 
-      flex: 1; 
-      font-size: 12px;
-      padding: 6px;
-    }
+    .drinks-container { margin-top: 8px; max-height: 100px; overflow-y: auto; }
+    .drink-item { display: flex; gap: 5px; margin-bottom: 6px; align-items: center; }
+    .drink-item input { flex: 1; font-size: 12px; padding: 5px; }
     
     .add-drink { 
       background: #27ae60; 
       color: white; 
       border: none; 
-      padding: 6px 10px; 
-      border-radius: 5px; 
+      padding: 6px; 
+      border-radius: 4px; 
       cursor: pointer; 
       width: 100%;
-      margin-top: 8px;
+      margin-top: 6px;
       font-size: 12px;
     }
     
@@ -208,8 +144,8 @@
       background: #c0392b; 
       color: white; 
       border: none; 
-      padding: 6px 8px; 
-      border-radius: 5px; 
+      padding: 5px 8px; 
+      border-radius: 4px; 
       cursor: pointer; 
       font-size: 10px;
     }
@@ -217,44 +153,42 @@
     .btn-group {
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      margin-top: 15px;
+      gap: 6px;
+      margin-top: 12px;
     }
     
     .btn-group button {
-      padding: 10px;
-      font-size: 13px;
+      padding: 8px;
+      font-size: 12px;
     }
     
     #calculationResult {
-      margin-top: 12px; 
-      padding: 10px; 
+      margin-top: 10px; 
+      padding: 8px; 
       background: rgba(52, 73, 94, 0.8); 
-      border-radius: 6px; 
+      border-radius: 4px; 
       display: none;
-      border-left: 3px solid #3498db;
-      font-size: 12px;
+      font-size: 11px;
     }
     
     .stats {
       display: flex;
-      gap: 8px;
-      margin: 12px 0;
+      gap: 6px;
+      margin: 10px 0;
       flex-wrap: wrap;
-      justify-content: center;
     }
     
     .stat-card {
       flex: 1;
-      min-width: 100px;
+      min-width: 80px;
       background: rgba(255,255,255,0.1);
-      padding: 10px;
-      border-radius: 6px;
+      padding: 8px;
+      border-radius: 5px;
       text-align: center;
     }
     
     .stat-value {
-      font-size: 16px;
+      font-size: 14px;
       font-weight: bold;
       color: #3498db;
     }
@@ -262,69 +196,27 @@
     .session-actions {
       display: flex;
       flex-direction: column;
-      gap: 3px;
-    }
-    
-    .drinks-list {
-      max-width: 120px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    
-    /* تحسينات للشاشات الصغيرة جداً */
-    @media (max-width: 360px) {
-      body {
-        padding: 8px;
-        font-size: 12px;
-      }
-      
-      .panel {
-        padding: 10px;
-      }
-      
-      th, td {
-        padding: 4px 2px;
-        font-size: 10px;
-      }
-      
-      button {
-        padding: 4px 6px;
-        font-size: 10px;
-      }
-      
-      .topbar h2 {
-        font-size: 14px;
-      }
-    }
-    
-    /* تحسينات للوضع الأفقي */
-    @media (max-height: 500px) and (orientation: landscape) {
-      .modal-content {
-        margin: 5px auto;
-        max-height: 90vh;
-        overflow-y: auto;
-      }
+      gap: 2px;
     }
   </style>
 </head>
 <body>
   <div class="panel">
     <div class="topbar">
-      <h2>🔑 Bianco Timer - Admin</h2>
-      <div style="display: flex; align-items: center; gap: 8px;">
+      <h2>🔑 Bianco Timer</h2>
+      <div>
         <span id="userEmail" class="muted"></span>
-        <button id="logoutBtn" style="background:#e67e22">تسجيل خروج</button>
+        <button id="logoutBtn" style="background:#e67e22">خروج</button>
       </div>
     </div>
 
     <div class="stats">
       <div class="stat-card">
-        <div>إجمالي الجلسات</div>
+        <div>الجلسات</div>
         <div class="stat-value" id="totalSessions">0</div>
       </div>
       <div class="stat-card">
-        <div>إجمالي الإيرادات</div>
+        <div>الإيرادات</div>
         <div class="stat-value" id="totalRevenue">0 ج</div>
       </div>
       <div class="stat-card">
@@ -337,8 +229,6 @@
       </div>
     </div>
 
-    <p class="muted">إدارة الجلسات - اضغط على أي جلسة للتعديل</p>
-
     <table id="sessionsTable">
       <thead>
         <tr>
@@ -347,7 +237,6 @@
           <th>الوقت</th>
           <th>المدة</th>
           <th>السعر</th>
-          <th>المشروبات</th>
           <th>العمليات</th>
         </tr>
       </thead>
@@ -355,11 +244,10 @@
     </table>
   </div>
 
-  <!-- نافذة التعديل المصغرة -->
   <div id="editModal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
-        <h3>✏️ تعديل الجلسة</h3>
+        <h3>تعديل الجلسة</h3>
         <span class="close">&times;</span>
       </div>
       <form id="editForm">
@@ -367,8 +255,8 @@
           <label>الجهاز:</label>
           <select id="editDevice">
             <option value="ping">بنج</option>
-            <option value="ps4">بلايستيشن 4</option>
-            <option value="ps5">بلايستيشن 5</option>
+            <option value="ps4">PS4</option>
+            <option value="ps5">PS5</option>
           </select>
         </div>
         
@@ -424,23 +312,14 @@
           </div>
         </div>
         
-        <div class="form-group">
-          <label>المشروبات:</label>
-          <div id="drinksContainer" class="drinks-container">
-            <!-- المشروبات ستضاف هنا ديناميكياً -->
-          </div>
-          <button type="button" class="add-drink" id="addDrinkBtn">+ إضافة مشروب</button>
-        </div>
-        
         <div id="calculationResult">
-          <strong>نتيجة الحساب:</strong>
           <div id="durationResult"></div>
           <div id="priceResult"></div>
         </div>
         
         <div class="btn-group">
           <button type="button" id="calculateBtn" style="background: #3498db;">حساب السعر</button>
-          <button type="submit" style="background: #27ae60;">حفظ التعديلات</button>
+          <button type="submit" style="background: #27ae60;">حفظ</button>
           <button type="button" id="cancelBtn" style="background: #e74c3c;">إلغاء</button>
         </div>
       </form>
@@ -476,7 +355,6 @@
     const closeBtn = document.querySelector('.close');
     const cancelBtn = document.getElementById('cancelBtn');
     const editForm = document.getElementById('editForm');
-    const addDrinkBtn = document.getElementById('addDrinkBtn');
     const calculateBtn = document.getElementById('calculateBtn');
     const calculationResult = document.getElementById('calculationResult');
     const durationResult = document.getElementById('durationResult');
@@ -487,25 +365,9 @@
     const todaySessions = document.getElementById('todaySessions');
 
     // قائمة المشرفين
-    const adminEmails = [
-      "moosama@gmail.com",
-      "ahmed@gmail.com",
-      "mahmoud@gmail.com"
-    ];
-
-    // أسعار المشروبات
-    const drinkPrices = {
-      
-      "شاي": 10,
-      "قهوة": 15,
-      "اندومي صغير": 15,
-      "اندومي كبير": 25,
-      "بيبسي": 25
-      
-    };
+    const adminEmails = ["moosama@gmail.com", "ahmed@gmail.com", "mahmoud@gmail.com"];
 
     let currentEditId = null;
-    let allSessions = [];
 
     // تحميل الصفحة والتحقق من المصادقة
     onAuthStateChanged(auth, user => {
@@ -515,9 +377,8 @@
       }
       userEmailSpan.textContent = user.email;
       
-      // التحقق من صلاحية المشرف
       if (!adminEmails.includes(user.email)) {
-        alert('ليس لديك صلاحية مشرف. سيتم تحويلك لصفحة الإضافة.');
+        alert('ليس لديك صلاحية مشرف.');
         window.location.href = 'index.html';
         return;
       }
@@ -530,15 +391,10 @@
     // تحويل الوقت من 24 ساعة إلى 12 ساعة
     function parseTimeTo12H(timeStr) {
       if (!timeStr) return { hour: '1', minute: '00', period: 'AM' };
-      
       const [h, m] = timeStr.split(':').map(Number);
       const period = h >= 12 ? 'PM' : 'AM';
       let hour12 = h % 12 || 12;
-      return {
-        hour: hour12.toString(),
-        minute: m.toString().padStart(2, '0'),
-        period: period
-      };
+      return { hour: hour12.toString(), minute: m.toString().padStart(2, '0'), period };
     }
 
     // تحويل الوقت من 12 ساعة إلى 24 ساعة
@@ -549,7 +405,7 @@
       return `${h.toString().padStart(2, '0')}:${minute}`;
     }
 
-    // تنسيق الوقت للعرض بالعربية
+    // تنسيق الوقت للعرض
     function formatTimeArabic(timeStr) {
       if (!timeStr) return '';
       const [h, m] = timeStr.split(':').map(Number);
@@ -560,12 +416,8 @@
 
     // تحديث الإحصائيات
     function updateStats(sessions) {
-      allSessions = sessions;
-      
-      // إجمالي الجلسات
+      // إجمالي الجلسات والإيرادات
       totalSessions.textContent = sessions.length;
-      
-      // إجمالي الإيرادات
       const totalRevenueValue = sessions.reduce((sum, session) => sum + (session.price || 0), 0);
       totalRevenue.textContent = totalRevenueValue.toFixed(0) + ' ج';
       
@@ -601,7 +453,6 @@
           const tr = document.createElement('tr');
           const fromTo = `${formatTimeArabic(s.start)} → ${formatTimeArabic(s.end)}`;
           
-          // جعل الصف قابلاً للنقر للتعديل
           tr.style.cursor = 'pointer';
           tr.onclick = () => editDoc(id);
           
@@ -611,7 +462,6 @@
             <td>${fromTo}</td>
             <td>${s.duration || '0 س'}</td>
             <td>${(s.price || 0).toFixed(0)} ج</td>
-            <td class="drinks-list" title="${s.drinks || 'لا يوجد'}">${s.drinks || '-'}</td>
             <td class="session-actions">
               <button class="editBtn" onclick="event.stopPropagation(); editDoc('${id}')">تعديل</button>
               <button class="danger" onclick="event.stopPropagation(); deleteDocById('${id}')">حذف</button>
@@ -620,53 +470,35 @@
         });
         
         updateStats(sessions);
-      }, err => {
-        console.error('خطأ في جلب البيانات:', err);
-        alert('خطأ في جلب البيانات: ' + err.message);
       });
     }
 
-    // اسم الجهاز بالعربية
+    // اسم الجهاز
     function getDeviceName(device) {
-      const devices = {
-        'ping': 'بنج',
-        'ps4': 'PS4',
-        'ps5': 'PS5'
-      };
+      const devices = { 'ping': 'بنج', 'ps4': 'PS4', 'ps5': 'PS5' };
       return devices[device] || device;
     }
 
     // حذف الجلسة
     window.deleteDocById = async (id) => {
-      if (!confirm('هل تريد حذف هذه الجلسة؟')) return;
+      if (!confirm('حذف هذه الجلسة؟')) return;
       try {
         await deleteDoc(doc(db, 'sessions', id));
-        alert('تم الحذف بنجاح');
-      } catch (e) { 
-        alert('خطأ في الحذف: ' + e.message); 
-      }
+      } catch (e) { alert('خطأ في الحذف'); }
     };
 
     // تعديل الجلسة
     window.editDoc = async (id) => {
       currentEditId = id;
-      
       try {
         const dRef = doc(db, 'sessions', id);
         const snap = await getDoc(dRef);
-        
-        if (!snap.exists()) {
-          alert('الجلسة غير موجودة');
-          return;
-        }
+        if (!snap.exists()) return alert('الجلسة غير موجودة');
         
         const data = snap.data();
-        
-        // تعبئة البيانات في النموذج
         document.getElementById('editDevice').value = data.device || 'ping';
         document.getElementById('editType').value = data.type || 'single';
         
-        // تحليل الوقت
         const startTime = parseTimeTo12H(data.start);
         const endTime = parseTimeTo12H(data.end);
         
@@ -678,63 +510,12 @@
         document.getElementById('editEndMinute').value = endTime.minute;
         document.getElementById('editEndPeriod').value = endTime.period;
         
-        // تعبئة المشروبات
-        const drinksContainer = document.getElementById('drinksContainer');
-        drinksContainer.innerHTML = '';
-        
-        if (data.drinks && data.drinks !== '-') {
-          const drinks = data.drinks.split(', ');
-          drinks.forEach(drink => {
-            if (drink.trim()) addDrinkInput(drink.trim());
-          });
-        } else {
-          addDrinkInput(); // حقل فارغ واحد
-        }
-        
-        // إظهار النافذة
         editModal.style.display = 'block';
         calculationResult.style.display = 'none';
-        
       } catch (error) {
-        console.error('خطأ في تحميل البيانات:', error);
-        alert('خطأ في تحميل بيانات الجلسة');
+        alert('خطأ في تحميل البيانات');
       }
     };
-
-    // إضافة حقل مشروب
-    function addDrinkInput(value = '') {
-      const drinksContainer = document.getElementById('drinksContainer');
-      const drinkDiv = document.createElement('div');
-      drinkDiv.className = 'drink-item';
-      drinkDiv.innerHTML = `
-        <input type="text" class="drink-name" placeholder="اسم المشروب (بيبسي، شاي، ...)" value="${value}">
-        <button type="button" class="remove-drink">-</button>
-      `;
-      drinksContainer.appendChild(drinkDiv);
-      
-      drinkDiv.querySelector('.remove-drink').addEventListener('click', function() {
-        drinksContainer.removeChild(drinkDiv);
-      });
-    }
-
-    // حساب سعر المشروب
-    function calculateDrinkPrice(drinkName) {
-      // البحث عن السعر في القائمة
-      for (const [name, price] of Object.entries(drinkPrices)) {
-        if (drinkName.includes(name)) {
-          return price;
-        }
-      }
-      
-      // إذا لم يتم العثور على المشروب، حاول استخراج السعر من النص
-      const priceMatch = drinkName.match(/(\d+)\s*ج/);
-      if (priceMatch) {
-        return parseInt(priceMatch[1]);
-      }
-      
-      // إذا لم يتم العثور على سعر، افترض 10 جنيه
-      return 10;
-    }
 
     // حساب السعر والمدة
     function calculatePrice() {
@@ -742,7 +523,6 @@
         const device = document.getElementById('editDevice').value;
         const type = document.getElementById('editType').value;
         
-        // تحويل الأوقات
         const startTime24 = convertTo24H(
           document.getElementById('editStartHour').value,
           document.getElementById('editStartMinute').value,
@@ -755,42 +535,15 @@
           document.getElementById('editEndPeriod').value
         );
         
-        // حساب المدة والسعر الأساسي
-        const { duration, price: sessionPrice } = compute(startTime24, endTime24, device, type);
+        const { duration, price } = compute(startTime24, endTime24, device, type);
         
-        // حساب سعر المشروبات
-        let drinksTotal = 0;
-        const drinkInputs = document.querySelectorAll('.drink-name');
-        const drinksList = [];
-        
-        drinkInputs.forEach(input => {
-          const drinkText = input.value.trim();
-          if (drinkText) {
-            const drinkPrice = calculateDrinkPrice(drinkText);
-            drinksTotal += drinkPrice;
-            drinksList.push(`${drinkText} (${drinkPrice}ج)`);
-          }
-        });
-        
-        const totalPrice = sessionPrice + drinksTotal;
-        
-        // عرض النتيجة
         durationResult.textContent = `المدة: ${duration}`;
-        priceResult.textContent = `السعر الإجمالي: ${totalPrice.toFixed(0)} ج (${sessionPrice.toFixed(0)} ج للجلسة + ${drinksTotal.toFixed(0)} ج للمشروبات)`;
+        priceResult.textContent = `السعر: ${price.toFixed(0)} ج`;
         calculationResult.style.display = 'block';
         
-        return { 
-          duration, 
-          price: totalPrice, 
-          drinks: drinksList.join(', ') || '-',
-          start: startTime24,
-          end: endTime24,
-          device,
-          type
-        };
+        return { duration, price, start: startTime24, end: endTime24, device, type };
       } catch (error) {
-        console.error('خطأ في الحساب:', error);
-        alert('خطأ في حساب السعر: ' + error.message);
+        alert('خطأ في الحساب');
         return null;
       }
     }
@@ -802,7 +555,6 @@
       
       let s = new Date(0, 0, 0, sh, sm);
       let e = new Date(0, 0, 0, eh, em);
-      
       if (e <= s) e.setDate(e.getDate() + 1);
       
       const diffMs = e - s;
@@ -817,48 +569,30 @@
       }[device][type];
       
       const total = (diffMins / 60) * priceHour;
-      return { 
-        duration: `${h} س ${m} د`, 
-        price: Number(total.toFixed(2)) 
-      };
+      return { duration: `${h} س ${m} د`, price: Number(total.toFixed(2)) };
     }
 
     // أحداث النافذة
     closeBtn.onclick = () => editModal.style.display = 'none';
     cancelBtn.onclick = () => editModal.style.display = 'none';
-    
-    addDrinkBtn.onclick = () => addDrinkInput();
-    
     calculateBtn.onclick = () => calculatePrice();
     
     editForm.onsubmit = async (e) => {
       e.preventDefault();
-      
       const result = calculatePrice();
       if (!result) return;
       
       try {
-        await updateDoc(doc(db, 'sessions', currentEditId), {
-          ...result,
-          updatedAt: new Date().toISOString()
-        });
-        alert('تم التعديل بنجاح');
+        await updateDoc(doc(db, 'sessions', currentEditId), result);
         editModal.style.display = 'none';
       } catch (error) { 
-        console.error('خطأ في الحفظ:', error);
-        alert('خطأ في حفظ التعديلات: ' + error.message); 
+        alert('خطأ في الحفظ'); 
       }
     };
 
-    // إغلاق النافذة عند النقر خارجها
     window.onclick = (event) => {
-      if (event.target == editModal) {
-        editModal.style.display = 'none';
-      }
+      if (event.target == editModal) editModal.style.display = 'none';
     };
-
-    // إضافة مشروب افتراضي عند فتح النافذة لأول مرة
-    addDrinkBtn.click();
   </script>
 </body>
 </html>
