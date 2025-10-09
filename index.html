@@ -9,7 +9,7 @@
     .panel { max-width:1100px; margin:12px auto; background: rgba(0,0,0,0.6); padding:14px; border-radius:8px; }
     label {margin:6px;}
     input, select { padding:8px; font-size:15px; margin:4px; border-radius:6px; border:none;}
-    input[type="time"]{ background:#fff; color:#000; }
+    input[type="time"], input[type="number"], input[type="text"] { background:#fff; color:#000; }
     button { padding:8px 12px; margin:6px; border-radius:6px; cursor:pointer; border:none; background:#28a745; color:#fff;}
     table { width:100%; border-collapse:collapse; margin-top:12px; background:rgba(255,255,255,0.06); }
     th, td { padding:8px; border:1px solid rgba(255,255,255,0.08); font-size:14px; text-align:center;}
@@ -48,24 +48,34 @@
       <label>إلى:</label>
       <input type="time" id="end">
 
-      <label>مشروبات:</label>
-      <input type="text" id="drinks" placeholder="بيبسي، نسكافيه ...">
+      <div style="margin-top:10px;">
+        <label>المشروبات:</label>
+        <select id="drinksSelect" multiple size="6">
+          <option value="شاي">شاي - 10ج</option>
+          <option value="قهوة">قهوة - 15ج</option>
+          <option value="اندومي صغير">إندومي صغير - 15ج</option>
+          <option value="اندومي كبير">إندومي كبير - 25ج</option>
+           <option value="بيبسي">بيبسي - 25ج</option>
+          <option value="متنوع">متنوع (أدخل يدويًا)</option>
+        </select>
+        <div id="customDrink" style="display:none; margin-top:6px;">
+          <input type="text" id="customName" placeholder="اسم المنتج">
+          <input type="number" id="customPrice" placeholder="السعر" min="1">
+        </div>
+      </div>
 
       <button id="addBtn">➕ إضافة جلسة</button>
     </div>
 
     <div id="msg" class="muted" style="margin-top:8px"></div>
 
-    <h3 style="margin-top:14px">📋 جلسات محلية (غير محفوظة بالسحابة)</h3>
+    <h3 style="margin-top:14px">📋 الجلسات المحلية</h3>
     <table id="localTable">
       <thead>
         <tr><th>الجهاز</th><th>النوع</th><th>من → إلى</th><th>المدة</th><th>السعر</th><th>المشروبات</th></tr>
       </thead>
       <tbody></tbody>
     </table>
-
-    <p class="muted" style="margin-top:8px">اضغط "رفع للسحابة" من جدول المشرف لحفظ في قاعدة البيانات أو استخدم زر "Add" ليُخزن مباشرة (هذا الملف يقوم بالحفظ في Firestore كما في admin page).</p>
-
   </div>
 
   <script type="module">
@@ -73,15 +83,15 @@
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
     import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-     const firebaseConfig = {
-  apiKey: "AIzaSyBFI6W1mCbFsG8MfcGxWL0JonZtJ_7P6W0",
-  authDomain: "bianco-playstation.firebaseapp.com",
-  projectId: "bianco-playstation",
-  storageBucket: "bianco-playstation.firebasestorage.app",
-  messagingSenderId: "699813217029",
-  appId: "1:699813217029:web:568e169371a2361358ad6c",
-  measurementId: "G-YE9S5421FR"
-};
+    const firebaseConfig = {
+      apiKey: "AIzaSyBFI6W1mCbFsG8MfcGxWL0JonZtJ_7P6W0",
+      authDomain: "bianco-playstation.firebaseapp.com",
+      projectId: "bianco-playstation",
+      storageBucket: "bianco-playstation.firebasestorage.app",
+      messagingSenderId: "699813217029",
+      appId: "1:699813217029:web:568e169371a2361358ad6c",
+      measurementId: "G-YE9S5421FR"
+    };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
@@ -94,16 +104,25 @@
     const typeEl = document.getElementById('type');
     const startEl = document.getElementById('start');
     const endEl = document.getElementById('end');
-    const drinksEl = document.getElementById('drinks');
+    const drinksSelect = document.getElementById('drinksSelect');
+    const customDrinkDiv = document.getElementById('customDrink');
+    const customName = document.getElementById('customName');
+    const customPrice = document.getElementById('customPrice');
     const addBtn = document.getElementById('addBtn');
     const localTbody = document.querySelector('#localTable tbody');
     const msg = document.getElementById('msg');
 
-    // أسعار
     const prices = {
       ping: { single: 30, double: 40 },
       ps4: { single: 30, double: 40 },
-      ps5: { single: 40, double: 50 }
+      ps5: { single: 40, double: 50 },
+      drinks: {
+        "شاي": 10,
+        "قهوة": 15,
+        "اندومي صغير": 15,
+        "اندومي كبير": 25,
+        "بيبسي": 25
+      }
     };
 
     let currentUser = null;
@@ -118,9 +137,12 @@
     });
 
     logoutBtn.onclick = () => signOut(auth).then(() => window.location.href='login.html');
-
-    // زر يفتح صفحة الادمن (الادمن لازم يتحقق عليه لاحقًا في admin.html)
     goAdminBtn.onclick = () => window.location.href = 'admin.html';
+
+    drinksSelect.onchange = () => {
+      const selected = Array.from(drinksSelect.selectedOptions).map(o => o.value);
+      customDrinkDiv.style.display = selected.includes("متنوع") ? "block" : "none";
+    };
 
     function compute(start, end, device, type) {
       const [sh, sm] = start.split(':').map(Number);
@@ -137,19 +159,11 @@
       return { hours: h, minutes: m, total };
     }
 
-    function formatTimeArabic(timeStr) {
-      const [h, m] = timeStr.split(':').map(Number);
-      const suffix = h >= 12 ? 'مساءً' : 'صباحًا';
-      let hh = h % 12 || 12;
-      return `${hh}:${m.toString().padStart(2,'0')} ${suffix}`;
-    }
-
-    // عرض سطر محلياً (لنفس الجلسة) — مفيد لو عايز تتأكد قبل رفع للسحابة
     function appendLocalRow(obj) {
       const tr = document.createElement('tr');
       tr.innerHTML = `<td>${obj.device}</td>
                       <td>${obj.type === 'single' ? 'فردي':'زوجي'}</td>
-                      <td>${formatTimeArabic(obj.start)} → ${formatTimeArabic(obj.end)}</td>
+                      <td>${obj.start} → ${obj.end}</td>
                       <td>${obj.duration}</td>
                       <td>${obj.price.toFixed(2)} ج</td>
                       <td>${obj.drinks || '-'}</td>`;
@@ -158,32 +172,49 @@
 
     addBtn.onclick = async () => {
       if (!startEl.value || !endEl.value) { msg.textContent='أدخل وقت البداية والنهاية'; return; }
+
       const device = deviceEl.value;
       const type = typeEl.value;
       const start = startEl.value;
       const end = endEl.value;
-      const drinks = drinksEl.value || '';
+
+      const selectedDrinks = Array.from(drinksSelect.selectedOptions).map(o => o.value);
+      let drinksTotal = 0;
+      let drinksList = [];
+
+      selectedDrinks.forEach(drink => {
+        if (drink === "متنوع" && customName.value && customPrice.value) {
+          drinksList.push(`${customName.value} (${customPrice.value}ج)`);
+          drinksTotal += Number(customPrice.value);
+        } else if (prices.drinks[drink]) {
+          drinksList.push(`${drink} (${prices.drinks[drink]}ج)`);
+          drinksTotal += prices.drinks[drink];
+        }
+      });
+
       const { hours, minutes, total } = compute(start, end, device, type);
       const duration = `${hours} س ${minutes} د`;
-      const obj = { device, type, start, end, duration, price: Number(total.toFixed(2)), drinks };
+      const totalPrice = total + drinksTotal;
 
-      // 1) عرض محلياً
+      const obj = { device, type, start, end, duration, price: Number(totalPrice.toFixed(2)), drinks: drinksList.join(", ") };
+
       appendLocalRow(obj);
 
-      // 2) حفظ للسحابة (Firestore) — مجموعة "sessions"
       try {
         await addDoc(collection(db, 'sessions'), {
           ...obj,
           createdBy: currentUser.email,
           createdAt: new Date().toISOString()
         });
-        msg.textContent = 'تم إضافة الجلسة وحفظها في السحابة.';
+        msg.textContent = '✅ تم إضافة الجلسة وحساب المشروبات بنجاح.';
       } catch (e) {
-        msg.textContent = 'خطأ أثناء الحفظ: ' + e.message;
+        msg.textContent = '❌ خطأ أثناء الحفظ: ' + e.message;
       }
 
-      // تفريغ الحقول
-      startEl.value=''; endEl.value=''; drinksEl.value='';
+      startEl.value=''; endEl.value='';
+      drinksSelect.value='';
+      customName.value=''; customPrice.value='';
+      customDrinkDiv.style.display='none';
     };
   </script>
 </body>
