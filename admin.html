@@ -1,148 +1,24 @@
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-  import {
-    getFirestore, collection, doc, deleteDoc, updateDoc, onSnapshot, query, orderBy, getDoc
-  } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyBFI6W1mCbFsG8MfcGxWL0JonZtJ_7P6W0",
-    authDomain: "bianco-playstation.firebaseapp.com",
-    projectId: "bianco-playstation",
-    storageBucket: "bianco-playstation.firebasestorage.app",
-    messagingSenderId: "699813217029",
-    appId: "1:699813217029:web:568e169371a2361358ad6c",
-    measurementId: "G-YE9S5421FR"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-
-  const userEmailSpan = document.getElementById('userEmail');
-  const logoutBtn = document.getElementById('logoutBtn');
-  const sessionsTbody = document.querySelector('#sessionsTable tbody');
-
-  const adminEmails = [
-    "moosama@gmail.com",
-    "ahmed@gmail.com",
-    "mahmoud@gmail.com"
-  ];
-
-  onAuthStateChanged(auth, user => {
-    if (!user) return window.location.href = 'login.html';
-    userEmailSpan.textContent = user.email;
-    if (!adminEmails.includes(user.email)) {
-      alert('ليس لديك صلاحية مشرف. سيتم تحويلك لصفحة الإضافة.');
-      window.location.href = 'index.html';
-      return;
-    }
-    startRealtime();
-  });
-
-  logoutBtn.onclick = () => signOut(auth).then(() => window.location.href = 'login.html');
-
-  function formatTime12h(timeStr) {
-    let [h, m] = timeStr.split(':').map(Number);
-    const suffix = h >= 12 ? 'PM' : 'AM';
-    h = h % 12 || 12;
-    return `${h}:${m.toString().padStart(2, '0')} ${suffix}`;
-  }
-
-  function parseTime12h(t) {
-    const [time, period] = t.split(' ');
-    let [h, m] = time.split(':').map(Number);
-    if (period.toUpperCase() === 'PM' && h !== 12) h += 12;
-    if (period.toUpperCase() === 'AM' && h === 12) h = 0;
-    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
-  }
-
-  function startRealtime() {
-    const q = query(collection(db, 'sessions'), orderBy('createdAt', 'desc'));
-    onSnapshot(q, snapshot => {
-      sessionsTbody.innerHTML = '';
-      snapshot.forEach(docSnap => {
-        const s = docSnap.data();
-        const id = docSnap.id;
-        const fromTo = `${formatTime12h(s.start)} → ${formatTime12h(s.end)}`;
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${s.device}</td>
-          <td>${s.type === 'single' ? 'فردي' : 'زوجي'}</td>
-          <td>${fromTo}</td>
-          <td>${s.duration}</td>
-          <td>${s.price.toFixed(2)} ج</td>
-          <td>${s.drinks || '-'}</td>
-          <td>${s.createdBy || '-'}</td>
-          <td>
-            <button class="editBtn" onclick="editDoc('${id}')">✏️</button>
-            <button class="danger" onclick="deleteDocById('${id}')">❌</button>
-          </td>`;
-        sessionsTbody.appendChild(tr);
-      });
-    }, err => alert('⚠️ خطأ في جلب البيانات: ' + err.message));
-  }
-
-  window.deleteDocById = async (id) => {
-    if (!confirm('هل أنت متأكد من الحذف؟')) return;
-    try {
-      await deleteDoc(doc(db, 'sessions', id));
-      alert('✅ تم الحذف');
-    } catch (e) {
-      alert('❌ خطأ: ' + e.message);
-    }
-  };
-
-  window.editDoc = async (id) => {
-    const dRef = doc(db, 'sessions', id);
-    const snap = await getDoc(dRef);
-    if (!snap.exists()) return alert('الجلسة غير موجودة');
-    const data = snap.data();
-
-    const newStart12 = prompt('⏰ وقت البداية (مثلاً 3:00 PM):', formatTime12h(data.start));
-    const newEnd12 = prompt('⏰ وقت النهاية (مثلاً 4:30 PM):', formatTime12h(data.end));
-    if (!newStart12 || !newEnd12) return;
-
-    const newDrink = prompt('🥤 أضف مشروب + سعره (مثلاً قهوة 15):', data.drinks || '');
-
-    const newStart = parseTime12h(newStart12);
-    const newEnd = parseTime12h(newEnd12);
-
-    function compute(start, end, device, type, drinkPrice = 0) {
-      const [sh, sm] = start.split(':').map(Number);
-      const [eh, em] = end.split(':').map(Number);
-      let s = new Date(0, 0, 0, sh, sm);
-      let e = new Date(0, 0, 0, eh, em);
-      if (e <= s) e.setDate(e.getDate() + 1);
-      const diffMs = e - s;
-      const diffMins = Math.floor(diffMs / 60000);
-      const h = Math.floor(diffMins / 60);
-      const m = diffMins % 60;
-      const priceHour = { ping: { single: 30, double: 40 }, ps4: { single: 30, double: 40 }, ps5: { single: 40, double: 50 } }[device][type];
-      const total = (diffMins / 60) * priceHour + drinkPrice;
-      return { duration: `${h} س ${m} د`, price: Number(total.toFixed(2)) };
-    }
-
-    let drinkPrice = 0;
-    if (newDrink) {
-      const parts = newDrink.trim().split(' ');
-      const last = parts.pop();
-      if (!isNaN(last)) drinkPrice = Number(last);
-    }
-
-    const { duration, price } = compute(newStart, newEnd, data.device, data.type, drinkPrice);
-
-    try {
-      await updateDoc(dRef, {
-        start: newStart,
-        end: newEnd,
-        drinks: newDrink,
-        duration,
-        price
-      });
-      alert('✅ تم تعديل الجلسة بنجاح');
-    } catch (e) {
-      alert('❌ خطأ أثناء التعديل: ' + e.message);
-    }
-  };
-</script>
+<body>
+  <div>
+    <span id="userEmail"></span>
+    <button id="logoutBtn">تسجيل الخروج</button>
+  </div>
+  
+  <table id="sessionsTable">
+    <thead>
+      <tr>
+        <th>الجهاز</th>
+        <th>النوع</th>
+        <th>الوقت</th>
+        <th>المدة</th>
+        <th>السعر</th>
+        <th>المشروبات</th>
+        <th>تم الإنشاء بواسطة</th>
+        <th>الإجراءات</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Sessions will be inserted here -->
+    </tbody>
+  </table>
+</body>
