@@ -5,333 +5,87 @@
   <title>Bianco Timer - Admin</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
-    * { box-sizing: border-box; }
-    
-    body { 
-      font-family: Arial, sans-serif; 
-      direction: rtl; 
-      padding: 10px; 
-      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-      color: #fff;
-      margin: 0;
-      min-height: 100vh;
-      font-size: 14px;
-    }
-    
-    .panel { 
-      max-width: 100%; 
-      margin: 5px auto; 
-      background: rgba(255,255,255,0.1); 
-      padding: 12px; 
-      border-radius: 8px; 
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255,255,255,0.2);
-    }
-    
-    table { 
-      width: 100%; 
-      border-collapse: collapse; 
-      margin-top: 10px; 
-      background: rgba(255,255,255,0.08); 
-      border-radius: 6px;
-      overflow: hidden;
-      font-size: 12px;
-    }
-    
-    th, td { 
-      padding: 6px 3px; 
-      border: 1px solid rgba(255,255,255,0.1); 
-      text-align: center;
-    }
-    
-    th {
-      background: rgba(255,255,255,0.15);
-      font-weight: bold;
-      font-size: 11px;
-    }
-    
-    button { 
-      padding: 5px 8px; 
-      border-radius: 4px; 
-      cursor: pointer; 
-      border: none; 
-      font-size: 11px;
-      margin: 1px;
-    }
-    
-    .danger { background: #e74c3c; color: #fff; }
-    .editBtn { background: #f39c12; color: #fff; }
-    .muted { color: #bdc3c7; font-size: 12px; }
-    
-    .topbar { 
-      display: flex; 
-      justify-content: space-between; 
-      align-items: center; 
-      margin-bottom: 10px;
-    }
-    
-    .topbar h2 {
-      font-size: 16px;
-      margin: 0;
-    }
-    
-    .modal { 
-      display: none; 
-      position: fixed; 
-      z-index: 1000; 
-      left: 0; 
-      top: 0; 
-      width: 100%; 
-      height: 100%; 
-      background-color: rgba(0,0,0,0.9); 
-    }
-    
-    .modal-content { 
-      background: #2c3e50;
-      margin: 20px auto; 
-      padding: 15px; 
-      border-radius: 8px; 
-      width: 95%; 
-      max-width: 350px;
-    }
-    
-    .modal-header { 
-      display: flex; 
-      justify-content: space-between; 
-      align-items: center; 
-      margin-bottom: 12px; 
-    }
-    
-    .close { 
-      color: #fff; 
-      font-size: 22px; 
-      font-weight: bold; 
-      cursor: pointer; 
-    }
-    
-    .form-group { margin-bottom: 10px; }
-    .form-group label { display: block; margin-bottom: 5px; font-size: 13px; }
-    .form-group input, .form-group select { 
-      width: 100%; 
-      padding: 6px; 
-      border-radius: 4px; 
-      border: 1px solid #555; 
-      background: #34495e; 
-      color: #fff; 
-      font-size: 13px;
-    }
-    
-    .time-inputs { display: flex; gap: 5px; }
-    .time-inputs select { flex: 1; font-size: 12px; padding: 5px; }
-    
-    .drinks-container { margin-top: 8px; max-height: 100px; overflow-y: auto; }
-    .drink-item { display: flex; gap: 5px; margin-bottom: 6px; align-items: center; }
-    .drink-item input { flex: 1; font-size: 12px; padding: 5px; }
-    
-    .add-drink { 
-      background: #27ae60; 
-      color: white; 
-      border: none; 
-      padding: 6px; 
-      border-radius: 4px; 
-      cursor: pointer; 
-      width: 100%;
-      margin-top: 6px;
-      font-size: 12px;
-    }
-    
-    .remove-drink { 
-      background: #c0392b; 
-      color: white; 
-      border: none; 
-      padding: 5px 8px; 
-      border-radius: 4px; 
-      cursor: pointer; 
-      font-size: 10px;
-    }
-    
-    .btn-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      margin-top: 12px;
-    }
-    
-    .btn-group button {
-      padding: 8px;
-      font-size: 12px;
-    }
-    
-    #calculationResult {
-      margin-top: 10px; 
-      padding: 8px; 
-      background: rgba(52, 73, 94, 0.8); 
-      border-radius: 4px; 
-      display: none;
-      font-size: 11px;
-    }
-    
-    .stats {
-      display: flex;
-      gap: 6px;
-      margin: 10px 0;
-      flex-wrap: wrap;
-    }
-    
-    .stat-card {
-      flex: 1;
-      min-width: 80px;
-      background: rgba(255,255,255,0.1);
-      padding: 8px;
-      border-radius: 5px;
-      text-align: center;
-    }
-    
-    .stat-value {
-      font-size: 14px;
-      font-weight: bold;
-      color: #3498db;
-    }
-    
-    .session-actions {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
+    body { font-family: "Cairo", Arial, sans-serif; direction: rtl; background: #0d0d0d; color: #fff; padding: 20px; }
+    .panel { background: rgba(20, 20, 20, 0.9); padding: 18px; border-radius: 10px; max-width: 1250px; margin: auto; }
+    table { width: 100%; border-collapse: collapse; margin-top: 14px; background: rgba(255, 255, 255, 0.05); border-radius: 6px; overflow: hidden; }
+    th, td { padding: 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); text-align: center; font-size: 14px; }
+    th { background: rgba(255,255,255,0.1); }
+    button { border: none; border-radius: 6px; cursor: pointer; padding: 6px 10px; color: #fff; }
+    .editBtn { background: #ffc107; color: #000; }
+    .danger { background: #dc3545; }
+    .stats { display: flex; gap: 20px; flex-wrap: wrap; background: #111; padding: 10px 14px; border-radius: 8px; margin: 14px 0; justify-content: space-around; }
+    .card { background: #1c1c1c; padding: 10px 14px; border-radius: 6px; min-width: 180px; text-align: center; }
+    .edit-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; visibility: hidden; }
+    .edit-modal.active { visibility: visible; }
+    .modal-content { background: #222; padding: 20px; border-radius: 10px; width: 350px; }
+    input, select { width: 100%; margin: 5px 0; padding: 8px; border-radius: 6px; border: none; }
   </style>
 </head>
 <body>
   <div class="panel">
-    <div class="topbar">
-      <h2>🔑 Bianco Timer</h2>
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <h2>🔑 واجهة المشرف - Bianco Timer</h2>
       <div>
-        <span id="userEmail" class="muted"></span>
-        <button id="logoutBtn" style="background:#e67e22">خروج</button>
+        <span id="userEmail"></span>
+        <button id="logoutBtn" style="background:#ff9800;">تسجيل خروج</button>
       </div>
     </div>
 
     <div class="stats">
-      <div class="stat-card">
-        <div>الجلسات</div>
-        <div class="stat-value" id="totalSessions">0</div>
-      </div>
-      <div class="stat-card">
-        <div>الإيرادات</div>
-        <div class="stat-value" id="totalRevenue">0 ج</div>
-      </div>
-      <div class="stat-card">
-        <div>إيرادات اليوم</div>
-        <div class="stat-value" id="todayRevenue">0 ج</div>
-      </div>
-      <div class="stat-card">
-        <div>جلسات اليوم</div>
-        <div class="stat-value" id="todaySessions">0</div>
-      </div>
+      <div class="card">📅 التاريخ: <br><b id="today"></b></div>
+      <div class="card">📊 عدد الجلسات اليوم: <br><b id="sessionCount">0</b></div>
+      <div class="card">💰 إجمالي الإيرادات اليوم: <br><b id="totalRevenue">0</b> ج</div>
     </div>
 
     <table id="sessionsTable">
       <thead>
         <tr>
-          <th>الجهاز</th>
-          <th>النوع</th>
-          <th>الوقت</th>
-          <th>المدة</th>
-          <th>السعر</th>
-          <th>العمليات</th>
+          <th>الجهاز</th><th>النوع</th><th>من → إلى</th><th>المدة</th><th>السعر</th><th>الطلبات</th><th>أنشئ بواسطة</th><th>التاريخ</th><th>عمليات</th>
         </tr>
       </thead>
       <tbody></tbody>
     </table>
   </div>
 
-  <div id="editModal" class="modal">
+  <!-- نافذة التعديل -->
+  <div class="edit-modal" id="editModal">
     <div class="modal-content">
-      <div class="modal-header">
-        <h3>تعديل الجلسة</h3>
-        <span class="close">&times;</span>
+      <h3>✏️ تعديل الجلسة</h3>
+      <label>الجهاز:</label>
+      <select id="editDevice">
+        <option value="ping">بنج</option>
+        <option value="ps4">بلايستيشن 4</option>
+        <option value="ps5">بلايستيشن 5</option>
+      </select>
+
+      <label>النوع:</label>
+      <select id="editType">
+        <option value="single">فردي</option>
+        <option value="double">زوجي</option>
+      </select>
+
+      <label>من:</label>
+      <input type="time" id="editStart">
+      <label>إلى:</label>
+      <input type="time" id="editEnd">
+
+      <label>السعر:</label>
+      <input type="number" id="editPrice" placeholder="السعر الكلي">
+
+      <label>الطلبات:</label>
+      <input type="text" id="editDrinks" placeholder="شاي×2, بيبسي×1">
+
+      <div style="text-align:right;margin-top:8px;">
+        <button id="saveEditBtn" style="background:#28a745;">💾 حفظ</button>
+        <button id="cancelEditBtn" style="background:#666;">إلغاء</button>
       </div>
-      <form id="editForm">
-        <div class="form-group">
-          <label>الجهاز:</label>
-          <select id="editDevice">
-            <option value="ping">بنج</option>
-            <option value="ps4">PS4</option>
-            <option value="ps5">PS5</option>
-          </select>
-        </div>
-        
-        <div class="form-group">
-          <label>النوع:</label>
-          <select id="editType">
-            <option value="single">فردي</option>
-            <option value="double">زوجي</option>
-          </select>
-        </div>
-        
-        <div class="form-group">
-          <label>من:</label>
-          <div class="time-inputs">
-            <select id="editStartHour">
-              <option value="1">1</option><option value="2">2</option><option value="3">3</option>
-              <option value="4">4</option><option value="5">5</option><option value="6">6</option>
-              <option value="7">7</option><option value="8">8</option><option value="9">9</option>
-              <option value="10">10</option><option value="11">11</option><option value="12">12</option>
-            </select>
-            <select id="editStartMinute">
-              <option value="00">00</option><option value="05">05</option><option value="10">10</option>
-              <option value="15">15</option><option value="20">20</option><option value="25">25</option>
-              <option value="30">30</option><option value="35">35</option><option value="40">40</option>
-              <option value="45">45</option><option value="50">50</option><option value="55">55</option>
-            </select>
-            <select id="editStartPeriod">
-              <option value="AM">ص</option>
-              <option value="PM">م</option>
-            </select>
-          </div>
-        </div>
-        
-        <div class="form-group">
-          <label>إلى:</label>
-          <div class="time-inputs">
-            <select id="editEndHour">
-              <option value="1">1</option><option value="2">2</option><option value="3">3</option>
-              <option value="4">4</option><option value="5">5</option><option value="6">6</option>
-              <option value="7">7</option><option value="8">8</option><option value="9">9</option>
-              <option value="10">10</option><option value="11">11</option><option value="12">12</option>
-            </select>
-            <select id="editEndMinute">
-              <option value="00">00</option><option value="05">05</option><option value="10">10</option>
-              <option value="15">15</option><option value="20">20</option><option value="25">25</option>
-              <option value="30">30</option><option value="35">35</option><option value="40">40</option>
-              <option value="45">45</option><option value="50">50</option><option value="55">55</option>
-            </select>
-            <select id="editEndPeriod">
-              <option value="AM">ص</option>
-              <option value="PM">م</option>
-            </select>
-          </div>
-        </div>
-        
-        <div id="calculationResult">
-          <div id="durationResult"></div>
-          <div id="priceResult"></div>
-        </div>
-        
-        <div class="btn-group">
-          <button type="button" id="calculateBtn" style="background: #3498db;">حساب السعر</button>
-          <button type="submit" style="background: #27ae60;">حفظ</button>
-          <button type="button" id="cancelBtn" style="background: #e74c3c;">إلغاء</button>
-        </div>
-      </form>
     </div>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import {
-      getFirestore, collection, doc, deleteDoc, updateDoc, onSnapshot, query, orderBy, getDoc
-    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { getFirestore, collection, onSnapshot, doc, deleteDoc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBFI6W1mCbFsG8MfcGxWL0JonZtJ_7P6W0",
@@ -339,260 +93,112 @@
       projectId: "bianco-playstation",
       storageBucket: "bianco-playstation.firebasestorage.app",
       messagingSenderId: "699813217029",
-      appId: "1:699813217029:web:568e169371a2361358ad6c",
-      measurementId: "G-YE9S5421FR"
+      appId: "1:699813217029:web:568e169371a2361358ad6c"
     };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // عناصر DOM
-    const userEmailSpan = document.getElementById('userEmail');
-    const logoutBtn = document.getElementById('logoutBtn');
-    const sessionsTbody = document.querySelector('#sessionsTable tbody');
-    const editModal = document.getElementById('editModal');
-    const closeBtn = document.querySelector('.close');
-    const cancelBtn = document.getElementById('cancelBtn');
-    const editForm = document.getElementById('editForm');
-    const calculateBtn = document.getElementById('calculateBtn');
-    const calculationResult = document.getElementById('calculationResult');
-    const durationResult = document.getElementById('durationResult');
-    const priceResult = document.getElementById('priceResult');
-    const totalSessions = document.getElementById('totalSessions');
-    const totalRevenue = document.getElementById('totalRevenue');
-    const todayRevenue = document.getElementById('todayRevenue');
-    const todaySessions = document.getElementById('todaySessions');
+    const todayEl = document.getElementById("today");
+    const tableBody = document.querySelector("#sessionsTable tbody");
+    const sessionCount = document.getElementById("sessionCount");
+    const totalRevenue = document.getElementById("totalRevenue");
+    const userEmail = document.getElementById("userEmail");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const editModal = document.getElementById("editModal");
+    const editDevice = document.getElementById("editDevice");
+    const editType = document.getElementById("editType");
+    const editStart = document.getElementById("editStart");
+    const editEnd = document.getElementById("editEnd");
+    const editPrice = document.getElementById("editPrice");
+    const editDrinks = document.getElementById("editDrinks");
+    const saveEditBtn = document.getElementById("saveEditBtn");
+    const cancelEditBtn = document.getElementById("cancelEditBtn");
+    let editingId = null;
 
-    // قائمة المشرفين
-    const adminEmails = ["moosama@gmail.com", "ahmed@gmail.com", "mahmoud@gmail.com"];
+    todayEl.textContent = new Date().toLocaleDateString("ar-EG");
 
-    let currentEditId = null;
+    const adminEmails = ["moosama@gmail.com","ahmed@gmail.com","mahmoud@gmail.com"];
 
-    // تحميل الصفحة والتحقق من المصادقة
     onAuthStateChanged(auth, user => {
-      if (!user) {
-        window.location.href = 'login.html';
-        return;
-      }
-      userEmailSpan.textContent = user.email;
-      
-      if (!adminEmails.includes(user.email)) {
-        alert('ليس لديك صلاحية مشرف.');
-        window.location.href = 'index.html';
-        return;
-      }
-      startRealtime();
+      if (!user) window.location.href = "login.html";
+      if (!adminEmails.includes(user.email)) return alert("❌ ليس لديك صلاحية مشرف");
+      userEmail.textContent = user.email;
+      loadSessions();
     });
 
-    // تسجيل الخروج
-    logoutBtn.onclick = () => signOut(auth).then(() => window.location.href = 'login.html');
+    logoutBtn.onclick = () => signOut(auth).then(()=>window.location.href='login.html');
 
-    // تحويل الوقت من 24 ساعة إلى 12 ساعة
-    function parseTimeTo12H(timeStr) {
-      if (!timeStr) return { hour: '1', minute: '00', period: 'AM' };
-      const [h, m] = timeStr.split(':').map(Number);
-      const period = h >= 12 ? 'PM' : 'AM';
-      let hour12 = h % 12 || 12;
-      return { hour: hour12.toString(), minute: m.toString().padStart(2, '0'), period };
-    }
-
-    // تحويل الوقت من 12 ساعة إلى 24 ساعة
-    function convertTo24H(hour, minute, period) {
-      let h = parseInt(hour);
-      if (period === 'PM' && h !== 12) h += 12;
-      if (period === 'AM' && h === 12) h = 0;
-      return `${h.toString().padStart(2, '0')}:${minute}`;
-    }
-
-    // تنسيق الوقت للعرض
-    function formatTimeArabic(timeStr) {
-      if (!timeStr) return '';
-      const [h, m] = timeStr.split(':').map(Number);
-      const suffix = h >= 12 ? 'م' : 'ص';
-      let hh = h % 12 || 12;
+    function formatTime12h(timeStr){
+      const [h,m]=timeStr.split(':').map(Number);
+      const suffix=h>=12?'مساءً':'صباحًا';
+      const hh=h%12||12;
       return `${hh}:${m.toString().padStart(2,'0')} ${suffix}`;
     }
 
-    // تحديث الإحصائيات
-    function updateStats(sessions) {
-      // إجمالي الجلسات والإيرادات
-      totalSessions.textContent = sessions.length;
-      const totalRevenueValue = sessions.reduce((sum, session) => sum + (session.price || 0), 0);
-      totalRevenue.textContent = totalRevenueValue.toFixed(0) + ' ج';
-      
-      // جلسات وإيرادات اليوم
-      const today = new Date().toDateString();
-      let todayRevenueValue = 0;
-      let todaySessionsCount = 0;
-      
-      sessions.forEach(session => {
-        const sessionDate = new Date(session.createdAt).toDateString();
-        if (sessionDate === today) {
-          todaySessionsCount++;
-          todayRevenueValue += session.price || 0;
-        }
-      });
-      
-      todaySessions.textContent = todaySessionsCount;
-      todayRevenue.textContent = todayRevenueValue.toFixed(0) + ' ج';
-    }
-
-    // الاستماع للتحديثات الفورية
-    function startRealtime() {
-      const q = query(collection(db, 'sessions'), orderBy('createdAt', 'desc'));
-      onSnapshot(q, snapshot => {
-        sessionsTbody.innerHTML = '';
-        const sessions = [];
-        
-        snapshot.forEach(docSnap => {
-          const s = docSnap.data();
-          const id = docSnap.id;
-          sessions.push({...s, id});
-          
-          const tr = document.createElement('tr');
-          const fromTo = `${formatTimeArabic(s.start)} → ${formatTimeArabic(s.end)}`;
-          
-          tr.style.cursor = 'pointer';
-          tr.onclick = () => editDoc(id);
-          
-          tr.innerHTML = `
-            <td>${getDeviceName(s.device)}</td>
-            <td>${s.type === 'single' ? 'فردي' : 'زوجي'}</td>
-            <td>${fromTo}</td>
-            <td>${s.duration || '0 س'}</td>
-            <td>${(s.price || 0).toFixed(0)} ج</td>
-            <td class="session-actions">
-              <button class="editBtn" onclick="event.stopPropagation(); editDoc('${id}')">تعديل</button>
-              <button class="danger" onclick="event.stopPropagation(); deleteDocById('${id}')">حذف</button>
-            </td>`;
-          sessionsTbody.appendChild(tr);
+    function loadSessions(){
+      const q=query(collection(db,"sessions"),orderBy("createdAt","desc"));
+      onSnapshot(q,snap=>{
+        tableBody.innerHTML="";
+        let total=0,count=0;
+        const todayDate=new Date().toLocaleDateString("ar-EG");
+        snap.forEach(docSnap=>{
+          const s=docSnap.data();
+          const id=docSnap.id;
+          const drinks=Array.isArray(s.drinks)?s.drinks.map(d=>`${d.name}×${d.qty}`).join(", "):(s.drinks||"-");
+          const tr=document.createElement("tr");
+          tr.innerHTML=`
+          <td>${s.device}</td>
+          <td>${s.type==='single'?'فردي':'زوجي'}</td>
+          <td>${formatTime12h(s.start)} → ${formatTime12h(s.end)}</td>
+          <td>${s.duration}</td>
+          <td>${s.price} ج</td>
+          <td>${drinks}</td>
+          <td>${s.createdBy}</td>
+          <td>${s.date||"-"}</td>
+          <td>
+            <button class="editBtn" onclick="editSession('${id}','${encodeURIComponent(JSON.stringify(s))}')">✏️</button>
+            <button class="danger" onclick="deleteSession('${id}')">🗑</button>
+          </td>`;
+          tableBody.appendChild(tr);
+          if(s.date===todayDate){total+=s.price;count++;}
         });
-        
-        updateStats(sessions);
+        totalRevenue.textContent=total.toFixed(2);
+        sessionCount.textContent=count;
       });
     }
 
-    // اسم الجهاز
-    function getDeviceName(device) {
-      const devices = { 'ping': 'بنج', 'ps4': 'PS4', 'ps5': 'PS5' };
-      return devices[device] || device;
-    }
+    window.deleteSession=async(id)=>{if(confirm("هل تريد حذف الجلسة؟"))await deleteDoc(doc(db,"sessions",id));};
 
-    // حذف الجلسة
-    window.deleteDocById = async (id) => {
-      if (!confirm('حذف هذه الجلسة؟')) return;
-      try {
-        await deleteDoc(doc(db, 'sessions', id));
-      } catch (e) { alert('خطأ في الحذف'); }
+    window.editSession=(id,encoded)=>{
+      const s=JSON.parse(decodeURIComponent(encoded));
+      editingId=id;
+      editDevice.value=s.device;
+      editType.value=s.type;
+      editStart.value=s.start;
+      editEnd.value=s.end;
+      editPrice.value=s.price;
+      editDrinks.value=Array.isArray(s.drinks)?s.drinks.map(d=>`${d.name}×${d.qty}`).join(", "):s.drinks;
+      editModal.classList.add("active");
     };
 
-    // تعديل الجلسة
-    window.editDoc = async (id) => {
-      currentEditId = id;
-      try {
-        const dRef = doc(db, 'sessions', id);
-        const snap = await getDoc(dRef);
-        if (!snap.exists()) return alert('الجلسة غير موجودة');
-        
-        const data = snap.data();
-        document.getElementById('editDevice').value = data.device || 'ping';
-        document.getElementById('editType').value = data.type || 'single';
-        
-        const startTime = parseTimeTo12H(data.start);
-        const endTime = parseTimeTo12H(data.end);
-        
-        document.getElementById('editStartHour').value = startTime.hour;
-        document.getElementById('editStartMinute').value = startTime.minute;
-        document.getElementById('editStartPeriod').value = startTime.period;
-        
-        document.getElementById('editEndHour').value = endTime.hour;
-        document.getElementById('editEndMinute').value = endTime.minute;
-        document.getElementById('editEndPeriod').value = endTime.period;
-        
-        editModal.style.display = 'block';
-        calculationResult.style.display = 'none';
-      } catch (error) {
-        alert('خطأ في تحميل البيانات');
-      }
+    saveEditBtn.onclick=async()=>{
+      if(!editingId)return;
+      const dRef=doc(db,"sessions",editingId);
+      await updateDoc(dRef,{
+        device:editDevice.value,
+        type:editType.value,
+        start:editStart.value,
+        end:editEnd.value,
+        price:Number(editPrice.value),
+        drinks:editDrinks.value
+      });
+      editModal.classList.remove("active");
+      alert("✅ تم حفظ التعديلات");
     };
 
-    // حساب السعر والمدة
-    function calculatePrice() {
-      try {
-        const device = document.getElementById('editDevice').value;
-        const type = document.getElementById('editType').value;
-        
-        const startTime24 = convertTo24H(
-          document.getElementById('editStartHour').value,
-          document.getElementById('editStartMinute').value,
-          document.getElementById('editStartPeriod').value
-        );
-        
-        const endTime24 = convertTo24H(
-          document.getElementById('editEndHour').value,
-          document.getElementById('editEndMinute').value,
-          document.getElementById('editEndPeriod').value
-        );
-        
-        const { duration, price } = compute(startTime24, endTime24, device, type);
-        
-        durationResult.textContent = `المدة: ${duration}`;
-        priceResult.textContent = `السعر: ${price.toFixed(0)} ج`;
-        calculationResult.style.display = 'block';
-        
-        return { duration, price, start: startTime24, end: endTime24, device, type };
-      } catch (error) {
-        alert('خطأ في الحساب');
-        return null;
-      }
-    }
-
-    // دالة الحساب الأساسية
-    function compute(start, end, device, type) {
-      const [sh, sm] = start.split(':').map(Number);
-      const [eh, em] = end.split(':').map(Number);
-      
-      let s = new Date(0, 0, 0, sh, sm);
-      let e = new Date(0, 0, 0, eh, em);
-      if (e <= s) e.setDate(e.getDate() + 1);
-      
-      const diffMs = e - s;
-      const diffMins = Math.floor(diffMs / 60000);
-      const h = Math.floor(diffMins / 60);
-      const m = diffMins % 60;
-      
-      const priceHour = { 
-        ping: { single: 30, double: 40 }, 
-        ps4: { single: 30, double: 40 }, 
-        ps5: { single: 40, double: 50 } 
-      }[device][type];
-      
-      const total = (diffMins / 60) * priceHour;
-      return { duration: `${h} س ${m} د`, price: Number(total.toFixed(2)) };
-    }
-
-    // أحداث النافذة
-    closeBtn.onclick = () => editModal.style.display = 'none';
-    cancelBtn.onclick = () => editModal.style.display = 'none';
-    calculateBtn.onclick = () => calculatePrice();
-    
-    editForm.onsubmit = async (e) => {
-      e.preventDefault();
-      const result = calculatePrice();
-      if (!result) return;
-      
-      try {
-        await updateDoc(doc(db, 'sessions', currentEditId), result);
-        editModal.style.display = 'none';
-      } catch (error) { 
-        alert('خطأ في الحفظ'); 
-      }
-    };
-
-    window.onclick = (event) => {
-      if (event.target == editModal) editModal.style.display = 'none';
-    };
+    cancelEditBtn.onclick=()=>editModal.classList.remove("active");
   </script>
 </body>
 </html>
