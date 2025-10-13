@@ -52,11 +52,7 @@
     <div class="modal-content">
       <h3>✏️ تعديل الجلسة</h3>
       <label>الجهاز:</label>
-      <select id="editDevice">
-        <option value="ping">بنج</option>
-        <option value="ps4">بلايستيشن 4</option>
-        <option value="ps5">بلايستيشن 5</option>
-      </select>
+      <input type="text" id="editDevice" placeholder="اسم الجهاز" />
 
       <label>النوع:</label>
       <select id="editType">
@@ -68,6 +64,9 @@
       <input type="time" id="editStart">
       <label>إلى:</label>
       <input type="time" id="editEnd">
+
+      <label>المدة:</label>
+      <input type="text" id="editDuration" placeholder="مثال: 1 س 30 د">
 
       <label>السعر:</label>
       <input type="number" id="editPrice" placeholder="السعر الكلي">
@@ -111,6 +110,7 @@
     const editType = document.getElementById("editType");
     const editStart = document.getElementById("editStart");
     const editEnd = document.getElementById("editEnd");
+    const editDuration = document.getElementById("editDuration");
     const editPrice = document.getElementById("editPrice");
     const editDrinks = document.getElementById("editDrinks");
     const saveEditBtn = document.getElementById("saveEditBtn");
@@ -131,74 +131,93 @@
     logoutBtn.onclick = () => signOut(auth).then(()=>window.location.href='login.html');
 
     function formatTime12h(timeStr){
-      const [h,m]=timeStr.split(':').map(Number);
-      const suffix=h>=12?'مساءً':'صباحًا';
-      const hh=h%12||12;
+      if(!timeStr) return "-";
+      const d = new Date(timeStr);
+      const h = d.getHours(), m = d.getMinutes();
+      const suffix = h >= 12 ? "مساءً" : "صباحًا";
+      const hh = h % 12 || 12;
       return `${hh}:${m.toString().padStart(2,'0')} ${suffix}`;
     }
 
     function loadSessions(){
-      const q=query(collection(db,"sessions"),orderBy("createdAt","desc"));
-      onSnapshot(q,snap=>{
-        tableBody.innerHTML="";
-        let total=0,count=0;
-        const todayDate=new Date().toLocaleDateString("ar-EG");
-        snap.forEach(docSnap=>{
-          const s=docSnap.data();
-          const id=docSnap.id;
-          const drinks=Array.isArray(s.drinks)?s.drinks.map(d=>`${d.name}×${d.qty}`).join(", "):(s.drinks||"-");
-          const tr=document.createElement("tr");
-          tr.innerHTML=`
-          <td>${s.device}</td>
-          <td>${s.type==='single'?'فردي':'زوجي'}</td>
-          <td>${formatTime12h(s.start)} → ${formatTime12h(s.end)}</td>
-          <td>${s.duration}</td>
-          <td>${s.price} ج</td>
-          <td>${drinks}</td>
-          <td>${s.createdBy}</td>
-          <td>${s.date||"-"}</td>
-          <td>
-            <button class="editBtn" onclick="editSession('${id}','${encodeURIComponent(JSON.stringify(s))}')">✏️</button>
-            <button class="danger" onclick="deleteSession('${id}')">🗑</button>
-          </td>`;
+      const q = query(collection(db,"sessions"),orderBy("createdAt","desc"));
+      onSnapshot(q, snap => {
+        tableBody.innerHTML = "";
+        let total = 0, count = 0;
+        const todayDate = new Date().toLocaleDateString("ar-EG");
+
+        snap.forEach(docSnap => {
+          const s = docSnap.data();
+          const id = docSnap.id;
+          const deviceName = s.deviceLabel || s.device || "-";
+          const typeName = s.mode === "single" || s.type === "single" ? "فردي" : "زوجي";
+          const start = s.startISO || s.start || "";
+          const end = s.endISO || s.end || "";
+          const drinks = Array.isArray(s.drinks)
+            ? s.drinks.map(d => `${d.name}×${d.qty}`).join(", ")
+            : s.drinks || "-";
+
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${deviceName}</td>
+            <td>${typeName}</td>
+            <td>${start && end ? formatTime12h(start) + " → " + formatTime12h(end) : "-"}</td>
+            <td>${s.duration || "-"}</td>
+            <td>${s.price || 0} ج</td>
+            <td>${drinks}</td>
+            <td>${s.createdBy || "-"}</td>
+            <td>${s.date || "-"}</td>
+            <td>
+              <button class="editBtn" onclick="editSession('${id}','${encodeURIComponent(JSON.stringify(s))}')">✏️</button>
+              <button class="danger" onclick="deleteSession('${id}')">🗑</button>
+            </td>`;
           tableBody.appendChild(tr);
-          if(s.date===todayDate){total+=s.price;count++;}
+
+          if (s.date === todayDate) {
+            total += Number(s.price) || 0;
+            count++;
+          }
         });
-        totalRevenue.textContent=total.toFixed(2);
-        sessionCount.textContent=count;
+
+        totalRevenue.textContent = total.toFixed(2);
+        sessionCount.textContent = count;
       });
     }
 
-    window.deleteSession=async(id)=>{if(confirm("هل تريد حذف الجلسة؟"))await deleteDoc(doc(db,"sessions",id));};
+    window.deleteSession = async (id) => {
+      if (confirm("هل تريد حذف الجلسة؟")) await deleteDoc(doc(db, "sessions", id));
+    };
 
-    window.editSession=(id,encoded)=>{
-      const s=JSON.parse(decodeURIComponent(encoded));
-      editingId=id;
-      editDevice.value=s.device;
-      editType.value=s.type;
-      editStart.value=s.start;
-      editEnd.value=s.end;
-      editPrice.value=s.price;
-      editDrinks.value=Array.isArray(s.drinks)?s.drinks.map(d=>`${d.name}×${d.qty}`).join(", "):s.drinks;
+    window.editSession = (id, encoded) => {
+      const s = JSON.parse(decodeURIComponent(encoded));
+      editingId = id;
+      editDevice.value = s.deviceLabel || s.device || "";
+      editType.value = s.mode || s.type || "single";
+      editStart.value = s.startISO ? new Date(s.startISO).toTimeString().slice(0,5) : s.start || "";
+      editEnd.value = s.endISO ? new Date(s.endISO).toTimeString().slice(0,5) : s.end || "";
+      editDuration.value = s.duration || "";
+      editPrice.value = s.price || 0;
+      editDrinks.value = Array.isArray(s.drinks) ? s.drinks.map(d=>`${d.name}×${d.qty}`).join(", ") : s.drinks || "";
       editModal.classList.add("active");
     };
 
-    saveEditBtn.onclick=async()=>{
-      if(!editingId)return;
-      const dRef=doc(db,"sessions",editingId);
-      await updateDoc(dRef,{
-        device:editDevice.value,
-        type:editType.value,
-        start:editStart.value,
-        end:editEnd.value,
-        price:Number(editPrice.value),
-        drinks:editDrinks.value
+    saveEditBtn.onclick = async () => {
+      if (!editingId) return;
+      const dRef = doc(db, "sessions", editingId);
+      await updateDoc(dRef, {
+        deviceLabel: editDevice.value,
+        mode: editType.value,
+        start: editStart.value,
+        end: editEnd.value,
+        duration: editDuration.value,
+        price: Number(editPrice.value),
+        drinks: editDrinks.value
       });
       editModal.classList.remove("active");
-      alert("✅ تم حفظ التعديلات");
+      alert("✅ تم حفظ التعديلات بنجاح");
     };
 
-    cancelEditBtn.onclick=()=>editModal.classList.remove("active");
+    cancelEditBtn.onclick = () => editModal.classList.remove("active");
   </script>
 </body>
 </html>
