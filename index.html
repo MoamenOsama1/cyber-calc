@@ -17,21 +17,28 @@
       --shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
     }
   
-    * { box-sizing: border-box; }
+    * { 
+      box-sizing: border-box; 
+      -webkit-tap-highlight-color: transparent;
+    }
   
     body {
       margin: 0;
-      padding: 14px;
+      padding: 12px;
       font-family: "Cairo", "Segoe UI", sans-serif;
       color: #eaf2fb;
       background: linear-gradient(135deg, var(--bg1), var(--bg2));
       direction: rtl;
-  background: url('https://e0.pxfuel.com/wallpapers/239/293/desktop-wallpaper-playstation-background-playstation-blue-ps4.jpg') center/cover fixed, linear-gradient(135deg, var(--bg1), var(--bg2));
-backdrop-filter: blur(4px);
-
+      background: url('https://e0.pxfuel.com/wallpapers/239/293/desktop-wallpaper-playstation-background-playstation-blue-ps4.jpg') center/cover fixed, linear-gradient(135deg, var(--bg1), var(--bg2));
+      backdrop-filter: blur(4px);
+      min-height: 100vh;
     }
   
-    .wrap { max-width: 1100px; margin: auto; }
+    .wrap { 
+      max-width: 1100px; 
+      margin: auto; 
+      width: 100%;
+    }
   
     header {
       display: flex;
@@ -39,63 +46,108 @@ backdrop-filter: blur(4px);
       align-items: center;
       gap: 8px;
       flex-wrap: wrap;
-      padding-bottom: 8px;
+      padding-bottom: 12px;
       border-bottom: 1px solid rgba(255,255,255,0.08);
     }
   
-    h1 { margin: 0; font-size: 20px; }
-    .small { color: var(--muted); font-size: 13px; }
+    h1 { 
+      margin: 0; 
+      font-size: clamp(18px, 5vw, 22px); 
+      line-height: 1.3;
+    }
+    
+    .small { 
+      color: var(--muted); 
+      font-size: clamp(12px, 3vw, 13px);
+      line-height: 1.4;
+    }
   
     .btn {
       background: var(--accent);
       border: none;
       color: #021018;
-      padding: 9px 12px;
+      padding: 10px 14px;
       border-radius: 10px;
       font-weight: 700;
       cursor: pointer;
       box-shadow: var(--shadow);
       transition: 0.2s;
+      font-size: 14px;
+      min-height: 44px; /* لللمسة على الهواتف */
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    .btn:hover { transform: scale(1.05); }
+    
+    .btn:hover, .btn:focus { 
+      transform: scale(1.05); 
+      outline: none;
+    }
   
     .secondary {
       background: transparent;
       border: 1px solid var(--glass);
       color: var(--muted);
-      padding: 8px 10px;
+      padding: 9px 12px;
       border-radius: 8px;
       cursor: pointer;
       transition: 0.2s;
+      font-size: 14px;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    .secondary:hover { color: #fff; border-color: #888; }
+    
+    .secondary:hover, .secondary:focus { 
+      color: #fff; 
+      border-color: #888; 
+      outline: none;
+    }
   
     .summary {
       display: flex;
       gap: 10px;
-      margin-top: 12px;
+      margin-top: 16px;
       flex-wrap: wrap;
+      justify-content: center;
     }
   
     .card {
       background: var(--card);
-      padding: 10px;
+      padding: 12px;
       border-radius: 10px;
       border: 1px solid var(--glass);
       box-shadow: var(--shadow);
       transition: 0.2s;
+      flex: 1;
+      min-width: 120px;
+      max-width: 180px;
     }
   
     .card:hover { transform: translateY(-2px); }
-    .card.small { min-width: 120px; text-align: center; }
+    .card.small { text-align: center; }
   
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
       gap: 12px;
       margin-top: 16px;
     }
-  
+    
+    @media (max-width: 480px) {
+      .grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 10px;
+      }
+    }
+    
+    @media (max-width: 360px) {
+      .grid {
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      }
+    }
+
     .device {
       background: var(--card);
       border: 1px solid var(--glass);
@@ -106,6 +158,7 @@ backdrop-filter: blur(4px);
       flex-direction: column;
       gap: 8px;
       transition: 0.3s ease;
+      min-height: 160px;
     }
   
     .device:hover { transform: translateY(-3px); }
@@ -113,17 +166,30 @@ backdrop-filter: blur(4px);
     .device .title {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-start;
+      gap: 8px;
     }
   
-    .dev-name { font-weight: 800; color: #ffffff; }
-    .dev-sub { font-size: 12px; color: var(--muted); }
+    .dev-name { 
+      font-weight: 800; 
+      color: #ffffff; 
+      font-size: 16px;
+      line-height: 1.2;
+    }
+    
+    .dev-sub { 
+      font-size: 12px; 
+      color: var(--muted); 
+      margin-top: 4px;
+      line-height: 1.3;
+    }
   
     .status {
       padding: 6px 8px;
       border-radius: 8px;
       font-weight: 700;
-      font-size: 13px;
+      font-size: 12px;
+      white-space: nowrap;
     }
   
     .open { background: #064f2b; color: #a8f7c1; }
@@ -137,12 +203,17 @@ backdrop-filter: blur(4px);
   
     .controls button {
       flex: 1;
-      padding: 8px;
+      padding: 10px 8px;
       border-radius: 8px;
       border: none;
       font-weight: 800;
       touch-action: manipulation;
       cursor: pointer;
+      font-size: 13px;
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
   
     .start { background: var(--accent); color: #000000; }
@@ -150,34 +221,58 @@ backdrop-filter: blur(4px);
     .end { background: var(--danger); color: #fff; }
   
     .sessions {
-      margin-top: 16px;
+      margin-top: 20px;
       background: var(--card);
-      padding: 10px;
+      padding: 12px;
       border-radius: 12px;
       border: 1px solid var(--glass);
       box-shadow: var(--shadow);
+      overflow-x: auto;
     }
-  
+    
+    .sessions-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    
+    .sessions-header strong {
+      font-size: 16px;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 8px;
+      min-width: 600px; /* لضمان عدم انضغاط الجدول على الشاشات الصغيرة */
     }
   
     th, td {
-      padding: 8px;
+      padding: 10px 8px;
       text-align: center;
       border-bottom: 1px solid rgba(255,255,255,0.05);
       font-size: 13px;
     }
   
     th { color: var(--muted); }
-  
+    
+    @media (max-width: 768px) {
+      th, td {
+        padding: 8px 6px;
+        font-size: 12px;
+      }
+    }
+
     footer {
-      margin-top: 14px;
+      margin-top: 16px;
       text-align: center;
       color: var(--muted);
       font-size: 12px;
+      padding: 0 8px;
+      line-height: 1.5;
     }
   
     /* مودالات */
@@ -191,42 +286,126 @@ backdrop-filter: blur(4px);
       visibility: hidden;
       opacity: 0;
       transition: all 0.2s;
+      z-index: 1000;
+      padding: 16px;
     }
   
-    .modal-back.active { visibility: visible; opacity: 1; }
+    .modal-back.active { 
+      visibility: visible; 
+      opacity: 1; 
+    }
   
     .modal {
-      width: 360px;
-      max-width: 94%;
+      width: 100%;
+      max-width: 360px;
       background: #081c2c;
-      padding: 14px;
+      padding: 16px;
       border-radius: 12px;
       border: 1px solid var(--glass);
       box-shadow: var(--shadow);
+      max-height: 90vh;
+      overflow-y: auto;
     }
-  
-    label { font-size: 13px; color: var(--muted); display: block; margin-top: 6px; }
-    input, select {
-      width: 100%;
-      padding: 10px;
-      margin-top: 4px;
-      border-radius: 8px;
-      border: 1px solid rgba(255,255,255,0.05);
-      background: rgba(255,255,255,0.03);
-      color: #ffffff;
+    
+    .modal h3 {
+      text-align: center;
+      margin-top: 0;
+      margin-bottom: 16px;
+      font-size: 18px;
+    }
+
+    label { 
+      font-size: 13px; 
+      color: var(--muted); 
+      display: block; 
+      margin-top: 10px; 
+      margin-bottom: 4px;
     }
     
     input, select {
-  background-color: #0f1b26 !important; 
-  color: #fff !important; 
-}
-
-option {
-  background-color: #0f1b26; 
-  color: #fff; 
-}
-
-    input:focus, select:focus { outline: 1px solid var(--accent-2); }
+      width: 100%;
+      padding: 12px;
+      margin-top: 4px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.05);
+      background: #0f1b26 !important;
+      color: #fff !important;
+      font-size: 14px;
+      min-height: 44px;
+    }
+    
+    input:focus, select:focus { 
+      outline: 2px solid var(--accent-2); 
+    }
+    
+    .row {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .half {
+      flex: 1;
+    }
+    
+    .center {
+      text-align: center;
+    }
+    
+    /* تحسينات للشاشات الصغيرة جداً */
+    @media (max-width: 480px) {
+      body {
+        padding: 8px;
+      }
+      
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+      
+      .header-buttons {
+        display: flex;
+        gap: 8px;
+        width: 100%;
+        justify-content: space-between;
+      }
+      
+      .header-buttons .btn,
+      .header-buttons .secondary {
+        flex: 1;
+        font-size: 13px;
+        padding: 10px 8px;
+      }
+      
+      .summary {
+        gap: 8px;
+      }
+      
+      .card {
+        min-width: 100px;
+        padding: 10px;
+      }
+      
+      .sessions {
+        padding: 10px;
+      }
+      
+      .modal {
+        padding: 14px;
+      }
+    }
+    
+    /* تحسينات للوضع الأفقي على الهواتف */
+    @media (max-height: 500px) and (orientation: landscape) {
+      .modal-back {
+        align-items: flex-start;
+        padding-top: 20px;
+      }
+      
+      .modal {
+        max-height: 80vh;
+      }
+    }
   </style>
   
 </head>
@@ -238,8 +417,8 @@ option {
         <h1>🎮 Bianco Timer - إدارة الأجهزة</h1>
         <div class="small">بنج + PS4 (1–6) + PS5 (7–15) — تخزين محلي لليوم + مزامنة Firebase</div>
       </div>
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-        <div id="userEmail" class="small-muted"></div>
+      <div class="header-buttons">
+        <div id="userEmail" class="small"></div>
         <button class="btn" id="goAdmin">صفحة المشرف</button>
         <button class="secondary" id="logoutBtn">تسجيل الخروج</button>
       </div>
@@ -254,9 +433,9 @@ option {
     <section class="grid" id="devicesGrid"></section>
 
     <section class="sessions">
-      <div style="display:flex;justify-content:space-between;align-items:center">
+      <div class="sessions-header">
         <strong>جلسات اليوم (محلي)</strong>
-        <div class="small-muted">🕓 يتم حذفها تلقائيًا بعد 24 ساعة من آخر استخدام</div>
+        <div class="small">🕓 يتم حذفها تلقائيًا بعد 24 ساعة من آخر استخدام</div>
       </div>
       <table id="completedTable">
         <thead><tr><th>جهاز</th><th>من</th><th>إلى</th><th>المدة</th><th>الطلبات</th><th>السعر</th></tr></thead>
@@ -282,7 +461,7 @@ option {
       </div>
       <label>نوع اللعب</label>
       <select id="playMode"><option value="single">فردي</option><option value="double">زوجي</option></select>
-      <div style="display:flex;gap:8px;margin-top:10px;">
+      <div style="display:flex;gap:8px;margin-top:16px;">
         <button class="btn" id="confirmStart">ابدأ</button>
         <button class="secondary" id="cancelStart">إلغاء</button>
       </div>
@@ -305,7 +484,7 @@ option {
       </select>
       <label>الكمية</label><input id="drinkQty" type="number" min="1" value="1" />
       <label>لجهاز</label><input id="drinkDevice" disabled />
-      <div style="display:flex;gap:8px;margin-top:10px;">
+      <div style="display:flex;gap:8px;margin-top:16px;">
         <button class="btn" id="confirmAddDrink">إضافة</button>
         <button class="secondary" id="cancelAddDrink">إلغاء</button>
       </div>
@@ -316,7 +495,7 @@ option {
   <div class="modal-back" id="modalEnd">
     <div class="modal">
       <h3 class="center">⏱️ إنهاء الجلسة</h3>
-      <div class="small-muted center" id="endDeviceLabel"></div>
+      <div class="small center" id="endDeviceLabel"></div>
       <div class="row">
         <div class="half"><label>من</label><input id="endFrom" disabled /></div>
         <div class="half"><label>إلى</label><input id="endTo" disabled /></div>
@@ -324,7 +503,7 @@ option {
       <label>المدة</label><input id="endDuration" disabled />
       <label>الطلبات</label><input id="endDrinks" disabled />
       <label>المجموع (جنيه)</label><input id="endTotal" disabled />
-      <div style="display:flex;gap:8px;margin-top:10px;">
+      <div style="display:flex;gap:8px;margin-top:16px;">
         <button class="btn" id="confirmEnd">احفظ واحسب</button>
         <button class="secondary" id="cancelEnd">إلغاء</button>
       </div>
@@ -407,7 +586,7 @@ option {
     function isoFromTimeStr(timeStr){ const [hh,mm]=timeStr.split(':').map(Number); const now=new Date(); const d=new Date(now.getFullYear(),now.getMonth(),now.getDate(),hh,mm,0); if(d<=now) d.setDate(d.getDate()+1); return d.toISOString(); }
 
     // render
-    function renderDevices(){ devicesGrid.innerHTML=''; DEVICES.forEach((dev,idx)=>{ const open=openSessions[dev.id]; const statusHtml=open?`<div class="status open">مفتوحة</div>`:`<div class="status idle">خالي</div>`; const infoHtml=open?`<div class="small-muted">${format12FromISO(open.startISO)} ${open.scheduledEndISO? '→ ' + format12FromISO(open.scheduledEndISO): ''}</div><div class="small-muted">نوع: ${open.mode==='single'?'فردي':'زوجي'}</div>`:`<div class="small-muted">اضغط بدء</div>`; const controlsHtml=open?`<button class="end" data-action="end" data-idx="${idx}">إنهاء</button><button class="add" data-action="add" data-idx="${idx}">➕ طلب</button>`:`<button class="start" data-action="start" data-idx="${idx}">بدء جلسة</button>`; const wrapper=document.createElement('div'); wrapper.className='device'; wrapper.innerHTML=`<div class="title"><div><div class="dev-name">${dev.label}</div><div class="dev-sub">سعر/ساعة: ${RATES[dev.type].single}/${RATES[dev.type].double} ج</div></div>${statusHtml}</div><div>${infoHtml}</div><div class="controls">${controlsHtml}</div>`; devicesGrid.appendChild(wrapper); }); updateSummary(); renderCompleted(); }
+    function renderDevices(){ devicesGrid.innerHTML=''; DEVICES.forEach((dev,idx)=>{ const open=openSessions[dev.id]; const statusHtml=open?`<div class="status open">مفتوحة</div>`:`<div class="status idle">خالي</div>`; const infoHtml=open?`<div class="small">${format12FromISO(open.startISO)} ${open.scheduledEndISO? '→ ' + format12FromISO(open.scheduledEndISO): ''}</div><div class="small">نوع: ${open.mode==='single'?'فردي':'زوجي'}</div>`:`<div class="small">اضغط بدء</div>`; const controlsHtml=open?`<button class="end" data-action="end" data-idx="${idx}">إنهاء</button><button class="add" data-action="add" data-idx="${idx}">➕ طلب</button>`:`<button class="start" data-action="start" data-idx="${idx}">بدء جلسة</button>`; const wrapper=document.createElement('div'); wrapper.className='device'; wrapper.innerHTML=`<div class="title"><div><div class="dev-name">${dev.label}</div><div class="dev-sub">سعر/ساعة: ${RATES[dev.type].single}/${RATES[dev.type].double} ج</div></div>${statusHtml}</div><div>${infoHtml}</div><div class="controls">${controlsHtml}</div>`; devicesGrid.appendChild(wrapper); }); updateSummary(); renderCompleted(); }
 
     function updateSummary(){ openCountEl.textContent=Object.keys(openSessions).length; let total=0; completedSessionsToday.forEach(s=> total += Number(s.price||0)); const now = nowISO(); Object.values(openSessions).forEach(s=>{ const mins = diffMinutes(s.startISO, now); const rate = RATES[s.rateType][s.mode]; const hoursPrice = (mins/60)*rate; const drinksTotal = (s.drinks||[]).reduce((a,b)=>a+(b.price*b.qty),0); total += hoursPrice + drinksTotal; }); todayRevenueEl.textContent = `${Number(total.toFixed(2))} ج`; }
 
