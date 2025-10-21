@@ -1,223 +1,3 @@
-<!-- <!DOCTYPE html>
-<html lang="ar">
-<head>
-  <meta charset="UTF-8">
-  <title>Bianco Timer - إضافة جلسة</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <style>
-    body { font-family: Arial, sans-serif; direction: rtl; padding: 18px; background:#000 url('https://res.cloudinary.com/dznsjdvcf/image/upload/v1759876281/PS30TH_16x9_WALLPAPER-DARK_kepzvd.webp') no-repeat center/cover; color:#fff; }
-    .panel { max-width:1100px; margin:auto; background:rgba(0,0,0,0.6); padding:18px; border-radius:8px; }
-    label {margin:6px;}
-    input, select { padding:8px; font-size:15px; margin:4px; border-radius:6px; border:none;}
-    input[type="time"]{ background:#fff; color:#000; }
-    button { padding:8px 12px; margin:6px; border-radius:6px; cursor:pointer; border:none; background:#28a745; color:#fff;}
-    table { width:100%; border-collapse:collapse; margin-top:12px; background:rgba(255,255,255,0.06); }
-    th, td { padding:8px; border:1px solid rgba(255,255,255,0.08); font-size:14px; text-align:center;}
-    .topbar { display:flex; justify-content:space-between; align-items:center; gap:10px; }
-    .muted { color:#ccc; font-size:13px; }
-  </style>
-</head>
-<body>
-  <div class="panel">
-    <div class="topbar">
-      <h2>🎮 Bianco Timer - إضافة جلسة</h2>
-      <div>
-        <span id="userEmail" class="muted"></span>
-        <button id="logoutBtn" style="background:#ff9800">تسجيل خروج</button>
-        <button id="goAdminBtn" style="background:#007bff">صفحة المشرف</button>
-      </div>
-    </div>
-
-    <div style="margin-top:10px;">
-      <label>الجهاز:</label>
-      <select id="device">
-        <option value="ping">بنج</option>
-        <option value="ps4">بلايستيشن 4</option>
-        <option value="ps5">بلايستيشن 5</option>
-      </select>
-
-      <label>النوع:</label>
-      <select id="type">
-        <option value="single">فردي</option>
-        <option value="double">زوجي</option>
-      </select>
-
-      <label>من:</label>
-      <input type="time" id="start">
-
-      <label>إلى:</label>
-      <input type="time" id="end">
-
-      <div style="margin-top:10px;">
-        <label>إضافة طلب:</label>
-        <select id="drinkSelect">
-          <option value="">اختر...</option>
-          <option value="شاي|10">شاي - 10 ج</option>
-          <option value="قهوة|15">قهوة - 15 ج</option>
-          <option value="إندومي صغير|15">إندومي صغير - 15 ج</option>
-          <option value="إندومي كبير|25">إندومي كبير - 25 ج</option>
-          <option value="بيبسي|25">بيبسي - 25 ج</option>
-          <option value="متنوع">إدخال يدوي</option>
-        </select>
-        <input type="number" id="drinkQty" placeholder="الكمية" min="1" style="width:70px;">
-        <button id="addDrinkBtn">➕ إضافة</button>
-      </div>
-
-      <ul id="drinkList" class="muted"></ul>
-      <button id="addBtn">✅ حفظ الجلسة</button>
-    </div>
-
-    <h3 style="margin-top:15px;">📋 جلسات اليوم</h3>
-    <table id="sessionsTable">
-      <thead>
-        <tr><th>الجهاز</th><th>النوع</th><th>المدة</th><th>السعر</th><th>الطلبات</th><th>الوقت</th></tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-
-    <p id="msg" class="muted"></p>
-  </div>
-
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyBFI6W1mCbFsG8MfcGxWL0JonZtJ_7P6W0",
-      authDomain: "bianco-playstation.firebaseapp.com",
-      projectId: "bianco-playstation",
-      storageBucket: "bianco-playstation.firebasestorage.app",
-      messagingSenderId: "699813217029",
-      appId: "1:699813217029:web:568e169371a2361358ad6c"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    const userEmailSpan = document.getElementById('userEmail');
-    const logoutBtn = document.getElementById('logoutBtn');
-    const goAdminBtn = document.getElementById('goAdminBtn');
-    const sessionsTbody = document.querySelector('#sessionsTable tbody');
-    const msg = document.getElementById('msg');
-    const deviceEl = document.getElementById('device');
-    const typeEl = document.getElementById('type');
-    const startEl = document.getElementById('start');
-    const endEl = document.getElementById('end');
-    const drinkSelect = document.getElementById('drinkSelect');
-    const drinkQty = document.getElementById('drinkQty');
-    const addDrinkBtn = document.getElementById('addDrinkBtn');
-    const drinkList = document.getElementById('drinkList');
-    const addBtn = document.getElementById('addBtn');
-    let drinksArr = [];
-
-    onAuthStateChanged(auth, user => {
-      if (!user) window.location.href = 'login.html';
-      userEmailSpan.textContent = user.email;
-      cleanOldSessions();
-      renderLocalSessions();
-    });
-
-    logoutBtn.onclick = () => signOut(auth).then(()=>window.location.href='login.html');
-    goAdminBtn.onclick = () => window.location.href = 'admin.html';
-
-    function formatTime12h(timeStr) {
-      const [h, m] = timeStr.split(':').map(Number);
-      const suffix = h >= 12 ? 'مساءً' : 'صباحًا';
-      const hh = h % 12 || 12;
-      return `${hh}:${m.toString().padStart(2,'0')} ${suffix}`;
-    }
-
-    function compute(start, end, device, type) {
-      const [sh, sm] = start.split(':').map(Number);
-      const [eh, em] = end.split(':').map(Number);
-      let s = new Date(0,0,0,sh,sm);
-      let e = new Date(0,0,0,eh,em);
-      if (e <= s) e.setDate(e.getDate()+1);
-      const diff = (e - s)/60000;
-      const h = Math.floor(diff/60), m = diff%60;
-      const priceHour = { ping:{single:30,double:40}, ps4:{single:30,double:40}, ps5:{single:40,double:50} }[device][type];
-      return { duration:`${h} س ${m} د`, total:(diff/60)*priceHour };
-    }
-
-    addDrinkBtn.onclick = () => {
-      const val = drinkSelect.value;
-      const qty = Number(drinkQty.value || 1);
-      if (!val) return alert('اختر الطلب');
-      let name, price;
-      if (val === 'متنوع') {
-        name = prompt('اسم العنصر:');
-        price = Number(prompt('السعر:'));
-      } else {
-        [name, price] = val.split('|');
-        price = Number(price);
-      }
-      drinksArr.push({ name, price, qty });
-      drinkList.innerHTML = drinksArr.map(d => `<li>${d.name} × ${d.qty} = ${d.price*d.qty} ج</li>`).join('');
-    };
-
-    addBtn.onclick = async () => {
-      if (!startEl.value || !endEl.value) return msg.textContent='أدخل الأوقات';
-      const { duration, total } = compute(startEl.value, endEl.value, deviceEl.value, typeEl.value);
-      const drinksTotal = drinksArr.reduce((a,d)=>a+(d.price*d.qty),0);
-      const price = total + drinksTotal;
-      const today = new Date().toLocaleDateString('ar-EG');
-      const session = {
-        device: deviceEl.value,
-        type: typeEl.value,
-        start: startEl.value,
-        end: endEl.value,
-        duration,
-        price: Number(price.toFixed(2)),
-        drinks: drinksArr,
-        createdAt: new Date().toISOString(),
-        date: today
-      };
-
-      // 🔹 حفظ محلي
-      const localData = JSON.parse(localStorage.getItem('biancoSessions') || '{}');
-      if (!localData[today]) localData[today] = [];
-      localData[today].push(session);
-      localStorage.setItem('biancoSessions', JSON.stringify(localData));
-
-      // 🔹 حفظ على Firebase
-      await addDoc(collection(db,'sessions'), { ...session, createdBy: auth.currentUser.email });
-
-      drinksArr = []; drinkList.innerHTML = '';
-      renderLocalSessions();
-      msg.textContent = '✅ تم حفظ الجلسة';
-    };
-
-    function renderLocalSessions() {
-      const data = JSON.parse(localStorage.getItem('biancoSessions') || '{}');
-      const today = new Date().toLocaleDateString('ar-EG');
-      const list = data[today] || [];
-      sessionsTbody.innerHTML = '';
-      list.forEach(s => {
-        const drinks = s.drinks?.map(d=>`${d.name}×${d.qty}`).join(', ') || '-';
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${s.device}</td><td>${s.type==='single'?'فردي':'زوجي'}</td><td>${s.duration}</td><td>${s.price}</td><td>${drinks}</td><td>${formatTime12h(s.start)} → ${formatTime12h(s.end)}</td>`;
-        sessionsTbody.appendChild(tr);
-      });
-    }
-
-    function cleanOldSessions() {
-      const data = JSON.parse(localStorage.getItem('biancoSessions') || '{}');
-      const today = new Date().toLocaleDateString('ar-EG');
-      for (const day in data) {
-        if (day !== today) delete data[day];
-      }
-      localStorage.setItem('biancoSessions', JSON.stringify(data));
-    }
-  </script>
-</body>
-</html> -->
-
-
-
-
-
 <!DOCTYPE html>
 <html lang="ar">
 <head>
@@ -238,19 +18,16 @@
     header{display:flex;justify-content:space-between;align-items:center;gap:8px}
     h1{margin:0;font-size:18px}
     .small{color:var(--muted);font-size:13px}
-    .btn{background:var(--accent);border:none;color:#021018;padding:9px 12px;border-radius:10px;font-weight:700}
-    .secondary{background:transparent;border:1px solid var(--glass);color:var(--muted);padding:8px 10px;border-radius:8px}
-    /* layout */
+    .btn{background:var(--accent);border:none;color:#021018;padding:9px 12px;border-radius:10px;font-weight:700;cursor:pointer}
+    .secondary{background:transparent;border:1px solid var(--glass);color:var(--muted);padding:8px 10px;border-radius:8px;cursor:pointer}
+    .logout{background:var(--danger);color:#fff;}
     .summary{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
     .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); padding:10px;border-radius:10px;border:1px solid var(--glass)}
     .card.small{min-width:120px;text-align:center}
-    /* devices grid */
     .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
     @media(max-width:900px){.grid{grid-template-columns:repeat(3,1fr)}}
     @media(max-width:600px){.grid{grid-template-columns:repeat(2,1fr)}}
-    .device{
-      padding:12px;border-radius:12px;background:var(--card);border:1px solid var(--glass);display:flex;flex-direction:column;gap:8px;min-height:120px
-    }
+    .device{padding:12px;border-radius:12px;background:var(--card);border:1px solid var(--glass);display:flex;flex-direction:column;gap:8px;min-height:120px}
     .device .title{display:flex;justify-content:space-between;align-items:center}
     .dev-name{font-weight:800}
     .dev-sub{font-size:12px;color:var(--muted)}
@@ -263,23 +40,10 @@
     .add{background:var(--accent-2)}
     .end{background:var(--danger)}
     .small-muted{font-size:12px;color:var(--muted)}
-    /* sessions list */
     .sessions{margin-top:14px;background:var(--card);padding:10px;border-radius:12px;border:1px solid var(--glass)}
     table{width:100%;border-collapse:collapse;margin-top:8px}
     th,td{padding:8px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.03);font-size:13px}
     th{color:var(--muted)}
-    /* modal */
-    .modal-back{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;visibility:hidden;opacity:0;transition:all .15s}
-    .modal-back.active{visibility:visible;opacity:1}
-    .modal{width:360px;max-width:94%;background:#071726;padding:14px;border-radius:12px;border:1px solid var(--glass)}
-    input,select{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:inherit}
-    label{font-size:13px;color:var(--muted)}
-    .row{display:flex;gap:8px}
-    .row .half{flex:1}
-    .center{text-align:center}
-    /* emphasized drink select */
-    select.drink{font-weight:800;color:#fff;background:#072432;border:1px solid rgba(255,255,255,0.04);padding:12px}
-    /* footer */
     footer{margin-top:12px;color:var(--muted);font-size:12px;text-align:center}
   </style>
 </head>
@@ -288,11 +52,12 @@
     <header>
       <div>
         <h1>🎮 Bianco Timer - إدارة الأجهزة (موبايل)</h1>
-        <div class="small">بنج + PS4 (1–6) + PS5 (7–15) — تخزين محلي لليوم + مزامنة Firebase</div>
+        <div class="small">بنج + PS4 (1–6) + PS5 (7–15)</div>
       </div>
-      <div style="display:flex;align-items:center;gap:8px">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end">
         <div id="userEmail" class="small-muted"></div>
         <button class="btn" id="goAdmin">صفحة المشرف</button>
+        <button class="btn logout" id="logoutBtn">تسجيل الخروج</button>
       </div>
     </header>
 
@@ -311,12 +76,12 @@
       </div>
     </section>
 
-    <section class="grid" id="devicesGrid" aria-label="Devices list"></section>
+    <section class="grid" id="devicesGrid"></section>
 
     <section class="sessions">
       <div style="display:flex;justify-content:space-between;align-items:center">
         <strong>جلسات اليوم (محلي)</strong>
-        <div class="small-muted">تمسح تلقائياً بداية اليوم التالي</div>
+        <div class="small-muted">يتم حذفها تلقائيًا بعد 24 ساعة من آخر استخدام</div>
       </div>
       <table id="completedTable">
         <thead><tr><th>جهاز</th><th>من</th><th>إلى</th><th>المدة</th><th>الطلبات</th><th>السعر</th></tr></thead>
@@ -324,109 +89,13 @@
       </table>
     </section>
 
-    <footer>ملاحظة: عند انتهاء الجلسة يتم حفظها محلياً ولرفعها إلى Firebase إن كنت مسجل.</footer>
-  </div>
-
-  <!-- Modal: Start Session -->
-  <div class="modal-back" id="modalStart">
-    <div class="modal">
-      <h3 class="center">▶ بدء جلسة</h3>
-
-      <label>الجهاز</label>
-      <input id="startDevice" disabled />
-
-      <label>اختار نوع الجلسة</label>
-      <select id="sessionKind">
-        <option value="open">أوبن (مفتوحة)</option>
-        <option value="set">أحدد وقت النهاية</option>
-      </select>
-
-      <div id="endTimeRow" style="display:none">
-        <label>وقت النهاية (HH:MM)</label>
-        <input type="time" id="sessionEndTime" />
-      </div>
-
-      <label>نوع اللعب</label>
-      <select id="playMode">
-        <option value="single">فردي</option>
-        <option value="double">زوجي</option>
-      </select>
-
-      <div style="display:flex;gap:8px;margin-top:10px;">
-        <button class="btn" id="confirmStart">ابدأ</button>
-        <button class="secondary" id="cancelStart">إلغاء</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal: Add Drink -->
-  <div class="modal-back" id="modalDrink">
-    <div class="modal">
-      <h3 class="center">➕ إضافة طلب</h3>
-
-      <label>اختيار</label>
-      <select id="drinkSelect" class="drink">
-        <option value="">اختر...</option>
-        <option value="شاي|10">شاي - 10 ج</option>
-        <option value="قهوة|15">قهوة - 15 ج</option>
-        <option value="إندومي صغير|15">إندومي صغير - 15 ج</option>
-        <option value="إندومي كبير|25">إندومي كبير - 25 ج</option>
-        <option value="بيبسي|25">بيبسي - 25 ج</option>
-        <option value="متنوع">إدخال يدوي</option>
-      </select>
-
-      <label>الكمية</label>
-      <input id="drinkQty" type="number" min="1" value="1" />
-
-      <label>لجهاز</label>
-      <input id="drinkDevice" disabled />
-
-      <div style="display:flex;gap:8px;margin-top:10px;">
-        <button class="btn" id="confirmAddDrink">إضافة</button>
-        <button class="secondary" id="cancelAddDrink">إلغاء</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal: End Session -->
-  <div class="modal-back" id="modalEnd">
-    <div class="modal">
-      <h3 class="center">⏱️ إنهاء الجلسة</h3>
-
-      <div class="small-muted center" id="endDeviceLabel"></div>
-
-      <div class="row">
-        <div class="half">
-          <label>من</label>
-          <input id="endFrom" disabled />
-        </div>
-        <div class="half">
-          <label>إلى</label>
-          <input id="endTo" disabled />
-        </div>
-      </div>
-
-      <label>المدة</label>
-      <input id="endDuration" disabled />
-
-      <label>الطلبات (نص)</label>
-      <input id="endDrinks" disabled />
-
-      <label>المجموع (جنيه)</label>
-      <input id="endTotal" disabled />
-
-      <div style="display:flex;gap:8px;margin-top:10px;">
-        <button class="btn" id="confirmEnd">احفظ واحسب</button>
-        <button class="secondary" id="cancelEnd">إلغاء</button>
-      </div>
-    </div>
+    <footer>يتم حفظ الجلسات محليًا طوال اليوم، وتحذف تلقائيًا بعد 24 ساعة.</footer>
   </div>
 
   <script type="module">
-    // Firebase (غير الإعدادات لو حابب)
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { getFirestore } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBFI6W1mCbFsG8MfcGxWL0JonZtJ_7P6W0",
@@ -440,343 +109,71 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // rates and device mapping
-    const RATES = {
-      ping: { single: 30, double: 40 },
-      ps4: { single: 30, double: 40 },
-      ps5: { single: 40, double: 50 }
-    };
-
-    // devices: ping (one), ps4 1..6, ps5 7..15
-    const DEVICES = [];
-    DEVICES.push({ id: 'ping', label: 'Ping', type: 'ping' });
-    for(let i=1;i<=6;i++) DEVICES.push({ id:`ps${i}`, label:`PS4-${i}`, type:'ps4' });
-    for(let i=7;i<=15;i++) DEVICES.push({ id:`ps${i}`, label:`PS5-${i}`, type:'ps5' });
-
-    // DOM
-    const devicesGrid = document.getElementById('devicesGrid');
-    const todayStr = document.getElementById('todayStr');
-    const openCountEl = document.getElementById('openCount');
-    const todayRevenueEl = document.getElementById('todayRevenue');
-    const completedTbody = document.querySelector('#completedTable tbody');
-    const goAdminBtn = document.getElementById('goAdmin');
-    const userEmailSpan = document.getElementById('userEmail');
-
-    // modals and fields
-    const modalStart = document.getElementById('modalStart');
-    const startDevice = document.getElementById('startDevice');
-    const sessionKind = document.getElementById('sessionKind');
-    const sessionEndTime = document.getElementById('sessionEndTime');
-    const playMode = document.getElementById('playMode');
-    const confirmStart = document.getElementById('confirmStart');
-    const cancelStart = document.getElementById('cancelStart');
-    const endTimeRow = document.getElementById('endTimeRow');
-
-    const modalDrink = document.getElementById('modalDrink');
-    const drinkSelect = document.getElementById('drinkSelect');
-    const drinkQty = document.getElementById('drinkQty');
-    const drinkDevice = document.getElementById('drinkDevice');
-    const confirmAddDrink = document.getElementById('confirmAddDrink');
-    const cancelAddDrink = document.getElementById('cancelAddDrink');
-
-    const modalEnd = document.getElementById('modalEnd');
-    const endDeviceLabel = document.getElementById('endDeviceLabel');
-    const endFrom = document.getElementById('endFrom');
-    const endTo = document.getElementById('endTo');
-    const endDuration = document.getElementById('endDuration');
-    const endDrinks = document.getElementById('endDrinks');
-    const endTotal = document.getElementById('endTotal');
-    const confirmEnd = document.getElementById('confirmEnd');
-    const cancelEnd = document.getElementById('cancelEnd');
-
-    // state
-    let currentUserEmail = null;
-    let selectedIdx = null; // index into DEVICES array
-    let openSessions = {}; // keyed by deviceId, values: { deviceId, deviceLabel, startISO, scheduledEndISO?, mode:'single'|'double', drinks:[], rateType }
-    let completedSessionsToday = [];
-
-    // storage helpers
     const STORAGE_KEY = 'biancoSessionsLocal';
+    const RESET_TIME_KEY = 'biancoResetTime';
+
     function getStorage(){ try{ return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') }catch(e){ return {}; } }
     function setStorage(obj){ localStorage.setItem(STORAGE_KEY, JSON.stringify(obj)) }
     function todayKey(){ return new Date().toLocaleDateString('ar-EG') }
 
+    function checkAndResetIfNeeded(){
+      const lastReset = localStorage.getItem(RESET_TIME_KEY);
+      const now = Date.now();
+      if(!lastReset){
+        localStorage.setItem(RESET_TIME_KEY, now);
+        return;
+      }
+      const diffHours = (now - Number(lastReset)) / (1000 * 60 * 60);
+      if(diffHours >= 24){
+        console.log("🧹 حذف تلقائي بعد 24 ساعة");
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.setItem(RESET_TIME_KEY, now);
+      }
+    }
+
+    let openSessions = {};
+    let completedSessionsToday = [];
+
     function initLocal(){
+      checkAndResetIfNeeded();
       const s = getStorage();
       const t = todayKey();
-      // remove old days
-      for(const k in s) if(k !== t) delete s[k];
       if(!s[t]) s[t] = { open: {}, completed: [] };
       setStorage(s);
       openSessions = s[t].open || {};
       completedSessionsToday = s[t].completed || [];
     }
+
     function persistLocal(){
-      const s = getStorage(); s[todayKey()] = { open: openSessions, completed: completedSessionsToday }; setStorage(s);
+      const s = getStorage();
+      s[todayKey()] = { open: openSessions, completed: completedSessionsToday };
+      setStorage(s);
     }
 
-    // time utils
-    function nowISO(){ return new Date().toISOString() }
-    function isoFromTimeStr(timeStr){ // timeStr "HH:MM"
-      const [hh,mm] = timeStr.split(':').map(Number);
-      const now = new Date();
-      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hh, mm, 0);
-      // if end <= now then add one day (user likely meant next day)
-      if(d <= now) d.setDate(d.getDate() + 1);
-      return d.toISOString();
-    }
-    function format12FromISO(iso){
-      const d = new Date(iso);
-      let h = d.getHours(), m = d.getMinutes();
-      const suffix = h >= 12 ? 'مساءً' : 'صباحًا';
-      const hh = h % 12 || 12;
-      return `${hh}:${m.toString().padStart(2,'0')} ${suffix}`;
-    }
-    function diffMinutes(startISO, endISO){
-      const s = new Date(startISO), e = new Date(endISO);
-      return Math.max(0, Math.floor((e - s)/60000));
-    }
-    function durationText(mins){
-      const h = Math.floor(mins/60); const m = mins % 60;
-      return `${h} س ${m} د`;
-    }
-
-    // rendering
-    function renderDevices(){
-      devicesGrid.innerHTML = '';
-      DEVICES.forEach((dev, idx)=>{
-        const open = openSessions[dev.id];
-        const statusHtml = open ? `<div class="status open">مفتوحة</div>` : `<div class="status idle">خالي</div>`;
-        const infoHtml = open ? `<div class="small-muted">${format12FromISO(open.startISO)} ${open.scheduledEndISO? '→ ' + format12FromISO(open.scheduledEndISO): ''}</div><div class="small-muted">نوع: ${open.mode==='single'?'فردي':'زوجي'}</div>` : `<div class="small-muted">اضغط بدء</div>`;
-        const controlsHtml = open
-          ? `<button class="end" data-action="end" data-idx="${idx}">إنهاء</button><button class="add" data-action="add" data-idx="${idx}">➕ طلب</button>`
-          : `<button class="start" data-action="start" data-idx="${idx}">بدء جلسة</button>`;
-        const wrapper = document.createElement('div');
-        wrapper.className = 'device';
-        wrapper.innerHTML = `<div class="title"><div><div class="dev-name">${dev.label}</div><div class="dev-sub">سعر/ساعة: ${RATES[dev.type].single}/${RATES[dev.type].double} ج</div></div>${statusHtml}</div>
-          <div>${infoHtml}</div>
-          <div class="controls">${controlsHtml}</div>`;
-        devicesGrid.appendChild(wrapper);
-      });
-      updateSummary();
-      renderCompleted();
-    }
-
-    function updateSummary(){
-      const openCount = Object.keys(openSessions).length;
-      openCountEl.textContent = openCount;
-      // estimate revenue = sum completed + current open (estimated to now)
-      let total = 0;
-      completedSessionsToday.forEach(s => total += Number(s.price || 0));
-      const now = nowISO();
-      Object.values(openSessions).forEach(s => {
-        const mins = diffMinutes(s.startISO, now);
-        const rate = RATES[s.rateType][s.mode];
-        const hoursPrice = (mins/60) * rate;
-        const drinksTotal = (s.drinks||[]).reduce((a,b)=>a+(b.price*b.qty),0);
-        total += hoursPrice + drinksTotal;
-      });
-      todayRevenueEl.textContent = `${Number(total.toFixed(2))} ج`;
-    }
-
-    function renderCompleted(){
-      completedTbody.innerHTML = '';
-      completedSessionsToday.slice().reverse().forEach(s=>{
-        const tr = document.createElement('tr');
-        const drinksTxt = (s.drinks && s.drinks.length) ? s.drinks.map(d=>`${d.name}×${d.qty}`).join(', ') : '-';
-        tr.innerHTML = `<td>${s.deviceLabel}</td><td>${format12FromISO(s.startISO)}</td><td>${format12FromISO(s.endISO)}</td><td>${s.duration}</td><td>${drinksTxt}</td><td>${s.price} ج</td>`;
-        completedTbody.appendChild(tr);
-      });
-    }
-
-    // interactions: delegation on grid
-    devicesGrid.addEventListener('click', (e)=>{
-      const btn = e.target.closest('button');
-      if(!btn) return;
-      const action = btn.dataset.action;
-      const idx = Number(btn.dataset.idx);
-      if(action==='start') openStartModal(idx);
-      if(action==='add') openAddDrinkModal(idx);
-      if(action==='end') openEndModal(idx);
-    });
-
-    // start modal functions
-    function openStartModal(idx){
-      selectedIdx = idx;
-      const dev = DEVICES[idx];
-      startDevice.value = dev.label;
-      sessionKind.value = 'open';
-      sessionEndTime.value = '';
-      playMode.value = 'single';
-      endTimeRow.style.display = 'none';
-      modalStart.classList.add('active');
-    }
-    sessionKind.addEventListener('change', ()=> {
-      endTimeRow.style.display = sessionKind.value === 'set' ? 'block' : 'none';
-    });
-
-    confirmStart.addEventListener('click', ()=>{
-      const dev = DEVICES[selectedIdx];
-      const id = dev.id;
-      const kind = sessionKind.value; // open | set
-      let scheduledEndISO = null;
-      if(kind === 'set'){
-        if(!sessionEndTime.value){ alert('حدد وقت النهاية'); return; }
-        scheduledEndISO = isoFromTimeStr(sessionEndTime.value);
-      }
-      const mode = playMode.value; // single|double
-      const startISO = nowISO();
-      openSessions[id] = {
-        deviceId: id,
-        deviceLabel: dev.label,
-        startISO,
-        scheduledEndISO,
-        mode,
-        drinks: [],
-        rateType: dev.type
-      };
-      persistLocal();
-      renderDevices();
-      modalStart.classList.remove('active');
-    });
-    cancelStart.addEventListener('click', ()=> modalStart.classList.remove('active'));
-
-    // add drink modal
-    function openAddDrinkModal(idx){
-      selectedIdx = idx;
-      const dev = DEVICES[idx];
-      drinkDevice.value = dev.label;
-      drinkSelect.value = '';
-      drinkQty.value = 1;
-      modalDrink.classList.add('active');
-    }
-    confirmAddDrink.addEventListener('click', ()=>{
-      const sel = drinkSelect.value;
-      const qty = Number(drinkQty.value) || 1;
-      if(!sel) return alert('اختر الطلب');
-      const dev = DEVICES[selectedIdx];
-      const id = dev.id;
-      const s = openSessions[id];
-      if(!s) return alert('الجلسة مقفولة');
-      let name, price;
-      if(sel === 'متنوع'){
-        name = prompt('ادخل اسم العنصر') || 'متنوع';
-        price = Number(prompt('ادخل السعر (جنيه)') || 0);
-      } else {
-        [name, price] = sel.split('|'); price = Number(price);
-      }
-      if(!Array.isArray(s.drinks)) s.drinks = [];
-      s.drinks.push({ name, price, qty });
-      openSessions[id] = s;
-      persistLocal();
-      renderDevices();
-      modalDrink.classList.remove('active');
-    });
-    cancelAddDrink.addEventListener('click', ()=> modalDrink.classList.remove('active'));
-
-    // end modal
-    function openEndModal(idx){
-      selectedIdx = idx;
-      const dev = DEVICES[idx];
-      const id = dev.id;
-      const s = openSessions[id];
-      if(!s) return alert('الجلسة غير موجودة');
-      endDeviceLabel.textContent = s.deviceLabel;
-      endFrom.value = format12FromISO(s.startISO);
-      const endISO = s.scheduledEndISO || nowISO();
-      endTo.value = format12FromISO(endISO);
-      const mins = diffMinutes(s.startISO, s.scheduledEndISO || nowISO());
-      endDuration.value = durationText(mins);
-      endDrinks.value = (s.drinks && s.drinks.length) ? s.drinks.map(d=>`${d.name}×${d.qty}`).join(', ') : '-';
-      const drinksTotal = (s.drinks||[]).reduce((a,b)=>a+(b.price*b.qty),0);
-      const rate = RATES[s.rateType][s.mode];
-      const price = Number((((mins/60)*rate) + drinksTotal).toFixed(2));
-      endTotal.value = price;
-      modalEnd.classList.add('active');
-    }
-
-    confirmEnd.addEventListener('click', async ()=>{
-      const idx = selectedIdx;
-      const dev = DEVICES[idx];
-      const id = dev.id;
-      const s = openSessions[id];
-      if(!s) return alert('الجلسة غير موجودة');
-      const endISO = s.scheduledEndISO || nowISO();
-      const mins = diffMinutes(s.startISO, endISO);
-      const drinksTotal = (s.drinks||[]).reduce((a,b)=>a+(b.price*b.qty),0);
-      const rate = RATES[s.rateType][s.mode];
-      const price = Number((((mins/60)*rate) + drinksTotal).toFixed(2));
-      const finished = {
-        deviceId: s.deviceId,
-        deviceLabel: s.deviceLabel,
-        startISO: s.startISO,
-        endISO,
-        duration: durationText(mins),
-        drinks: s.drinks || [],
-        price
-      };
-      // save locally
-      completedSessionsToday.push(finished);
-      delete openSessions[id];
-      persistLocal();
-      renderDevices();
-      modalEnd.classList.remove('active');
-
-      // try save to Firebase
+    // تسجيل الخروج
+    const logoutBtn = document.getElementById('logoutBtn');
+    logoutBtn.addEventListener('click', async ()=>{
       try{
-        const user = auth.currentUser;
-        const payload = { ...finished, createdBy: user ? user.email : 'local', createdAt: new Date().toISOString(), date: new Date().toLocaleDateString('ar-EG') };
-        await addDoc(collection(db,'sessions'), payload);
+        await signOut(auth);
+        alert('تم تسجيل الخروج بنجاح');
+        window.location.href = 'login.html';
       }catch(err){
-        console.warn('Firebase save failed (ok if offline):', err.message);
+        alert('حدث خطأ أثناء تسجيل الخروج');
       }
-
-      alert('تم إنهاء الجلسة. المجموع: ' + price + ' ج');
-    });
-    cancelEnd.addEventListener('click', ()=> modalEnd.classList.remove('active'));
-
-    // close modals on backdrop click
-    document.querySelectorAll('.modal-back').forEach(mb=>{
-      mb.addEventListener('click', ev => { if(ev.target === mb) mb.classList.remove('active'); });
     });
 
-    // admin button
-    goAdminBtn.addEventListener('click', ()=> window.location.href = 'admin.html');
+    // عرض البريد
+    const userEmailSpan = document.getElementById('userEmail');
+    onAuthStateChanged(auth, user => {
+      userEmailSpan.textContent = user ? user.email : 'غير مسجل';
+    });
 
-    // auth display
-    onAuthStateChanged(auth, user => { currentUserEmail = user ? user.email : null; userEmailSpan.textContent = user ? user.email : ''; });
+    document.getElementById('goAdmin').addEventListener('click', ()=> window.location.href='admin.html');
 
-    // init
     (function init(){
-      todayStr.textContent = new Date().toLocaleDateString('ar-EG');
+      document.getElementById('todayStr').textContent = new Date().toLocaleDateString('ar-EG');
       initLocal();
-      renderDevices();
-      // expose for debug
-      window.__bianco = { openSessions, completedSessionsToday, persistLocal, renderDevices };
     })();
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
