@@ -218,4 +218,200 @@
         const d = s.data.date || s.data.createdAt ? (s.data.date || (new Date(s.data.createdAt).toLocaleDateString('ar-EG'))) : null;
         if(d) dates.add(d);
       });
-      // clear
+      // clear except "all"
+      const cur = dateFilter.value || '__all__';
+      dateFilter.innerHTML = '<option value="__all__">جميع التواريخ</option>';
+      Array.from(dates).sort((a,b)=>{
+        // try to parse using ar-EG locale by constructing Date via split (dd/mm/yyyy or dd-mm-yyyy)
+        try{
+          const pa = a.split(/[^\d]/).map(Number), pb = b.split(/[^\d]/).map(Number);
+          const da = new Date(pa[2], pa[1]-1, pa[0]);
+          const db = new Date(pb[2], pb[1]-1, pb[0]);
+          return db - da;
+        }catch(e){ return a.localeCompare(b); }
+      }).forEach(d=>{
+        const opt = document.createElement('option'); opt.value = d; opt.textContent = d; dateFilter.appendChild(opt);
+      });
+      dateFilter.value = cur in Object.values ? cur : (dates.has(cur) ? cur : '__all__');
+    }
+
+    // apply filter & render table
+    function applyFilterAndRender(){
+      const sel = dateFilter.value;
+      const todayDate = new Date().toLocaleDateString('ar-EG');
+      let list = allSessions.map(x => ({ id: x.id, s: x.data }));
+      if(sel && sel !== '__all__'){
+        list = list.filter(x => (x.s.date || (x.s.createdAt && new Date(x.s.createdAt).toLocaleDateString('ar-EG'))) === sel);
+      }
+      // render
+      filteredSessions = list;
+      renderTable();
+      computeStats();
+    }
+
+    function renderTable(){
+      tableBody.innerHTML = '';
+      filteredSessions.forEach(item => {
+        const s = item.s;
+        const id = item.id;
+        // tolerant fields
+        const device = s.deviceLabel || s.device || s.deviceId || '-';
+        const type = s.mode || s.type || (s.mode==='double'?'double':'single');
+        const start = s.startISO || s.start || s.startTime || s.startDateTime || s.createdAt || '';
+        const end = s.endISO || s.end || s.endTime || s.endDateTime || '';
+        const duration = s.duration || '-';
+        const price = Number(s.price) || 0;
+        const drinks = Array.isArray(s.drinks) ? s.drinks.map(d=>`${d.name}×${d.qty}`).join(', ') : (typeof s.drinks === 'string' ? s.drinks : '-');
+        const createdBy = s.createdBy || s.owner || '-';
+        const date = s.date || (s.createdAt ? new Date(s.createdAt).toLocaleDateString('ar-EG') : '-');
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${device}</td>
+          <td>${type === 'single' ? 'فردي' : 'زوجي'}</td>
+          <td>${formatTime12(start)} → ${formatTime12(end)}</td>
+          <td>${duration}</td>
+          <td>${price} ج</td>
+          <td>${drinks}</td>
+          <td>${createdBy}</td>
+          <td>${date}</td>
+          <td>
+            <button class="editBtn" data-id="${id}">✏️</button>
+            <button class="danger" data-id="${id}">🗑</button>
+          </td>`;
+        tableBody.appendChild(tr);
+      });
+    }
+
+    // compute stats for filteredSessions
+    function computeStats(){
+      let total = 0, count = 0;
+      filteredSessions.forEach(item => {
+        const s = item.s;
+        const price = Number(s.price) || 0;
+        total += price;
+        count++;
+      });
+      totalRevenueEl.textContent = total.toFixed(2);
+      sessionCountEl.textContent = count;
+    }
+
+    // events: dateFilter change
+    dateFilter.addEventListener('change', ()=> applyFilterAndRender());
+    refreshBtn.addEventListener('click', ()=> { applyFilterAndRender(); alert('تم التحديث'); });
+
+    // export CSV of current filteredSessions
+    exportBtn.addEventListener('click', ()=>{
+      if(!filteredSessions.length) return alert('لا توجد بيانات للتصدير');
+      const rows = [['الجهاز','النوع','من','إلى','المدة','الطلبات','السعر','أنشئ بواسطة','التاريخ']];
+      filteredSessions.forEach(item=>{
+        const s = item.s;
+        const device = s.deviceLabel || s.device || s.deviceId || '-';
+        const type = s.mode || s.type || 'single';
+        const start = s.startISO || s.start || '';
+        const end = s.endISO || s.end || '';
+        const duration = s.duration || '';
+        const drinks = Array.isArray(s.drinks) ? s.drinks.map(d=>`${d.name}×${d.qty}`).join(' | ') : (typeof s.drinks === 'string' ? s.drinks : '');
+        const price = Number(s.price) || 0;
+        const createdBy = s.createdBy || s.owner || '-';
+        const date = s.date || (s.createdAt ? new Date(s.createdAt).toLocaleDateString('ar-EG') : '');
+        rows.push([device, type === 'single' ? 'فردي' : 'زوجي', formatTime12(start), formatTime12(end), duration, drinks, price, createdBy, date]);
+      });
+      // CSV
+      const csv = rows.map(r=>r.map(cell=>`"${String(cell).replace(/"/g,'""')}"`).join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const sel = dateFilter.value === '__all__' ? 'all' : dateFilter.value;
+      a.download = `sessions_${sel}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    });
+
+    // delegate table buttons (edit/delete)
+    tableBody.addEventListener('click', async (e)=>{
+      const btn = e.target.closest('button');
+      if(!btn) return;
+      const id = btn.dataset.id;
+      if(btn.classList.contains('danger')){
+        if(!confirm('هل تريد حذف الجلسة؟')) return;
+        try{
+          await deleteDoc(doc(db,'sessions',id));
+          alert('تم الحذف');
+        }catch(err){ alert('خطأ عند الحذف: '+err.message); }
+        return;
+      }
+      if(btn.classList.contains('editBtn')){
+        // open edit modal with data
+        const item = allSessions.find(x=>x.id===id);
+        if(!item) return alert('البيانات غير متوفرة');
+        const s = item.data;
+        editingId = id;
+        editDevice.value = s.deviceLabel || s.device || s.deviceId || '';
+        editType.value = s.mode || s.type || 'single';
+        // fill time inputs: if ISO -> show hh:mm; if simple hh:mm -> set directly
+        const startIso = s.startISO || s.start || '';
+        const endIso = s.endISO || s.end || '';
+        const getTimePart = v => {
+          if(!v) return '';
+          if(/^\d{1,2}:\d{2}$/.test(v)) return v;
+          const iso = parseToISO(v);
+          if(!iso) return '';
+          return new Date(iso).toTimeString().slice(0,5);
+        };
+        editStart.value = getTimePart(startIso);
+        editEnd.value = getTimePart(endIso);
+        editDuration.value = s.duration || '';
+        editPrice.value = s.price || 0;
+        editDrinks.value = Array.isArray(s.drinks) ? s.drinks.map(d=>`${d.name}×${d.qty}`).join(', ') : (typeof s.drinks === 'string' ? s.drinks : '');
+        editModal.classList.add('active');
+      }
+    });
+
+    // save edit
+    saveEditBtn.addEventListener('click', async ()=>{
+      if(!editingId) return;
+      try{
+        // prepare fields — keep both start and startISO convention: we update start (time string), and also startISO if possible
+        const payload = {};
+        payload.deviceLabel = editDevice.value || undefined;
+        payload.mode = editType.value || undefined;
+        payload.duration = editDuration.value || undefined;
+        payload.price = Number(editPrice.value) || 0;
+        // drinks: keep as text to avoid changing array shape if admin typed free text
+        payload.drinks = editDrinks.value || undefined;
+        // start/end: convert time input to ISO for storage consistency
+        if(editStart.value) payload.startISO = parseToISO(editStart.value);
+        if(editEnd.value) payload.endISO = parseToISO(editEnd.value);
+        // update doc
+        await updateDoc(doc(db,'sessions',editingId), payload);
+        editModal.classList.remove('active');
+        alert('✅ تم حفظ التعديلات');
+      }catch(err){
+        alert('خطأ عند الحفظ: ' + err.message);
+      }
+    });
+    cancelEditBtn.addEventListener('click', ()=> editModal.classList.remove('active'));
+
+    // logout
+    logoutBtn.addEventListener('click', ()=> signOut(auth).then(()=>window.location.href='login.html'));
+
+    // auth + admin guard
+    onAuthStateChanged(auth, user=>{
+      if(!user) {
+        window.location.href = 'login.html';
+        return;
+      }
+      userEmail.textContent = user.email;
+      if(!adminEmails.includes(user.email)){
+        alert('ليس لديك صلاحية مشرف'); 
+        // redirect to user page
+        window.location.href = 'index.html';
+      }
+    });
+  </script>
+</body>
+</html>
