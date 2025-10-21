@@ -133,83 +133,85 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    const todayEl = document.getElementById('today');
-    const tableBody = document.querySelector('#sessionsTable tbody');
-    const sessionCountEl = document.getElementById('sessionCount');
-    const totalRevenueEl = document.getElementById('totalRevenue');
-    const dateFilter = document.getElementById('dateFilter');
-    const refreshBtn = document.getElementById('refreshBtn');
-    const exportBtn = document.getElementById('exportBtn');
-    const logoutBtn = document.getElementById('logoutBtn');
-    const userEmail = document.getElementById('userEmail');
+    const todayEl=document.getElementById('today');
+    const tableBody=document.querySelector('#sessionsTable tbody');
+    const sessionCountEl=document.getElementById('sessionCount');
+    const totalRevenueEl=document.getElementById('totalRevenue');
+    const dateFilter=document.getElementById('dateFilter');
+    const refreshBtn=document.getElementById('refreshBtn');
+    const exportBtn=document.getElementById('exportBtn');
+    const logoutBtn=document.getElementById('logoutBtn');
+    const userEmail=document.getElementById('userEmail');
 
-    const editModal = document.getElementById('editModal');
-    const editDevice = document.getElementById('editDevice');
-    const editType = document.getElementById('editType');
-    const editStart = document.getElementById('editStart');
-    const editEnd = document.getElementById('editEnd');
-    const editDuration = document.getElementById('editDuration');
-    const editPrice = document.getElementById('editPrice');
-    const editDrinks = document.getElementById('editDrinks');
-    const saveEditBtn = document.getElementById('saveEditBtn');
-    const cancelEditBtn = document.getElementById('cancelEditBtn');
+    const editModal=document.getElementById('editModal');
+    const editDevice=document.getElementById('editDevice');
+    const editType=document.getElementById('editType');
+    const editStart=document.getElementById('editStart');
+    const editEnd=document.getElementById('editEnd');
+    const editDuration=document.getElementById('editDuration');
+    const editPrice=document.getElementById('editPrice');
+    const editDrinks=document.getElementById('editDrinks');
+    const saveEditBtn=document.getElementById('saveEditBtn');
+    const cancelEditBtn=document.getElementById('cancelEditBtn');
 
-    const adminEmails = ["moosama@gmail.com","ahmed@gmail.com","mahmoud@gmail.com"];
-    todayEl.textContent = new Date().toLocaleDateString('ar-EG');
+    const adminEmails=["moosama@gmail.com","ahmed@gmail.com","mahmoud@gmail.com"];
+    todayEl.textContent=new Date().toLocaleDateString('ar-EG');
 
-    let allSessions = [], filteredSessions = [], editingId = null;
+    let allSessions=[],filteredSessions=[],editingId=null;
 
     function parseToISO(val){
       if(!val) return null;
-      if(val.includes('T') || val.endsWith('Z')) return val;
+      if(val.includes('T')||val.endsWith('Z')) return val;
       if(/^\d{1,2}:\d{2}$/.test(val)){
-        const [hh,mm] = val.split(':').map(Number);
-        const now = new Date();
-        const d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hh, mm, 0);
+        const [hh,mm]=val.split(':').map(Number);
+        const now=new Date();
+        const d=new Date(now.getFullYear(),now.getMonth(),now.getDate(),hh,mm,0);
         return d.toISOString();
       }
-      const dt = new Date(val);
-      return !isNaN(dt) ? dt.toISOString() : null;
+      const dt=new Date(val);
+      return !isNaN(dt)?dt.toISOString():null;
     }
 
     function formatTime12(val){
       if(!val) return '-';
-      const iso = parseToISO(val);
+      const iso=parseToISO(val);
       if(!iso) return val;
-      const d = new Date(iso);
-      const h = d.getHours(), m = d.getMinutes();
-      const suffix = h>=12 ? 'مساءً' : 'صباحًا';
-      const hh = h%12 || 12;
+      const d=new Date(iso);
+      const h=d.getHours(),m=d.getMinutes();
+      const suffix=h>=12?'مساءً':'صباحًا';
+      const hh=h%12||12;
       return `${hh}:${m.toString().padStart(2,'0')} ${suffix}`;
     }
 
-    const sessionsCol = collection(db,'sessions');
-    const q = query(sessionsCol, orderBy('createdAt','desc'));
-    onSnapshot(q, snap => {
-      allSessions = [];
-      snap.forEach(docSnap => allSessions.push({ id: docSnap.id, data: docSnap.data() }));
-      populateDates(); applyFilter();
+    const sessionsCol=collection(db,'sessions');
+    const q=query(sessionsCol,orderBy('createdAt','desc'));
+    onSnapshot(q,snap=>{
+      allSessions=[];
+      snap.forEach(docSnap=>allSessions.push({id:docSnap.id,data:docSnap.data()}));
+      populateDates();applyFilter();
     });
 
     function populateDates(){
-      const dates = new Set();
+      const dates=new Set();
       allSessions.forEach(s=>{
-        const d = s.data.date || (s.data.createdAt ? new Date(s.data.createdAt).toLocaleDateString('ar-EG') : null);
+        const d=s.data.date||(s.data.createdAt?new Date(s.data.createdAt).toLocaleDateString('ar-EG'):null);
         if(d) dates.add(d);
       });
-      dateFilter.innerHTML = '<option value="__all__">جميع التواريخ</option>';
+      dateFilter.innerHTML='<option value="__all__">جميع التواريخ</option>';
       Array.from(dates).forEach(d=>{
-        const opt=document.createElement('option'); opt.value=d; opt.textContent=d; dateFilter.appendChild(opt);
+        const opt=document.createElement('option');
+        opt.value=d;opt.textContent=d;
+        dateFilter.appendChild(opt);
       });
     }
 
     function applyFilter(){
-      const sel = dateFilter.value;
-      filteredSessions = allSessions.filter(x=>{
-        const d = x.data.date || (x.data.createdAt ? new Date(x.data.createdAt).toLocaleDateString('ar-EG') : '');
-        return sel==='__all__' || d===sel;
+      const sel=dateFilter.value;
+      filteredSessions=allSessions.filter(x=>{
+        const d=x.data.date||(x.data.createdAt?new Date(x.data.createdAt).toLocaleDateString('ar-EG'):'');
+        return sel==='__all__'||d===sel;
       });
-      renderTable(); calcStats();
+      renderTable();calcStats();
     }
 
     function renderTable(){
@@ -226,8 +228,18 @@
           <td>${Array.isArray(s.drinks)?s.drinks.map(d=>d.name+'×'+d.qty).join(', '):(s.drinks||'-')}</td>
           <td>${s.createdBy||'-'}</td>
           <td>${s.date||'-'}</td>
-          <td><button class="editBtn" data-id="${id}">✏️</button><button class="danger" data-id="${id}">🗑</button></td>`;
+          <td>
+            <button class="editBtn" data-id="${id}">✏️</button>
+            <button class="danger" data-id="${id}">🗑</button>
+          </td>`;
         tableBody.appendChild(tr);
+      });
+
+      document.querySelectorAll('.editBtn').forEach(btn=>{
+        btn.onclick=()=>editSession(btn.dataset.id);
+      });
+      document.querySelectorAll('.danger').forEach(btn=>{
+        btn.onclick=()=>deleteSession(btn.dataset.id);
       });
     }
 
@@ -237,10 +249,49 @@
       sessionCountEl.textContent=filteredSessions.length;
     }
 
+    async function editSession(id){
+      const session=allSessions.find(x=>x.id===id);
+      if(!session) return;
+      const s=session.data;
+      editingId=id;
+      editDevice.value=s.deviceLabel||'';
+      editType.value=s.mode||s.type||'single';
+      editStart.value=s.start?new Date(s.startISO||s.start).toTimeString().slice(0,5):'';
+      editEnd.value=s.end?new Date(s.endISO||s.end).toTimeString().slice(0,5):'';
+      editDuration.value=s.duration||'';
+      editPrice.value=s.price||0;
+      editDrinks.value=Array.isArray(s.drinks)?s.drinks.map(d=>`${d.name}×${d.qty}`).join(', '):(s.drinks||'');
+      editModal.classList.add('active');
+    }
+
+    async function deleteSession(id){
+      if(confirm('هل أنت متأكد من حذف هذه الجلسة؟')){
+        await deleteDoc(doc(db,'sessions',id));
+        alert('🗑️ تم حذف الجلسة بنجاح');
+      }
+    }
+
+    saveEditBtn.onclick=async()=>{
+      if(!editingId) return;
+      const ref=doc(db,'sessions',editingId);
+      await updateDoc(ref,{
+        deviceLabel:editDevice.value,
+        mode:editType.value,
+        start:editStart.value,
+        end:editEnd.value,
+        duration:editDuration.value,
+        price:Number(editPrice.value),
+        drinks:editDrinks.value
+      });
+      editModal.classList.remove('active');
+      alert('✅ تم حفظ التعديلات بنجاح');
+    };
+
+    cancelEditBtn.onclick=()=>editModal.classList.remove('active');
+
     dateFilter.onchange=applyFilter;
     refreshBtn.onclick=()=>{applyFilter();alert('تم التحديث');};
 
-    // ✅ إصلاح الترميز UTF-8
     exportBtn.onclick=()=>{
       if(!filteredSessions.length) return alert('لا توجد بيانات');
       const rows=[['الجهاز','النوع','من','إلى','المدة','الطلبات','السعر','أنشئ بواسطة','التاريخ']];
