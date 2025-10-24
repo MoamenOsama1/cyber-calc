@@ -16,12 +16,9 @@
       --glass: rgba(255, 255, 255, 0.04);
       --shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
     }
-  
-    * { 
-      box-sizing: border-box; 
-      -webkit-tap-highlight-color: transparent;
-    }
-  
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
     body {
       margin: 0;
       padding: 12px;
@@ -33,389 +30,85 @@
       backdrop-filter: blur(4px);
       min-height: 100vh;
     }
-  
-    .wrap { 
-      max-width: 1100px; 
-      margin: auto; 
-      width: 100%;
-    }
-  
+
+    .wrap { max-width: 1100px; margin: auto; width: 100%; }
+
     header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-      padding-bottom: 12px;
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 8px; flex-wrap: wrap; padding-bottom: 12px;
       border-bottom: 1px solid rgba(255,255,255,0.08);
     }
-  
-    h1 { 
-      margin: 0; 
-      font-size: clamp(18px, 5vw, 22px); 
-      line-height: 1.3;
-    }
-    
-    .small { 
-      color: var(--muted); 
-      font-size: clamp(12px, 3vw, 13px);
-      line-height: 1.4;
-    }
-  
+
+    h1 { margin: 0; font-size: clamp(18px, 5vw, 22px); line-height: 1.3; }
+    .small { color: var(--muted); font-size: clamp(12px, 3vw, 13px); line-height: 1.4; }
+
     .btn {
-      background: var(--accent);
-      border: none;
-      color: #021018;
-      padding: 10px 14px;
-      border-radius: 10px;
-      font-weight: 700;
-      cursor: pointer;
-      box-shadow: var(--shadow);
-      transition: 0.2s;
-      font-size: 14px;
-      min-height: 44px; /* لللمسة على الهواتف */
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      background: var(--accent); border: none; color: #021018;
+      padding: 10px 14px; border-radius: 10px; font-weight: 700;
+      cursor: pointer; box-shadow: var(--shadow); transition: 0.2s;
+      font-size: 14px; min-height: 44px; display: flex; align-items: center; justify-content: center;
     }
-    
-    .btn:hover, .btn:focus { 
-      transform: scale(1.05); 
-      outline: none;
-    }
-  
+
+    .btn:hover, .btn:focus { transform: scale(1.05); outline: none; }
+
     .secondary {
-      background: transparent;
-      border: 1px solid var(--glass);
-      color: var(--muted);
-      padding: 9px 12px;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: 0.2s;
-      font-size: 14px;
-      min-height: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      background: transparent; border: 1px solid var(--glass); color: var(--muted);
+      padding: 9px 12px; border-radius: 8px; cursor: pointer; transition: 0.2s;
+      font-size: 14px; min-height: 44px; display: flex; align-items: center; justify-content: center;
     }
-    
-    .secondary:hover, .secondary:focus { 
-      color: #fff; 
-      border-color: #888; 
-      outline: none;
-    }
-  
-    .summary {
-      display: flex;
-      gap: 10px;
-      margin-top: 16px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-  
+
+    .secondary:hover, .secondary:focus { color: #fff; border-color: #888; outline: none; }
+
+    .summary { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; justify-content: center; }
+
     .card {
-      background: var(--card);
-      padding: 12px;
-      border-radius: 10px;
-      border: 1px solid var(--glass);
-      box-shadow: var(--shadow);
-      transition: 0.2s;
-      flex: 1;
-      min-width: 120px;
-      max-width: 180px;
+      background: var(--card); padding: 12px; border-radius: 10px; border: 1px solid var(--glass);
+      box-shadow: var(--shadow); transition: 0.2s; flex: 1; min-width: 120px; max-width: 180px;
     }
-  
-    .card:hover { transform: translateY(-2px); }
-    .card.small { text-align: center; }
-  
+
     .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap: 12px;
-      margin-top: 16px;
-    }
-    
-    @media (max-width: 480px) {
-      .grid {
-        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-        gap: 10px;
-      }
-    }
-    
-    @media (max-width: 360px) {
-      .grid {
-        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-      }
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 12px; margin-top: 16px;
     }
 
     .device {
-      background: var(--card);
-      border: 1px solid var(--glass);
-      border-radius: 12px;
-      padding: 12px;
-      box-shadow: var(--shadow);
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      transition: 0.3s ease;
-      min-height: 160px;
+      background: var(--card); border: 1px solid var(--glass); border-radius: 12px;
+      padding: 12px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 8px;
+      transition: 0.3s ease; min-height: 160px;
     }
-  
+
     .device:hover { transform: translateY(-3px); }
-  
-    .device .title {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 8px;
-    }
-  
-    .dev-name { 
-      font-weight: 800; 
-      color: #ffffff; 
-      font-size: 16px;
-      line-height: 1.2;
-    }
-    
-    .dev-sub { 
-      font-size: 12px; 
-      color: var(--muted); 
-      margin-top: 4px;
-      line-height: 1.3;
-    }
-  
-    .status {
-      padding: 6px 8px;
-      border-radius: 8px;
-      font-weight: 700;
-      font-size: 12px;
-      white-space: nowrap;
-    }
-  
+
+    .dev-name { font-weight: 800; color: #fff; font-size: 16px; }
+    .dev-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+    .status { padding: 6px 8px; border-radius: 8px; font-weight: 700; font-size: 12px; white-space: nowrap; }
     .open { background: #064f2b; color: #a8f7c1; }
     .idle { background: #09131eae; color: var(--muted); border: 1px solid rgba(255,255,255,0.05); }
-  
-    .controls {
-      display: flex;
-      gap: 6px;
-      margin-top: auto;
-    }
-  
-    .controls button {
-      flex: 1;
-      padding: 10px 8px;
-      border-radius: 8px;
-      border: none;
-      font-weight: 800;
-      touch-action: manipulation;
-      cursor: pointer;
-      font-size: 13px;
-      min-height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-  
-    .start { background: var(--accent); color: #000000; }
+
+    .controls { display: flex; gap: 6px; margin-top: auto; }
+    .controls button { flex: 1; padding: 10px 8px; border-radius: 8px; border: none; font-weight: 800; cursor: pointer; font-size: 13px; min-height: 40px; display: flex; align-items: center; justify-content: center; }
+    .start { background: var(--accent); color: #000; }
     .add { background: var(--accent-2); color: #fff; }
     .end { background: var(--danger); color: #fff; }
-  
-    .sessions {
-      margin-top: 20px;
-      background: var(--card);
-      padding: 12px;
-      border-radius: 12px;
-      border: 1px solid var(--glass);
-      box-shadow: var(--shadow);
-      overflow-x: auto;
-    }
-    
-    .sessions-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 12px;
-    }
-    
-    .sessions-header strong {
-      font-size: 16px;
-    }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 8px;
-      min-width: 600px; /* لضمان عدم انضغاط الجدول على الشاشات الصغيرة */
-    }
-  
-    th, td {
-      padding: 10px 8px;
-      text-align: center;
-      border-bottom: 1px solid rgba(255,255,255,0.05);
-      font-size: 13px;
-    }
-  
+    .sessions { margin-top: 20px; background: var(--card); padding: 12px; border-radius: 12px; border: 1px solid var(--glass); box-shadow: var(--shadow); overflow-x: auto; }
+    .sessions-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+    .sessions-header strong { font-size: 16px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; min-width: 600px; }
+    th, td { padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px; }
     th { color: var(--muted); }
-    
-    @media (max-width: 768px) {
-      th, td {
-        padding: 8px 6px;
-        font-size: 12px;
-      }
-    }
 
-    footer {
-      margin-top: 16px;
-      text-align: center;
-      color: var(--muted);
-      font-size: 12px;
-      padding: 0 8px;
-      line-height: 1.5;
-    }
-  
-    /* مودالات */
-    .modal-back {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.6);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      visibility: hidden;
-      opacity: 0;
-      transition: all 0.2s;
-      z-index: 1000;
-      padding: 16px;
-    }
-  
-    .modal-back.active { 
-      visibility: visible; 
-      opacity: 1; 
-    }
-  
-    .modal {
-      width: 100%;
-      max-width: 360px;
-      background: #081c2c;
-      padding: 16px;
-      border-radius: 12px;
-      border: 1px solid var(--glass);
-      box-shadow: var(--shadow);
-      max-height: 90vh;
-      overflow-y: auto;
-    }
-    
-    .modal h3 {
-      text-align: center;
-      margin-top: 0;
-      margin-bottom: 16px;
-      font-size: 18px;
-    }
-
-    label { 
-      font-size: 13px; 
-      color: var(--muted); 
-      display: block; 
-      margin-top: 10px; 
-      margin-bottom: 4px;
-    }
-    
-    input, select {
-      width: 100%;
-      padding: 12px;
-      margin-top: 4px;
-      border-radius: 8px;
-      border: 1px solid rgba(255,255,255,0.05);
-      background: #0f1b26 !important;
-      color: #fff !important;
-      font-size: 14px;
-      min-height: 44px;
-    }
-    
-    input:focus, select:focus { 
-      outline: 2px solid var(--accent-2); 
-    }
-    
-    .row {
-      display: flex;
-      gap: 10px;
-    }
-    
-    .half {
-      flex: 1;
-    }
-    
-    .center {
-      text-align: center;
-    }
-    
-    /* تحسينات للشاشات الصغيرة جداً */
-    @media (max-width: 480px) {
-      body {
-        padding: 8px;
-      }
-      
-      header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
-      }
-      
-      .header-buttons {
-        display: flex;
-        gap: 8px;
-        width: 100%;
-        justify-content: space-between;
-      }
-      
-      .header-buttons .btn,
-      .header-buttons .secondary {
-        flex: 1;
-        font-size: 13px;
-        padding: 10px 8px;
-      }
-      
-      .summary {
-        gap: 8px;
-      }
-      
-      .card {
-        min-width: 100px;
-        padding: 10px;
-      }
-      
-      .sessions {
-        padding: 10px;
-      }
-      
-      .modal {
-        padding: 14px;
-      }
-    }
-    
-    /* تحسينات للوضع الأفقي على الهواتف */
-    @media (max-height: 500px) and (orientation: landscape) {
-      .modal-back {
-        align-items: flex-start;
-        padding-top: 20px;
-      }
-      
-      .modal {
-        max-height: 80vh;
-      }
-    }
+    footer { margin-top: 16px; text-align: center; color: var(--muted); font-size: 12px; padding: 0 8px; line-height: 1.5; }
   </style>
-  
 </head>
 <body>
-  
+
   <div class="wrap">
     <header>
       <div>
         <h1>🎮 Bianco Timer - إدارة الأجهزة</h1>
-        <div class="small">بنج + PS4 (1–6) + PS5 (7–15) — تخزين محلي لليوم + مزامنة Firebase</div>
+        <div class="small">بنج + PS4 (1–6) + PS5 (7–15)</div>
       </div>
       <div class="header-buttons">
         <div id="userEmail" class="small"></div>
@@ -434,86 +127,22 @@
 
     <section class="sessions">
       <div class="sessions-header">
-        <strong>جلسات اليوم (محلي)</strong>
-        <div class="small">🕓 يتم حذفها تلقائيًا بعد 24 ساعة من آخر استخدام</div>
+        <strong>جلسات اليوم</strong>
+        <div class="small">🔄 يتم التحديث تلقائيًا من السحابة</div>
       </div>
       <table id="completedTable">
-        <thead><tr><th>جهاز</th><th>من</th><th>إلى</th><th>المدة</th><th>الطلبات</th><th>السعر</th></tr></thead>
+        <thead><tr><th>جهاز</th><th>من</th><th>إلى</th><th>المدة</th><th>الطلبات</th><th>السعر</th><th>أنشئ بواسطة</th></tr></thead>
         <tbody></tbody>
       </table>
     </section>
 
-    <footer>💾 يتم حفظ الجلسات محليًا طوال اليوم وتحذف تلقائيًا بعد 24 ساعة.</footer>
-  </div>
-
-  <!-- مودال بدء الجلسة -->
-  <div class="modal-back" id="modalStart">
-    <div class="modal">
-      <h3 class="center">▶ بدء جلسة</h3>
-      <label>الجهاز</label><input id="startDevice" disabled />
-      <label>اختار نوع الجلسة</label>
-      <select id="sessionKind">
-        <option value="open">أوبن (مفتوحة)</option>
-        <option value="set">أحدد وقت النهاية</option>
-      </select>
-      <div id="endTimeRow" style="display:none">
-        <label>وقت النهاية (HH:MM)</label><input type="time" id="sessionEndTime" />
-      </div>
-      <label>نوع اللعب</label>
-      <select id="playMode"><option value="single">فردي</option><option value="double">زوجي</option></select>
-      <div style="display:flex;gap:8px;margin-top:16px;">
-        <button class="btn" id="confirmStart">ابدأ</button>
-        <button class="secondary" id="cancelStart">إلغاء</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- مودال إضافة الطلب -->
-  <div class="modal-back" id="modalDrink">
-    <div class="modal">
-      <h3 class="center">➕ إضافة طلب</h3>
-      <label>اختيار</label>
-      <select id="drinkSelect" class="drink">
-        <option value="">اختر...</option>
-        <option value="شاي|10">شاي - 10 ج</option>
-        <option value="قهوة|15">قهوة - 15 ج</option>
-        <option value="إندومي صغير|15">إندومي صغير - 15 ج</option>
-        <option value="إندومي كبير|25">إندومي كبير - 25 ج</option>
-        <option value="بيبسي|25">بيبسي - 25 ج</option>
-        <option value="متنوع">إدخال يدوي</option>
-      </select>
-      <label>الكمية</label><input id="drinkQty" type="number" min="1" value="1" />
-      <label>لجهاز</label><input id="drinkDevice" disabled />
-      <div style="display:flex;gap:8px;margin-top:16px;">
-        <button class="btn" id="confirmAddDrink">إضافة</button>
-        <button class="secondary" id="cancelAddDrink">إلغاء</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- مودال إنهاء الجلسة -->
-  <div class="modal-back" id="modalEnd">
-    <div class="modal">
-      <h3 class="center">⏱️ إنهاء الجلسة</h3>
-      <div class="small center" id="endDeviceLabel"></div>
-      <div class="row">
-        <div class="half"><label>من</label><input id="endFrom" disabled /></div>
-        <div class="half"><label>إلى</label><input id="endTo" disabled /></div>
-      </div>
-      <label>المدة</label><input id="endDuration" disabled />
-      <label>الطلبات</label><input id="endDrinks" disabled />
-      <label>المجموع (جنيه)</label><input id="endTotal" disabled />
-      <div style="display:flex;gap:8px;margin-top:16px;">
-        <button class="btn" id="confirmEnd">احفظ واحسب</button>
-        <button class="secondary" id="cancelEnd">إلغاء</button>
-      </div>
-    </div>
+    <footer>💾 الجلسات المفتوحة محلية، والمكتملة من السحابة (Firestore).</footer>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBFI6W1mCbFsG8MfcGxWL0JonZtJ_7P6W0",
@@ -523,23 +152,28 @@
       messagingSenderId: "699813217029",
       appId: "1:699813217029:web:568e169371a2361358ad6c"
     };
+
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
     const RATES = { ping:{single:30,double:40}, ps4:{single:30,double:40}, ps5:{single:40,double:50} };
-    const DEVICES = []; DEVICES.push({id:'ping',label:'Ping',type:'ping'}); for(let i=1;i<=6;i++) DEVICES.push({id:`ps${i}`,label:`PS4-${i}`,type:'ps4'}); for(let i=7;i<=15;i++) DEVICES.push({id:`ps${i}`,label:`PS5-${i}`,type:'ps5'});
+    const DEVICES = []; 
+    DEVICES.push({id:'ping',label:'Ping',type:'ping'}); 
+    for(let i=1;i<=6;i++) DEVICES.push({id:`ps${i}`,label:`PS4-${i}`,type:'ps4'});
+    for(let i=7;i<=15;i++) DEVICES.push({id:`ps${i}`,label:`PS5-${i}`,type:'ps5'});
 
+    // Local storage للجلسات المفتوحة فقط
     const STORAGE_KEY='biancoSessionsLocal', RESET_KEY='biancoResetTime';
     function getStorage(){ try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}')}catch(e){return{}} }
     function setStorage(o){ localStorage.setItem(STORAGE_KEY,JSON.stringify(o)) }
     function todayKey(){ return new Date().toLocaleDateString('ar-EG') }
     function checkReset(){ const last=localStorage.getItem(RESET_KEY), now=Date.now(); if(!last){ localStorage.setItem(RESET_KEY, now); return } const diff=(now-Number(last))/(1000*60*60); if(diff>=24){ localStorage.removeItem(STORAGE_KEY); localStorage.setItem(RESET_KEY, now); } }
 
-    let openSessions = {}, completedSessionsToday = [];
+    let openSessions = {};
 
-    function initLocal(){ checkReset(); const s=getStorage(); const t=todayKey(); if(!s[t]) s[t]={open:{},completed:[]}; setStorage(s); openSessions = s[t].open||{}; completedSessionsToday = s[t].completed||[]; }
-    function persistLocal(){ const s=getStorage(); s[todayKey()] = { open: openSessions, completed: completedSessionsToday }; setStorage(s); }
+    function initLocal(){ checkReset(); const s=getStorage(); const t=todayKey(); if(!s[t]) s[t]={open:{}}; setStorage(s); openSessions = s[t].open||{}; }
+    function persistLocal(){ const s=getStorage(); s[todayKey()] = { open: openSessions }; setStorage(s); }
 
     // DOM
     const devicesGrid = document.getElementById('devicesGrid');
@@ -551,81 +185,49 @@
     const logoutBtn = document.getElementById('logoutBtn');
     const goAdminBtn = document.getElementById('goAdmin');
 
-    // modals
-    const modalStart = document.getElementById('modalStart');
-    const startDevice = document.getElementById('startDevice');
-    const sessionKind = document.getElementById('sessionKind');
-    const sessionEndTime = document.getElementById('sessionEndTime');
-    const playMode = document.getElementById('playMode');
-    const confirmStart = document.getElementById('confirmStart');
-    const cancelStart = document.getElementById('cancelStart');
-    const endTimeRow = document.getElementById('endTimeRow');
-
-    const modalDrink = document.getElementById('modalDrink');
-    const drinkSelect = document.getElementById('drinkSelect');
-    const drinkQty = document.getElementById('drinkQty');
-    const drinkDevice = document.getElementById('drinkDevice');
-    const confirmAddDrink = document.getElementById('confirmAddDrink');
-    const cancelAddDrink = document.getElementById('cancelAddDrink');
-
-    const modalEnd = document.getElementById('modalEnd');
-    const endDeviceLabel = document.getElementById('endDeviceLabel');
-    const endFrom = document.getElementById('endFrom');
-    const endTo = document.getElementById('endTo');
-    const endDuration = document.getElementById('endDuration');
-    const endDrinks = document.getElementById('endDrinks');
-    const endTotal = document.getElementById('endTotal');
-    const confirmEnd = document.getElementById('confirmEnd');
-    const cancelEnd = document.getElementById('cancelEnd');
-
-    // helpers
     function nowISO(){ return new Date().toISOString(); }
     function diffMinutes(startISO,endISO){ return Math.max(0, Math.floor((new Date(endISO)-new Date(startISO))/60000)); }
     function format12FromISO(iso){ const d=new Date(iso); if(isNaN(d)) return '-'; let h=d.getHours(), m=d.getMinutes(), suf=h>=12?'مساءً':'صباحًا', hh=h%12||12; return `${hh}:${m.toString().padStart(2,'0')} ${suf}`; }
     function durationText(mins){ const h=Math.floor(mins/60), m=mins%60; return `${h} س ${m} د`; }
-    function isoFromTimeStr(timeStr){ const [hh,mm]=timeStr.split(':').map(Number); const now=new Date(); const d=new Date(now.getFullYear(),now.getMonth(),now.getDate(),hh,mm,0); if(d<=now) d.setDate(d.getDate()+1); return d.toISOString(); }
 
-    // render
-    function renderDevices(){ devicesGrid.innerHTML=''; DEVICES.forEach((dev,idx)=>{ const open=openSessions[dev.id]; const statusHtml=open?`<div class="status open">مفتوحة</div>`:`<div class="status idle">خالي</div>`; const infoHtml=open?`<div class="small">${format12FromISO(open.startISO)} ${open.scheduledEndISO? '→ ' + format12FromISO(open.scheduledEndISO): ''}</div><div class="small">نوع: ${open.mode==='single'?'فردي':'زوجي'}</div>`:`<div class="small">اضغط بدء</div>`; const controlsHtml=open?`<button class="end" data-action="end" data-idx="${idx}">إنهاء</button><button class="add" data-action="add" data-idx="${idx}">➕ طلب</button>`:`<button class="start" data-action="start" data-idx="${idx}">بدء جلسة</button>`; const wrapper=document.createElement('div'); wrapper.className='device'; wrapper.innerHTML=`<div class="title"><div><div class="dev-name">${dev.label}</div><div class="dev-sub">سعر/ساعة: ${RATES[dev.type].single}/${RATES[dev.type].double} ج</div></div>${statusHtml}</div><div>${infoHtml}</div><div class="controls">${controlsHtml}</div>`; devicesGrid.appendChild(wrapper); }); updateSummary(); renderCompleted(); }
+    function renderDevices(){
+      devicesGrid.innerHTML='';
+      DEVICES.forEach((dev,idx)=>{
+        const open=openSessions[dev.id];
+        const statusHtml=open?`<div class="status open">مفتوحة</div>`:`<div class="status idle">خالي</div>`;
+        const infoHtml=open?`<div class="small">${format12FromISO(open.startISO)}</div><div class="small">نوع: ${open.mode==='single'?'فردي':'زوجي'}</div>`:`<div class="small">اضغط بدء</div>`;
+        const controlsHtml=open?`<button class="end" data-action="end" data-idx="${idx}">إنهاء</button>`:`<button class="start" data-action="start" data-idx="${idx}">بدء جلسة</button>`;
+        const wrapper=document.createElement('div');
+        wrapper.className='device';
+        wrapper.innerHTML=`<div class="title"><div><div class="dev-name">${dev.label}</div><div class="dev-sub">سعر/ساعة: ${RATES[dev.type].single}/${RATES[dev.type].double} ج</div></div>${statusHtml}</div><div>${infoHtml}</div><div class="controls">${controlsHtml}</div>`;
+        devicesGrid.appendChild(wrapper);
+      });
+      openCountEl.textContent=Object.keys(openSessions).length;
+    }
 
-    function updateSummary(){ openCountEl.textContent=Object.keys(openSessions).length; let total=0; completedSessionsToday.forEach(s=> total += Number(s.price||0)); const now = nowISO(); Object.values(openSessions).forEach(s=>{ const mins = diffMinutes(s.startISO, now); const rate = RATES[s.rateType][s.mode]; const hoursPrice = (mins/60)*rate; const drinksTotal = (s.drinks||[]).reduce((a,b)=>a+(b.price*b.qty),0); total += hoursPrice + drinksTotal; }); todayRevenueEl.textContent = `${Number(total.toFixed(2))} ج`; }
+    // 🔥 مزامنة Firestore للجلسات المنتهية (Realtime)
+    const q=query(collection(db,'sessions'), orderBy('createdAt','desc'));
+    onSnapshot(q, snap=>{
+      completedTbody.innerHTML='';
+      snap.forEach(docSnap=>{
+        const s=docSnap.data();
+        const drinksTxt = (s.drinks && s.drinks.length) ? s.drinks.map(d=>`${d.name}×${d.qty}`).join(', ') : (s.drinks||'-');
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td>${s.deviceLabel||'-'}</td><td>${format12FromISO(s.startISO||s.start)}</td><td>${format12FromISO(s.endISO||s.end)}</td><td>${s.duration||'-'}</td><td>${drinksTxt}</td><td>${s.price||0} ج</td><td>${s.createdBy||'-'}</td>`;
+        completedTbody.appendChild(tr);
+      });
+    });
 
-    function renderCompleted(){ completedTbody.innerHTML=''; completedSessionsToday.slice().reverse().forEach(s=>{ const tr=document.createElement('tr'); const drinksTxt = (s.drinks && s.drinks.length) ? s.drinks.map(d=>`${d.name}×${d.qty}`).join(', ') : '-'; tr.innerHTML = `<td>${s.deviceLabel}</td><td>${format12FromISO(s.startISO)}</td><td>${format12FromISO(s.endISO)}</td><td>${s.duration}</td><td>${drinksTxt}</td><td>${s.price} ج</td>`; completedTbody.appendChild(tr); }); }
-
-    // events delegation for device buttons
-    devicesGrid.addEventListener('click', (e)=>{ const btn = e.target.closest('button'); if(!btn) return; const action = btn.dataset.action; const idx = Number(btn.dataset.idx); if(action === 'start') openStartModal(idx); if(action === 'add') openAddDrinkModal(idx); if(action === 'end') openEndModal(idx); });
-
-    // start modal
-    let selectedIdx = null;
-    function openStartModal(idx){ selectedIdx = idx; const dev = DEVICES[idx]; startDevice.value = dev.label; sessionKind.value = 'open'; sessionEndTime.value = ''; playMode.value = 'single'; endTimeRow.style.display = 'none'; modalStart.classList.add('active'); }
-    sessionKind.addEventListener('change', ()=> { endTimeRow.style.display = sessionKind.value === 'set' ? 'block' : 'none'; });
-    confirmStart.addEventListener('click', ()=>{ const dev = DEVICES[selectedIdx]; const id = dev.id; const kind = sessionKind.value; let scheduledEndISO = null; if(kind === 'set'){ if(!sessionEndTime.value){ alert('حدد وقت النهاية'); return; } scheduledEndISO = isoFromTimeStr(sessionEndTime.value); } const mode = playMode.value; const startISO = nowISO(); openSessions[id] = { deviceId: id, deviceLabel: dev.label, startISO, scheduledEndISO, mode, drinks: [], rateType: dev.type }; persistLocal(); renderDevices(); modalStart.classList.remove('active'); });
-    cancelStart.addEventListener('click', ()=> modalStart.classList.remove('active'));
-
-    // add drink modal
-    function openAddDrinkModal(idx){ selectedIdx = idx; const dev = DEVICES[idx]; drinkDevice.value = dev.label; drinkSelect.value = ''; drinkQty.value = 1; modalDrink.classList.add('active'); }
-    confirmAddDrink.addEventListener('click', ()=>{ const sel = drinkSelect.value; const qty = Number(drinkQty.value) || 1; if(!sel) return alert('اختر الطلب'); const dev = DEVICES[selectedIdx]; const id = dev.id; const s = openSessions[id]; if(!s) return alert('الجلسة مقفولة'); let name, price; if(sel === 'متنوع'){ name = prompt('ادخل اسم العنصر') || 'متنوع'; price = Number(prompt('ادخل السعر (جنيه)') || 0); } else { [name, price] = sel.split('|'); price = Number(price); } if(!Array.isArray(s.drinks)) s.drinks = []; s.drinks.push({ name, price, qty }); openSessions[id] = s; persistLocal(); renderDevices(); modalDrink.classList.remove('active'); });
-    cancelAddDrink.addEventListener('click', ()=> modalDrink.classList.remove('active'));
-
-    // end modal
-    function openEndModal(idx){ selectedIdx = idx; const dev = DEVICES[idx]; const id = dev.id; const s = openSessions[id]; if(!s) return alert('الجلسة غير موجودة'); endDeviceLabel.textContent = s.deviceLabel; endFrom.value = format12FromISO(s.startISO); const endISO = s.scheduledEndISO || nowISO(); endTo.value = format12FromISO(endISO); const mins = diffMinutes(s.startISO, s.scheduledEndISO || nowISO()); endDuration.value = durationText(mins); endDrinks.value = (s.drinks && s.drinks.length) ? s.drinks.map(d=>`${d.name}×${d.qty}`).join(', ') : '-'; const drinksTotal = (s.drinks||[]).reduce((a,b)=>a+(b.price*b.qty),0); const rate = RATES[s.rateType][s.mode]; const price = Number((((mins/60)*rate) + drinksTotal).toFixed(2)); endTotal.value = price; modalEnd.classList.add('active'); }
-    confirmEnd.addEventListener('click', async ()=>{ const idx = selectedIdx; const dev = DEVICES[idx]; const id = dev.id; const s = openSessions[id]; if(!s) return alert('الجلسة غير موجودة'); const endISO = s.scheduledEndISO || nowISO(); const mins = diffMinutes(s.startISO, endISO); const drinksTotal = (s.drinks||[]).reduce((a,b)=>a+(b.price*b.qty),0); const rate = RATES[s.rateType][s.mode]; const price = Number((((mins/60)*rate) + drinksTotal).toFixed(2)); const finished = { deviceId: s.deviceId, deviceLabel: s.deviceLabel, startISO: s.startISO, endISO, duration: durationText(mins), drinks: s.drinks || [], price }; completedSessionsToday.push(finished); delete openSessions[id]; persistLocal(); renderDevices(); modalEnd.classList.remove('active'); try{ const user = auth.currentUser; const payload = {...finished, createdBy: user ? user.email : 'local', createdAt: new Date().toISOString(), date: new Date().toLocaleDateString('ar-EG') }; await addDoc(collection(db,'sessions'), payload); }catch(err){ console.warn('Firebase save failed (ok if offline):', err.message); } alert('تم إنهاء الجلسة. المجموع: ' + price + ' ج'); });
-    cancelEnd.addEventListener('click', ()=> modalEnd.classList.remove('active'));
-
-    // close modals on backdrop click
-    document.querySelectorAll('.modal-back').forEach(mb=> mb.addEventListener('click', ev=> { if(ev.target===mb) mb.classList.remove('active'); }));
-
-    // logout
-    logoutBtn.addEventListener('click', async ()=> { try{ await signOut(auth); alert('تم تسجيل الخروج'); window.location.href='login.html'; }catch(e){ alert('خطأ تسجيل الخروج'); } });
-
-    // admin button
+    // events
     goAdminBtn.addEventListener('click', ()=> window.location.href='admin.html');
+    logoutBtn.addEventListener('click', async ()=> { await signOut(auth); window.location.href='login.html'; });
 
-    // auth display
-    onAuthStateChanged(auth, user => { if(user) userEmailSpan.textContent = user.email; else userEmailSpan.textContent=''; });
+    onAuthStateChanged(auth, user=>{ if(user) userEmailSpan.textContent=user.email; else window.location.href='login.html'; });
 
-    // init
-    (function init(){ todayStr.textContent = new Date().toLocaleDateString('ar-EG'); initLocal(); renderDevices(); window.__bianco = { openSessions, completedSessionsToday, persistLocal, renderDevices }; })();
+    (function init(){
+      todayStr.textContent = new Date().toLocaleDateString('ar-EG');
+      initLocal(); renderDevices();
+    })();
   </script>
 </body>
 </html>
