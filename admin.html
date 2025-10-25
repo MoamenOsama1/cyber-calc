@@ -271,44 +271,21 @@
       }
     }
 
-    saveEditBtn.onclick = async () => {
-  if (!editingId) return;
-  const ref = doc(db, "sessions", editingId);
-
-  // تحويل الأوقات لوقت بصيغة ISO عشان تظهر صح
-  const now = new Date();
-  const startISO = editStart.value
-    ? new Date(now.getFullYear(), now.getMonth(), now.getDate(), ...editStart.value.split(":").map(Number)).toISOString()
-    : null;
-  const endISO = editEnd.value
-    ? new Date(now.getFullYear(), now.getMonth(), now.getDate(), ...editEnd.value.split(":").map(Number)).toISOString()
-    : null;
-
-  // تحويل الطلبات إلى Array of Objects
-  const drinksArr = editDrinks.value
-    ? editDrinks.value.split(",").map(d => {
-        const [name, qty] = d.trim().split("×");
-        return { name: name || "متنوع", qty: Number(qty) || 1 };
-      })
-    : [];
-
-  await updateDoc(ref, {
-    deviceLabel: editDevice.value,
-    mode: editType.value,
-    startISO,
-    endISO,
-    duration: editDuration.value,
-    price: Number(editPrice.value),
-    drinks: drinksArr,
-    date: new Date().toLocaleDateString("ar-EG"),
-    updatedAt: new Date().toISOString(),
-  });
-
-  editModal.classList.remove("active");
-  alert("✅ تم حفظ التعديلات بنجاح");
-};
-
-
+    saveEditBtn.onclick=async()=>{
+      if(!editingId) return;
+      const ref=doc(db,'sessions',editingId);
+      await updateDoc(ref,{
+        deviceLabel:editDevice.value,
+        mode:editType.value,
+        start:editStart.value,
+        end:editEnd.value,
+        duration:editDuration.value,
+        price:Number(editPrice.value),
+        drinks:editDrinks.value
+      });
+      editModal.classList.remove('active');
+      alert('✅ تم حفظ التعديلات بنجاح');
+    };
 
     cancelEditBtn.onclick=()=>editModal.classList.remove('active');
 
