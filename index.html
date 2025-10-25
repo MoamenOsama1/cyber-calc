@@ -513,7 +513,9 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { 
+  getFirestore, collection, addDoc, onSnapshot, query, orderBy 
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBFI6W1mCbFsG8MfcGxWL0JonZtJ_7P6W0",
@@ -626,6 +628,26 @@
 
     // init
     (function init(){ todayStr.textContent = new Date().toLocaleDateString('ar-EG'); initLocal(); renderDevices(); window.__bianco = { openSessions, completedSessionsToday, persistLocal, renderDevices }; })();
+    // 🔄 مزامنة حية من Firebase لتحديث الصفحة فوراً
+const sessionsCol = collection(db, "sessions");
+const q = query(sessionsCol, orderBy("createdAt", "desc"));
+onSnapshot(q, snap => {
+  const latest = [];
+  snap.forEach(docSnap => latest.push(docSnap.data()));
+  // عرض الجلسات المكتملة مباشرة من Firebase بدل المحلي
+  completedSessionsToday = latest
+    .filter(s => s.date === new Date().toLocaleDateString('ar-EG'))
+    .map(s => ({
+      deviceLabel: s.deviceLabel,
+      startISO: s.startISO || s.start,
+      endISO: s.endISO || s.end,
+      duration: s.duration || '-',
+      drinks: s.drinks || [],
+      price: s.price || 0
+    }));
+  renderDevices();
+});
+
   </script>
 </body>
 </html>
