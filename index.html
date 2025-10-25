@@ -528,6 +528,31 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
+    // 🔄 تحديث فوري من Firebase
+import { onSnapshot, query, orderBy, collection } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+const sessionsCol = collection(db, "sessions");
+const q = query(sessionsCol, orderBy("createdAt", "desc"));
+
+// كل مرة الأدمن يغيّر أو يضيف جلسة، الصفحة دي تتحدث تلقائيًا
+onSnapshot(q, snap => {
+  completedSessionsToday = [];
+  snap.forEach(docSnap => {
+    const s = docSnap.data();
+    if (s.date === new Date().toLocaleDateString('ar-EG')) {
+      completedSessionsToday.push({
+        deviceLabel: s.deviceLabel,
+        startISO: s.startISO || s.start,
+        endISO: s.endISO || s.end,
+        duration: s.duration || '-',
+        drinks: s.drinks || [],
+        price: s.price || 0
+      });
+    }
+  });
+  renderDevices(); // تحدث الواجهة
+});
+
 
     const RATES = { ping:{single:30,double:40}, ps4:{single:30,double:40}, ps5:{single:40,double:50} };
     const DEVICES = []; DEVICES.push({id:'ping',label:'Ping',type:'ping'}); for(let i=1;i<=6;i++) DEVICES.push({id:`ps${i}`,label:`PS4-${i}`,type:'ps4'}); for(let i=7;i<=15;i++) DEVICES.push({id:`ps${i}`,label:`PS5-${i}`,type:'ps5'});
