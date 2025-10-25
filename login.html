@@ -5,84 +5,46 @@
   <title>تسجيل الدخول - Bianco Timer</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
-    :root {
-      --bg1:#050f18;
-      --bg2:#0b1b2b;
-      --card:#0d2136;
-       --accent:#020e07ef;
-      --accent2:#03a9f4;
-      --danger:#ff5252;
-      --text:#eaf2fb;
-      --muted:#b6c5d4;
-    }
-    *{box-sizing:border-box;font-family:"Cairo",sans-serif;direction:rtl;}
-    body{
-      margin:0; padding:0;
-      background:linear-gradient(135deg,var(--bg1),var(--bg2));
-      color:var(--text);
-      min-height:100vh;
-      display:flex; align-items:center; justify-content:center;
-      background-image:url('https://e0.pxfuel.com/wallpapers/239/293/desktop-wallpaper-playstation-background-playstation-blue-ps4.jpg');
-      background-size:cover; background-position:center;
-      backdrop-filter:blur(4px);
-    }
-    .card{
-      background:rgba(58, 138, 212, 0.505);
-      padding:24px;
-      border-radius:16px;
-      box-shadow:0 6px 18px rgb(0, 17, 255);
-      width:100%; max-width:380px;
-      text-align:center;
-      border:1px solid rgba(255,255,255,0.05);
-    }
-    h2{margin:0 0 20px;font-weight:800;font-size:22px;color:#fff;}
-    input{
-      width:100%;padding:12px;margin:8px 0;
-      border:none;border-radius:10px;
-      background:#140a6cb5;color:#fff;
-      font-size:15px;
-    }
-    input:focus{outline:2px solid var(--accent2);}
-    button{
-      width:100%;padding:12px;margin-top:10px;
-      border:none;border-radius:10px;
-      font-weight:700;font-size:15px;
-      cursor:pointer;transition:0.2s;
-    }
-    #loginBtn{background:var(--accent);color:#000;}
-    #registerBtn{background:transparent;border:1px solid var(--accent2);color:var(--accent2);}
-    #loginBtn:hover{transform:scale(1.05);}
-    #registerBtn:hover{background:var(--accent2);color:#fff;}
-    .small{font-size:13px;color:var(--muted);margin-top:10px;}
-    #msg{font-size:14px;margin-top:10px;}
+    body { font-family: Arial, sans-serif; direction: rtl; text-align: center; padding: 30px; background:#f4f7fb; color:#222;}
+    .card { max-width:420px; margin:40px auto; padding:20px; border-radius:8px; background:#fff; box-shadow:0 4px 12px rgba(0,0,0,0.08); }
+    input { width:100%; padding:10px; margin:8px 0; font-size:16px; }
+    button { padding:10px 16px; margin:6px; font-size:16px; cursor:pointer; }
+    .small { font-size:14px; color:#666; }
   </style>
 </head>
 <body>
   <div class="card">
     <h2>🔒 تسجيل الدخول - Bianco Timer</h2>
+
     <input id="email" type="email" placeholder="الايميل" />
-    <input id="password" type="password" placeholder="كلمة المرور" />
-    <button id="loginBtn">دخول</button>
-    <button id="registerBtn">إنشاء حساب جديد</button>
-    <p class="small">مرحبًا بك في نظام إدارة أجهزة Bianco 🎮</p>
-    <p id="msg"></p>
+    <input id="password" type="password" placeholder="الباسورد" />
+
+    <div>
+      <button id="loginBtn">دخول</button>
+      <button id="registerBtn">إنشاء حساب جديد</button>
+    </div>
+
+    <p class="small">مرحبا بك في بلايستيشن بيانكو </p>
+    <p id="msg" class="small"></p>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyBFI6W1mCbFsG8MfcGxWL0JonZtJ_7P6W0",
-      authDomain: "bianco-playstation.firebaseapp.com",
-      projectId: "bianco-playstation",
-      storageBucket: "bianco-playstation.firebasestorage.app",
-      messagingSenderId: "699813217029",
-      appId: "1:699813217029:web:568e169371a2361358ad6c"
-    };
+      const firebaseConfig = {
+  apiKey: "AIzaSyBFI6W1mCbFsG8MfcGxWL0JonZtJ_7P6W0",
+  authDomain: "bianco-playstation.firebaseapp.com",
+  projectId: "bianco-playstation",
+  storageBucket: "bianco-playstation.firebasestorage.app",
+  messagingSenderId: "699813217029",
+  appId: "1:699813217029:web:568e169371a2361358ad6c",
+  measurementId: "G-YE9S5421FR"
+};
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+
     const emailInput = document.getElementById('email');
     const passInput = document.getElementById('password');
     const loginBtn = document.getElementById('loginBtn');
@@ -93,12 +55,10 @@
       msg.textContent = "";
       try {
         await signInWithEmailAndPassword(auth, emailInput.value, passInput.value);
-        msg.style.color = "#00e676";
-        msg.textContent = "تم تسجيل الدخول بنجاح ✔️";
+        // النجاح -> توجيه حسب الدور في الصفحات (server-side role check in app/admin)
         window.location.href = "index.html";
       } catch (e) {
-        msg.style.color = "var(--danger)";
-        msg.textContent = "⚠️ فشل تسجيل الدخول: " + e.message;
+        msg.textContent = "فشل تسجيل الدخول: " + e.message;
       }
     };
 
@@ -106,16 +66,17 @@
       msg.textContent = "";
       try {
         await createUserWithEmailAndPassword(auth, emailInput.value, passInput.value);
-        msg.style.color = "#00e676";
-        msg.textContent = "✅ تم إنشاء الحساب بنجاح! يمكنك الآن تسجيل الدخول.";
+        msg.textContent = "تم إنشاء الحساب. الآن سجل الدخول.";
       } catch (e) {
-        msg.style.color = "var(--danger)";
-        msg.textContent = "⚠️ خطأ: " + e.message;
+        msg.textContent = "خطأ: " + e.message;
       }
     };
 
+    // لو المستخدم مُسجل بالفعل نوجّهه تلقائياً
     onAuthStateChanged(auth, user => {
-      if (user) window.location.href = "index.html";
+      if (user) {
+        window.location.href = "index.html";
+      }
     });
   </script>
 </body>
