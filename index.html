@@ -9,7 +9,7 @@
       --bg1: #050f18;
       --bg2: #0b1b2b;
       --card: #093f76;
-      --accent: #370bfb;
+      --accent: #00c853;
       --accent-2: #03a9f4;
       --muted: #a7b5c4;
       --danger: #ff5252;
@@ -513,9 +513,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import { 
-  getFirestore, collection, addDoc, onSnapshot, query, orderBy 
-} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, onSnapshot, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBFI6W1mCbFsG8MfcGxWL0JonZtJ_7P6W0",
@@ -528,7 +526,6 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
-
 
     const RATES = { ping:{single:30,double:40}, ps4:{single:30,double:40}, ps5:{single:40,double:50} };
     const DEVICES = []; DEVICES.push({id:'ping',label:'Ping',type:'ping'}); for(let i=1;i<=6;i++) DEVICES.push({id:`ps${i}`,label:`PS4-${i}`,type:'ps4'}); for(let i=7;i<=15;i++) DEVICES.push({id:`ps${i}`,label:`PS5-${i}`,type:'ps5'});
@@ -627,28 +624,70 @@
     // auth display
     onAuthStateChanged(auth, user => { if(user) userEmailSpan.textContent = user.email; else userEmailSpan.textContent=''; });
 
-    // init
-    (function init(){ todayStr.textContent = new Date().toLocaleDateString('ar-EG'); initLocal(); renderDevices(); window.__bianco = { openSessions, completedSessionsToday, persistLocal, renderDevices }; })();
-    // 🔄 مزامنة حية من Firebase لتحديث الصفحة فوراً
-const sessionsCol = collection(db, "sessions");
-const q = query(sessionsCol, orderBy("createdAt", "desc"));
-onSnapshot(q, snap => {
-  const latest = [];
-  snap.forEach(docSnap => latest.push(docSnap.data()));
-  // عرض الجلسات المكتملة مباشرة من Firebase بدل المحلي
-  completedSessionsToday = latest
-    .filter(s => s.date === new Date().toLocaleDateString('ar-EG'))
-    .map(s => ({
-      deviceLabel: s.deviceLabel,
-      startISO: s.startISO || s.start,
-      endISO: s.endISO || s.end,
-      duration: s.duration || '-',
-      drinks: s.drinks || [],
-      price: s.price || 0
-    }));
-  renderDevices();
-});
+    // نظام المزامنة التلقائية مع Firebase
+    function syncSessionsFromFirebase() {
+        const today = new Date().toLocaleDateString('ar-EG');
+        const sessionsQuery = query(
+            collection(db, 'sessions'),
+            where('date', '==', today)
+        );
 
+        const unsubscribe = onSnapshot(sessionsQuery, (snapshot) => {
+            const firebaseSessions = [];
+            snapshot.forEach(doc => {
+                firebaseSessions.push({ id: doc.id, ...doc.data() });
+            });
+
+            // تحديث الجلسات المكتملة محليًا بناءً على بيانات Firebase
+            updateLocalSessions(firebaseSessions);
+        });
+
+        return unsubscribe;
+    }
+
+    // دالة لتحديث الجلسات المحلية بناءً على بيانات Firebase
+    function updateLocalSessions(firebaseSessions) {
+        const storage = getStorage();
+        const today = todayKey();
+        
+        if (!storage[today]) return;
+        
+        let updated = false;
+        
+        // تحديث الجلسات المكتملة
+        storage[today].completed = storage[today].completed.map(localSession => {
+            const firebaseSession = firebaseSessions.find(fbSession => 
+                fbSession.deviceId === localSession.deviceId &&
+                fbSession.startISO === localSession.startISO
+            );
+            
+            if (firebaseSession && firebaseSession.price !== localSession.price) {
+                updated = true;
+                return { ...localSession, price: firebaseSession.price };
+            }
+            
+            return localSession;
+        });
+        
+        if (updated) {
+            setStorage(storage);
+            initLocal(); // إعادة تحميل البيانات من Local Storage
+            renderDevices(); // إعادة عرض الواجهة
+            console.log('✅ تم تحديث البيانات من Firebase');
+        }
+    }
+
+    // init
+    (function init(){ 
+        todayStr.textContent = new Date().toLocaleDateString('ar-EG'); 
+        initLocal(); 
+        renderDevices(); 
+        
+        // بدء استماع للتغييرات من Firebase
+        syncSessionsFromFirebase();
+        
+        window.__bianco = { openSessions, completedSessionsToday, persistLocal, renderDevices }; 
+    })();
   </script>
 </body>
 </html>
