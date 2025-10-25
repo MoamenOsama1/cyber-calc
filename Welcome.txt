@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="ar">
+<head>
+  <meta charset="utf-8" />
+  <title>مرحباً - Bianco Timer</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root {
+      --bg: #0d0d0d;
+      --panel: #121216;
+      --accent: #00c853;
+      --muted: #9aa4b2;
+      --glass: rgba(255,255,255,0.04);
+    }
+    
+    body {
+      font-family: "Cairo", Arial, sans-serif;
+      background: var(--bg);
+      color: #fff;
+      direction: rtl;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .welcome-card {
+      background: var(--panel);
+      padding: 30px;
+      border-radius: 15px;
+      border: 1px solid var(--glass);
+      text-align: center;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    
+    .welcome-icon {
+      font-size: 4rem;
+      margin-bottom: 20px;
+    }
+    
+    h1 {
+      margin: 0 0 15px 0;
+      color: var(--accent);
+    }
+    
+    .user-info {
+      background: rgba(255,255,255,0.05);
+      padding: 15px;
+      border-radius: 10px;
+      margin: 20px 0;
+    }
+    
+    .btn {
+      background: var(--accent);
+      border: none;
+      color: #021018;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 10px;
+      transition: transform 0.2s;
+    }
+    
+    .btn:hover {
+      transform: scale(1.05);
+    }
+    
+    .btn.secondary {
+      background: transparent;
+      border: 1px solid var(--glass);
+      color: var(--muted);
+    }
+    
+    .muted {
+      color: var(--muted);
+      font-size: 14px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="welcome-card">
+    <div class="welcome-icon">👋</div>
+    <h1>مرحباً بك في لوحة التحكم</h1>
+    <p>أنت الآن مسجّل الدخول كـ <strong>مشرف</strong> في نظام Bianco Timer</p>
+    
+    <div class="user-info">
+      <div id="userEmailDisplay" class="muted"></div>
+      <div class="muted">وقت الدخول: <span id="loginTime"></span></div>
+    </div>
+    
+    <p>من هنا يمكنك إدارة الجلسات، متابعة الإيرادات، وتعديل البيانات</p>
+    
+    <div>
+      <button id="goToAdmin" class="btn">🚀 دخول لوحة التحكم</button>
+      <button id="logoutBtn" class="btn secondary">تسجيل خروج</button>
+    </div>
+    
+    <div class="muted">
+      يمكنك العودة إلى هذه الصفحة من خلال تسجيل الخروج والدخول مرة أخرى
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBFI6W1mCbFsG8MfcGxWL0JonZtJ_7P6W0",
+      authDomain: "bianco-playstation.firebaseapp.com",
+      projectId: "bianco-playstation",
+      storageBucket: "bianco-playstation.firebasestorage.app",
+      messagingSenderId: "699813217029",
+      appId: "1:699813217029:web:568e169371a2361358ad6c"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    const userEmailDisplay = document.getElementById('userEmailDisplay');
+    const loginTime = document.getElementById('loginTime');
+    const goToAdmin = document.getElementById('goToAdmin');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    // عرض وقت الدخول
+    loginTime.textContent = new Date().toLocaleString('ar-EG', {
+      dateStyle: 'medium',
+      timeStyle: 'medium'
+    });
+
+    // التحقق من صلاحية المستخدم
+    onAuthStateChanged(auth, user => {
+      if (!user) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      userEmailDisplay.textContent = user.email;
+      
+      // قائمة المشرفين المسموح لهم
+      const adminEmails = ["moosama@gmail.com", "ahmed@gmail.com", "mahmoud@gmail.com"];
+      
+      if (!adminEmails.includes(user.email)) {
+        alert('ليس لديك صلاحية مشرف');
+        window.location.href = 'index.html';
+      }
+    });
+
+    // الانتقال إلى لوحة التحكم
+    goToAdmin.onclick = () => {
+      window.location.href = 'admin.html';
+    };
+
+    // تسجيل الخروج
+    logoutBtn.onclick = () => {
+      signOut(auth).then(() => {
+        window.location.href = 'login.html';
+      });
+    };
+  </script>
+</body>
+</html>
