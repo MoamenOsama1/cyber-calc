@@ -32,15 +32,15 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
-      const firebaseConfig = {
-  apiKey: "AIzaSyBFI6W1mCbFsG8MfcGxWL0JonZtJ_7P6W0",
-  authDomain: "bianco-playstation.firebaseapp.com",
-  projectId: "bianco-playstation",
-  storageBucket: "bianco-playstation.firebasestorage.app",
-  messagingSenderId: "699813217029",
-  appId: "1:699813217029:web:568e169371a2361358ad6c",
-  measurementId: "G-YE9S5421FR"
-};
+    const firebaseConfig = {
+      apiKey: "AIzaSyBFI6W1mCbFsG8MfcGxWL0JonZtJ_7P6W0",
+      authDomain: "bianco-playstation.firebaseapp.com",
+      projectId: "bianco-playstation",
+      storageBucket: "bianco-playstation.firebasestorage.app",
+      messagingSenderId: "699813217029",
+      appId: "1:699813217029:web:568e169371a2361358ad6c",
+      measurementId: "G-YE9S5421FR"
+    };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
@@ -54,9 +54,17 @@
     loginBtn.onclick = async () => {
       msg.textContent = "";
       try {
-        await signInWithEmailAndPassword(auth, emailInput.value, passInput.value);
-        // النجاح -> توجيه حسب الدور في الصفحات (server-side role check in app/admin)
-        window.location.href = "index.html";
+        const userCredential = await signInWithEmailAndPassword(auth, emailInput.value, passInput.value);
+        const user = userCredential.user;
+        
+        // التحقق من نوع المستخدم بعد تسجيل الدخول
+        const adminEmails = ["moosama@gmail.com", "ahmed@gmail.com", "mahmoud@gmail.com"];
+        
+        if (adminEmails.includes(user.email)) {
+          window.location.href = "welcome.html";
+        } else {
+          window.location.href = "index.html";
+        }
       } catch (e) {
         msg.textContent = "فشل تسجيل الدخول: " + e.message;
       }
@@ -75,7 +83,15 @@
     // لو المستخدم مُسجل بالفعل نوجّهه تلقائياً
     onAuthStateChanged(auth, user => {
       if (user) {
-        window.location.href = "index.html";
+        // قائمة بريد المشرفين
+        const adminEmails = ["moosama@gmail.com", "ahmed@gmail.com", "mahmoud@gmail.com"];
+        
+        // التحقق من البريد الإلكتروني
+        if (adminEmails.includes(user.email)) {
+          window.location.href = "welcome.html";
+        } else {
+          window.location.href = "index.html";
+        }
       }
     });
   </script>
