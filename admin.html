@@ -271,32 +271,36 @@
       }
     }
 
-    saveEditBtn.onclick=async()=>{
-      if(!editingId) return;
-      const ref=doc(db,'sessions',editingId);
-      saveEditBtn.onclick = async () => {
+    saveEditBtn.onclick = async () => {
   if (!editingId) return;
   const ref = doc(db, "sessions", editingId);
 
-  // نحول الوقت إلى ISO عشان يظهر صح في الـ index
+  // تحويل الأوقات لوقت بصيغة ISO عشان تظهر صح
   const now = new Date();
-  const startTime = editStart.value ? new Date(now.getFullYear(), now.getMonth(), now.getDate(), ...editStart.value.split(':').map(Number)).toISOString() : null;
-  const endTime = editEnd.value ? new Date(now.getFullYear(), now.getMonth(), now.getDate(), ...editEnd.value.split(':').map(Number)).toISOString() : null;
+  const startISO = editStart.value
+    ? new Date(now.getFullYear(), now.getMonth(), now.getDate(), ...editStart.value.split(":").map(Number)).toISOString()
+    : null;
+  const endISO = editEnd.value
+    ? new Date(now.getFullYear(), now.getMonth(), now.getDate(), ...editEnd.value.split(":").map(Number)).toISOString()
+    : null;
+
+  // تحويل الطلبات إلى Array of Objects
+  const drinksArr = editDrinks.value
+    ? editDrinks.value.split(",").map(d => {
+        const [name, qty] = d.trim().split("×");
+        return { name: name || "متنوع", qty: Number(qty) || 1 };
+      })
+    : [];
 
   await updateDoc(ref, {
     deviceLabel: editDevice.value,
     mode: editType.value,
-    startISO: startTime,
-    endISO: endTime,
+    startISO,
+    endISO,
     duration: editDuration.value,
     price: Number(editPrice.value),
-    drinks: editDrinks.value
-      .split(',')
-      .map(str => {
-        const [name, qty] = str.trim().split('×');
-        return name ? { name, qty: Number(qty) || 1 } : null;
-      })
-      .filter(Boolean),
+    drinks: drinksArr,
+    date: new Date().toLocaleDateString("ar-EG"),
     updatedAt: new Date().toISOString(),
   });
 
@@ -304,9 +308,7 @@
   alert("✅ تم حفظ التعديلات بنجاح");
 };
 
-      editModal.classList.remove('active');
-      alert('✅ تم حفظ التعديلات بنجاح');
-    };
+
 
     cancelEditBtn.onclick=()=>editModal.classList.remove('active');
 
