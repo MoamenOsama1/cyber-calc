@@ -274,15 +274,36 @@
     saveEditBtn.onclick=async()=>{
       if(!editingId) return;
       const ref=doc(db,'sessions',editingId);
-      await updateDoc(ref,{
-        deviceLabel:editDevice.value,
-        mode:editType.value,
-        start:editStart.value,
-        end:editEnd.value,
-        duration:editDuration.value,
-        price:Number(editPrice.value),
-        drinks:editDrinks.value
-      });
+      saveEditBtn.onclick = async () => {
+  if (!editingId) return;
+  const ref = doc(db, "sessions", editingId);
+
+  // نحول الوقت إلى ISO عشان يظهر صح في الـ index
+  const now = new Date();
+  const startTime = editStart.value ? new Date(now.getFullYear(), now.getMonth(), now.getDate(), ...editStart.value.split(':').map(Number)).toISOString() : null;
+  const endTime = editEnd.value ? new Date(now.getFullYear(), now.getMonth(), now.getDate(), ...editEnd.value.split(':').map(Number)).toISOString() : null;
+
+  await updateDoc(ref, {
+    deviceLabel: editDevice.value,
+    mode: editType.value,
+    startISO: startTime,
+    endISO: endTime,
+    duration: editDuration.value,
+    price: Number(editPrice.value),
+    drinks: editDrinks.value
+      .split(',')
+      .map(str => {
+        const [name, qty] = str.trim().split('×');
+        return name ? { name, qty: Number(qty) || 1 } : null;
+      })
+      .filter(Boolean),
+    updatedAt: new Date().toISOString(),
+  });
+
+  editModal.classList.remove("active");
+  alert("✅ تم حفظ التعديلات بنجاح");
+};
+
       editModal.classList.remove('active');
       alert('✅ تم حفظ التعديلات بنجاح');
     };
