@@ -86,19 +86,21 @@
 </head>
 <body>
   <div class="welcome-card">
-    <div class="welcome-icon">👋</div>
+    <div class="welcome-icon">👑</div>
     <h1>مرحباً بك في لوحة التحكم</h1>
-    <p>أنت الآن مسجّل الدخول كـ <strong>مشرف</strong> في نظام Bianco Timer</p>
+    <p>أنت الآن مسجّل الدخول كـ <strong style="color: var(--accent);">مشرف</strong> في نظام Bianco Timer</p>
     
     <div class="user-info">
       <div id="userEmailDisplay" class="muted"></div>
       <div class="muted">وقت الدخول: <span id="loginTime"></span></div>
+      <div class="muted" style="color: var(--accent); margin-top: 8px;">🔐 صلاحية: مشرف كامل</div>
     </div>
     
     <p>من هنا يمكنك إدارة الجلسات، متابعة الإيرادات، وتعديل البيانات</p>
     
     <div>
       <button id="goToAdmin" class="btn">🚀 دخول لوحة التحكم</button>
+      <button id="goToMain" class="btn secondary">📊 الصفحة الرئيسية</button>
       <button id="logoutBtn" class="btn secondary">تسجيل خروج</button>
     </div>
     
@@ -126,7 +128,11 @@
     const userEmailDisplay = document.getElementById('userEmailDisplay');
     const loginTime = document.getElementById('loginTime');
     const goToAdmin = document.getElementById('goToAdmin');
+    const goToMain = document.getElementById('goToMain');
     const logoutBtn = document.getElementById('logoutBtn');
+
+    // قائمة المشرفين المسموح لهم
+    const adminEmails = ["moosama@gmail.com", "ahmed@gmail.com", "mahmoud@gmail.com"];
 
     // عرض وقت الدخول
     loginTime.textContent = new Date().toLocaleString('ar-EG', {
@@ -143,11 +149,8 @@
 
       userEmailDisplay.textContent = user.email;
       
-      // قائمة المشرفين المسموح لهم
-      const adminEmails = ["moosama@gmail.com", "ahmed@gmail.com", "mahmoud@gmail.com"];
-      
       if (!adminEmails.includes(user.email)) {
-        alert('ليس لديك صلاحية مشرف');
+        // إذا كان مستخدم عادي، توجيه للصفحة الرئيسية
         window.location.href = 'index.html';
       }
     });
@@ -155,6 +158,11 @@
     // الانتقال إلى لوحة التحكم
     goToAdmin.onclick = () => {
       window.location.href = 'admin.html';
+    };
+
+    // الانتقال إلى الصفحة الرئيسية
+    goToMain.onclick = () => {
+      window.location.href = 'index.html';
     };
 
     // تسجيل الخروج
