@@ -118,7 +118,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import { getFirestore, collection, onSnapshot, query, orderBy, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { getFirestore, collection, onSnapshot, query, orderBy, doc, deleteDoc, updateDoc, where, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBFI6W1mCbFsG8MfcGxWL0JonZtJ_7P6W0",
@@ -181,6 +181,37 @@
       const suffix=h>=12?'مساءً':'صباحًا';
       const hh=h%12||12;
       return `${hh}:${m.toString().padStart(2,'0')} ${suffix}`;
+    }
+
+    // 🔄 دالة لحفظ التعديلات في collection منفصل للمزامنة
+    async function saveEditToSyncCollection(sessionId, updatedData) {
+        try {
+            const syncRef = collection(db, 'sessionUpdates');
+            const q = query(syncRef, where("sessionId", "==", sessionId));
+            const querySnapshot = await getDocs(q);
+            
+            if (!querySnapshot.empty) {
+                // تحديث السجل الموجود
+                const docId = querySnapshot.docs[0].id;
+                await updateDoc(doc(db, 'sessionUpdates', docId), {
+                    ...updatedData,
+                    updatedAt: new Date().toISOString(),
+                    updatedBy: auth.currentUser.email
+                });
+            } else {
+                // إنشاء سجل جديد
+                await addDoc(syncRef, {
+                    sessionId,
+                    ...updatedData,
+                    updatedAt: new Date().toISOString(),
+                    updatedBy: auth.currentUser.email,
+                    date: new Date().toLocaleDateString('ar-EG')
+                });
+            }
+            console.log('✅ تم حفظ التعديلات في collection المزامنة');
+        } catch (error) {
+            console.error('❌ خطأ في حفظ التعديلات للمزامنة:', error);
+        }
     }
 
     const sessionsCol=collection(db,'sessions');
@@ -273,18 +304,48 @@
 
     saveEditBtn.onclick=async()=>{
       if(!editingId) return;
-      const ref=doc(db,'sessions',editingId);
-      await updateDoc(ref,{
+      const session=allSessions.find(x=>x.id===editingId);
+      if(!session) return;
+      
+      const originalSession=session.data;
+      
+      // البيانات المحدثة
+      const updatedData={
         deviceLabel:editDevice.value,
         mode:editType.value,
-        start:editStart.value,
-        end:editEnd.value,
+        startISO:parseToISO(editStart.value)||originalSession.startISO,
+        endISO:parseToISO(editEnd.value)||originalSession.endISO,
         duration:editDuration.value,
         price:Number(editPrice.value),
-        drinks:editDrinks.value
-      });
-      editModal.classList.remove('active');
-      alert('✅ تم حفظ التعديلات بنجاح');
+        drinks:editDrinks.value,
+        // الحفاظ على البيانات الأصلية المهمة
+        deviceId:originalSession.deviceId,
+        startISO:originalSession.startISO,
+        endISO:originalSession.endISO,
+        createdBy:originalSession.createdBy,
+        date:originalSession.date
+      };
+
+      try{
+        // تحديث الجلسة الأصلية
+        const ref=doc(db,'sessions',editingId);
+        await updateDoc(ref,updatedData);
+        
+        // 🔄 حفظ التعديلات في collection منفصل للمزامنة
+        await saveEditToSyncCollection(editingId, {
+            deviceLabel: updatedData.deviceLabel,
+            price: updatedData.price,
+            drinks: updatedData.drinks,
+            mode: updatedData.mode,
+            duration: updatedData.duration,
+            originalCreatedBy: originalSession.createdBy
+        });
+        
+        editModal.classList.remove('active');
+        alert('✅ تم حفظ التعديلات بنجاح وسيتم مزامنتها مع جميع الأجهزة');
+      }catch(error){
+        alert('❌ حدث خطأ في حفظ التعديلات: '+error.message);
+      }
     };
 
     cancelEditBtn.onclick=()=>editModal.classList.remove('active');
@@ -325,7 +386,7 @@
       if(!user){window.location.href='login.html';return;}
       userEmail.textContent=user.email;
       if(!adminEmails.includes(user.email)){
-        alert('ليس لديك صلاحية مشرف');
+        alert('⚠️ ليس لديك صلاحية مشرف');
         window.location.href='index.html';
       }
     });
