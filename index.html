@@ -552,7 +552,6 @@
 
     const STORAGE_KEY='biancoSessionsLocal';
     
-    // إزالة نظام المسح التلقائي بعد 24 ساعة
     function getStorage(){ try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}')}catch(e){return{}} }
     function setStorage(o){ localStorage.setItem(STORAGE_KEY,JSON.stringify(o)) }
     function todayKey(){ return new Date().toLocaleDateString('ar-EG') }
@@ -624,56 +623,103 @@
     function durationText(mins){ const h=Math.floor(mins/60), m=mins%60; return `${h} س ${m} د`; }
     function isoFromTimeStr(timeStr){ const [hh,mm]=timeStr.split(':').map(Number); const now=new Date(); const d=new Date(now.getFullYear(),now.getMonth(),now.getDate(),hh,mm,0); if(d<=now) d.setDate(d.getDate()+1); return d.toISOString(); }
 
-    // 🔄 نظام مزامنة الجلسات المفتوحة مع Firebase
+    // 🔄 نظام مزامنة الجلسات المفتوحة مع Firebase - الإصدار المعدل
     function syncOpenSessionsWithFirebase() {
         const openSessionsRef = collection(db, 'openSessions');
         
-        // الاستماع للتغييرات في الجلسات المفتوحة
+        console.log('🚀 بدء مزامنة الجلسات المفتوحة...');
+        
         const unsubscribe = onSnapshot(openSessionsRef, (snapshot) => {
             const firebaseOpenSessions = {};
             snapshot.forEach(doc => {
                 const session = doc.data();
-                firebaseOpenSessions[session.deviceId] = session;
+                firebaseOpenSessions[session.deviceId] = {
+                    ...session,
+                    firebaseId: doc.id // حفظ الـ ID من Firebase
+                };
             });
             
-            console.log('🔄 مزامنة الجلسات المفتوحة من Firebase:', Object.keys(firebaseOpenSessions).length, 'جلسة');
+            console.log('📡 تم استلام الجلسات المفتوحة من Firebase:', Object.keys(firebaseOpenSessions));
             
-            // تحديث الجلسات المحلية
+            let hasChanges = false;
+            
+            // تحديث الجلسات المحلية من Firebase
             Object.keys(firebaseOpenSessions).forEach(deviceId => {
-                openSessions[deviceId] = firebaseOpenSessions[deviceId];
+                const firebaseSession = firebaseOpenSessions[deviceId];
+                const localSession = openSessions[deviceId];
+                
+                // إذا كانت الجلسة غير موجودة محلياً أو مختلفة
+                if (!localSession || 
+                    localSession.startISO !== firebaseSession.startISO ||
+                    localSession.mode !== firebaseSession.mode) {
+                    
+                    openSessions[deviceId] = {
+                        deviceId: firebaseSession.deviceId,
+                        deviceLabel: firebaseSession.deviceLabel,
+                        startISO: firebaseSession.startISO,
+                        scheduledEndISO: firebaseSession.scheduledEndISO,
+                        mode: firebaseSession.mode,
+                        drinks: firebaseSession.drinks || [],
+                        rateType: firebaseSession.rateType,
+                        firebaseId: firebaseSession.firebaseId
+                    };
+                    hasChanges = true;
+                }
             });
             
-            persistLocal();
-            renderDevices();
+            // حذف الجلسات المحلية التي لم تعد موجودة في Firebase
+            Object.keys(openSessions).forEach(deviceId => {
+                if (!firebaseOpenSessions[deviceId]) {
+                    delete openSessions[deviceId];
+                    hasChanges = true;
+                }
+            });
+            
+            if (hasChanges) {
+                persistLocal();
+                renderDevices();
+                console.log('✅ تم تحديث الجلسات المفتوحة من Firebase');
+            }
+        }, (error) => {
+            console.error('❌ خطأ في مزامنة الجلسات المفتوحة:', error);
         });
         
         return unsubscribe;
     }
 
-    // 💾 حفظ الجلسات المفتوحة في Firebase
+    // 💾 حفظ الجلسات المفتوحة في Firebase - الإصدار المعدل
     async function saveOpenSessionToFirebase(session) {
         try {
             const openSessionsRef = collection(db, 'openSessions');
             
-            // البحث عن جلسة موجودة لنفس الجهاز
-            const q = query(openSessionsRef, where("deviceId", "==", session.deviceId));
-            const querySnapshot = await getDocs(q);
-            
-            if (!querySnapshot.empty) {
-                // تحديث الجلسة الموجودة
-                const docId = querySnapshot.docs[0].id;
-                await updateDoc(doc(db, 'openSessions', docId), session);
+            // إذا كان فيه firebaseId موجود، نستخدمه للتحديث
+            if (session.firebaseId) {
+                await updateDoc(doc(db, 'openSessions', session.firebaseId), session);
+                console.log('✅ تم تحديث الجلسة المفتوحة في Firebase:', session.deviceId);
             } else {
-                // إضافة جلسة جديدة
-                await addDoc(openSessionsRef, session);
+                // البحث عن جلسة موجودة لنفس الجهاز
+                const q = query(openSessionsRef, where("deviceId", "==", session.deviceId));
+                const querySnapshot = await getDocs(q);
+                
+                if (!querySnapshot.empty) {
+                    // تحديث الجلسة الموجودة
+                    const docId = querySnapshot.docs[0].id;
+                    await updateDoc(doc(db, 'openSessions', docId), session);
+                    console.log('✅ تم تحديث الجلسة المفتوحة في Firebase:', session.deviceId);
+                } else {
+                    // إضافة جلسة جديدة
+                    const docRef = await addDoc(openSessionsRef, session);
+                    // حفظ الـ ID في الجلسة المحلية
+                    session.firebaseId = docRef.id;
+                    console.log('✅ تم إضافة جلسة مفتوحة جديدة في Firebase:', session.deviceId);
+                }
             }
-            console.log('✅ تم حفظ الجلسة المفتوحة في Firebase');
         } catch (error) {
             console.error('❌ خطأ في حفظ الجلسة المفتوحة:', error);
         }
     }
 
-    // 🗑️ حذف الجلسة المفتوحة من Firebase
+    // 🗑️ حذف الجلسة المفتوحة من Firebase - الإصدار المعدل
     async function removeOpenSessionFromFirebase(deviceId) {
         try {
             const openSessionsRef = collection(db, 'openSessions');
@@ -681,9 +727,11 @@
             const querySnapshot = await getDocs(q);
             
             if (!querySnapshot.empty) {
-                const docId = querySnapshot.docs[0].id;
-                await deleteDoc(doc(db, 'openSessions', docId));
-                console.log('✅ تم حذف الجلسة المفتوحة من Firebase');
+                const deletePromises = querySnapshot.docs.map(doc => 
+                    deleteDoc(doc.ref)
+                );
+                await Promise.all(deletePromises);
+                console.log('✅ تم حذف الجلسة المفتوحة من Firebase:', deviceId);
             }
         } catch (error) {
             console.error('❌ خطأ في حذف الجلسة المفتوحة:', error);
@@ -692,10 +740,10 @@
 
     // 🔄 نظام استماع لتعديلات الأدمن على الجلسات
     function listenForAdminUpdates() {
-        const today = new Date().toLocaleDateString('ar-EG');
+        console.log('🚀 بدء الاستماع لتحديثات الأدمن...');
+        
         const updatesQuery = query(
-            collection(db, 'sessionUpdates'),
-            where("date", "==", today)
+            collection(db, 'sessionUpdates')
         );
 
         const unsubscribe = onSnapshot(updatesQuery, (snapshot) => {
@@ -708,6 +756,8 @@
                     updateLocalSessionWithAdminChanges(update);
                 }
             });
+        }, (error) => {
+            console.error('❌ خطأ في الاستماع لتحديثات الأدمن:', error);
         });
 
         return unsubscribe;
@@ -722,23 +772,30 @@
         
         let updated = false;
         
-        // البحث عن الجلسة المطلوبة وتحديثها
+        // تحديث الجلسات المكتملة بناءً على sessionId
         storage[today].completed = storage[today].completed.map(session => {
-            // المقارنة بناءً على deviceId و startISO (المعرف الفريد للجلسة)
-            if (session.deviceId === update.deviceId && 
-                session.startISO === update.startISO) {
+            if (update.sessionId) {
+                // البحث في الجلسات المكتملة المحلية التي تم حفظها في Firebase
+                const localSessionInFirebase = allCompletedSessionsFromFirebase.find(
+                    fbSession => fbSession.id === update.sessionId
+                );
                 
-                console.log('✅找到了 الجلسة للتحديث:', session.deviceLabel);
-                
-                updated = true;
-                return {
-                    ...session,
-                    deviceLabel: update.deviceLabel || session.deviceLabel,
-                    price: update.price || session.price,
-                    drinks: update.drinks || session.drinks,
-                    mode: update.mode || session.mode,
-                    duration: update.duration || session.duration
-                };
+                if (localSessionInFirebase && 
+                    localSessionInFirebase.deviceId === session.deviceId &&
+                    localSessionInFirebase.startISO === session.startISO) {
+                    
+                    console.log('✅找到 الجلسة للتحديث من الأدمن:', session.deviceLabel);
+                    
+                    updated = true;
+                    return {
+                        ...session,
+                        deviceLabel: update.deviceLabel || session.deviceLabel,
+                        price: update.price !== undefined ? update.price : session.price,
+                        drinks: update.drinks || session.drinks,
+                        mode: update.mode || session.mode,
+                        duration: update.duration || session.duration
+                    };
+                }
             }
             return session;
         });
@@ -747,36 +804,42 @@
             setStorage(storage);
             initLocal();
             renderDevices();
-            alert('🔄 تم تحديث الجلسة من قبل المشرف: ' + (update.deviceLabel || ''));
             console.log('✅ تم تحديث الجلسة المحلية بناءً على تعديل الأدمن');
         }
     }
 
-    // 🔄 تحديث دالة syncSessionsFromFirebase لتشمل التعديلات
-    function syncSessionsFromFirebase() {
-        const today = new Date().toLocaleDateString('ar-EG');
+    let allCompletedSessionsFromFirebase = [];
+
+    // 🔄 مزامنة الجلسات المكتملة من Firebase
+    function syncCompletedSessionsFromFirebase() {
+        console.log('🚀 بدء مزامنة الجلسات المكتملة...');
+        
         const sessionsQuery = query(
             collection(db, 'sessions'),
-            where('date', "==", today)
+            where("date", "==", todayKey())
         );
 
         const unsubscribe = onSnapshot(sessionsQuery, (snapshot) => {
-            const firebaseSessions = [];
+            allCompletedSessionsFromFirebase = [];
             snapshot.forEach(doc => {
-                firebaseSessions.push({ id: doc.id, ...doc.data() });
+                allCompletedSessionsFromFirebase.push({ 
+                    id: doc.id, 
+                    ...doc.data() 
+                });
             });
 
-            console.log('📡 بيانات Firebase المستلمة:', firebaseSessions.length, 'جلسة');
+            console.log('📡 تم استلام الجلسات المكتملة من Firebase:', allCompletedSessionsFromFirebase.length);
             
-            // تحديث الجلسات المحلية بناءً على بيانات Firebase
-            updateLocalSessionsFromFirebase(firebaseSessions);
+            updateLocalCompletedSessionsFromFirebase(allCompletedSessionsFromFirebase);
+        }, (error) => {
+            console.error('❌ خطأ في مزامنة الجلسات المكتملة:', error);
         });
 
         return unsubscribe;
     }
 
-    // 🔄 دالة محدثة لتحديث الجلسات المحلية
-    function updateLocalSessionsFromFirebase(firebaseSessions) {
+    // 🔄 تحديث الجلسات المكتملة المحلية من Firebase
+    function updateLocalCompletedSessionsFromFirebase(firebaseSessions) {
         const storage = getStorage();
         const today = todayKey();
         
@@ -784,72 +847,222 @@
         
         let updated = false;
         
-        // تحديث الجلسات المكتملة
-        storage[today].completed = storage[today].completed.map(localSession => {
-            const firebaseSession = firebaseSessions.find(fbSession => 
-                fbSession.deviceId === localSession.deviceId &&
-                fbSession.startISO === localSession.startISO
+        // دمج الجلسات من Firebase مع الجلسات المحلية
+        firebaseSessions.forEach(fbSession => {
+            const existsLocally = storage[today].completed.some(localSession =>
+                localSession.deviceId === fbSession.deviceId &&
+                localSession.startISO === fbSession.startISO
             );
             
-            if (firebaseSession) {
-                // التحقق إذا كان هناك تغيير في السعر
-                if (firebaseSession.price !== localSession.price) {
-                    updated = true;
-                    return { ...localSession, price: firebaseSession.price };
-                }
-                
-                // التحقق من التغييرات الأخرى
-                if (firebaseSession.deviceLabel !== localSession.deviceLabel ||
-                    JSON.stringify(firebaseSession.drinks) !== JSON.stringify(localSession.drinks) ||
-                    firebaseSession.mode !== localSession.mode ||
-                    firebaseSession.duration !== localSession.duration) {
-                    
-                    updated = true;
-                    return {
-                        ...localSession,
-                        deviceLabel: firebaseSession.deviceLabel,
-                        drinks: firebaseSession.drinks,
-                        mode: firebaseSession.mode,
-                        duration: firebaseSession.duration
-                    };
-                }
+            if (!existsLocally) {
+                // إضافة الجلسة من Firebase إذا غير موجودة محلياً
+                storage[today].completed.push({
+                    deviceId: fbSession.deviceId,
+                    deviceLabel: fbSession.deviceLabel,
+                    startISO: fbSession.startISO,
+                    endISO: fbSession.endISO,
+                    duration: fbSession.duration,
+                    drinks: fbSession.drinks || [],
+                    price: fbSession.price || 0
+                });
+                updated = true;
+            } else {
+                // تحديث الجلسة المحلية إذا كانت مختلفة
+                storage[today].completed = storage[today].completed.map(localSession => {
+                    if (localSession.deviceId === fbSession.deviceId &&
+                        localSession.startISO === fbSession.startISO) {
+                        
+                        if (localSession.price !== fbSession.price ||
+                            localSession.deviceLabel !== fbSession.deviceLabel ||
+                            JSON.stringify(localSession.drinks) !== JSON.stringify(fbSession.drinks || []) ||
+                            localSession.duration !== fbSession.duration) {
+                            
+                            updated = true;
+                            return {
+                                ...localSession,
+                                deviceLabel: fbSession.deviceLabel,
+                                price: fbSession.price,
+                                drinks: fbSession.drinks || [],
+                                duration: fbSession.duration
+                            };
+                        }
+                    }
+                    return localSession;
+                });
             }
-            
-            return localSession;
         });
         
         if (updated) {
             setStorage(storage);
             initLocal();
             renderDevices();
-            console.log('✅ تم تحديث البيانات من Firebase');
+            console.log('✅ تم تحديث الجلسات المكتملة من Firebase');
         }
     }
 
-    // render
-    function renderDevices(){ devicesGrid.innerHTML=''; DEVICES.forEach((dev,idx)=>{ const open=openSessions[dev.id]; const statusHtml=open?`<div class="status open">مفتوحة</div>`:`<div class="status idle">خالي</div>`; const infoHtml=open?`<div class="small">${format12FromISO(open.startISO)} ${open.scheduledEndISO? '→ ' + format12FromISO(open.scheduledEndISO): ''}</div><div class="small">نوع: ${open.mode==='single'?'فردي':'زوجي'}</div>`:`<div class="small">اضغط بدء</div>`; const controlsHtml=open?`<button class="end" data-action="end" data-idx="${idx}">إنهاء</button><button class="add" data-action="add" data-idx="${idx}">➕ طلب</button>`:`<button class="start" data-action="start" data-idx="${idx}">بدء جلسة</button>`; const wrapper=document.createElement('div'); wrapper.className='device'; wrapper.innerHTML=`<div class="title"><div><div class="dev-name">${dev.label}</div><div class="dev-sub">سعر/ساعة: ${RATES[dev.type].single}/${RATES[dev.type].double} ج</div></div>${statusHtml}</div><div>${infoHtml}</div><div class="controls">${controlsHtml}</div>`; devicesGrid.appendChild(wrapper); }); updateSummary(); renderCompleted(); }
+    // render functions
+    function renderDevices(){ 
+        devicesGrid.innerHTML=''; 
+        DEVICES.forEach((dev,idx)=>{ 
+            const open=openSessions[dev.id]; 
+            const statusHtml=open?`<div class="status open">مفتوحة</div>`:`<div class="status idle">خالي</div>`; 
+            const infoHtml=open?`<div class="small">${format12FromISO(open.startISO)} ${open.scheduledEndISO? '→ ' + format12FromISO(open.scheduledEndISO): ''}</div><div class="small">نوع: ${open.mode==='single'?'فردي':'زوجي'}</div>`:`<div class="small">اضغط بدء</div>`; 
+            const controlsHtml=open?`<button class="end" data-action="end" data-idx="${idx}">إنهاء</button><button class="add" data-action="add" data-idx="${idx}">➕ طلب</button>`:`<button class="start" data-action="start" data-idx="${idx}">بدء جلسة</button>`; 
+            const wrapper=document.createElement('div'); 
+            wrapper.className='device'; 
+            wrapper.innerHTML=`<div class="title"><div><div class="dev-name">${dev.label}</div><div class="dev-sub">سعر/ساعة: ${RATES[dev.type].single}/${RATES[dev.type].double} ج</div></div>${statusHtml}</div><div>${infoHtml}</div><div class="controls">${controlsHtml}</div>`; 
+            devicesGrid.appendChild(wrapper); 
+        }); 
+        updateSummary(); 
+        renderCompleted(); 
+    }
 
-    function updateSummary(){ openCountEl.textContent=Object.keys(openSessions).length; let total=0; completedSessionsToday.forEach(s=> total += Number(s.price||0)); const now = nowISO(); Object.values(openSessions).forEach(s=>{ const mins = diffMinutes(s.startISO, now); const rate = RATES[s.rateType][s.mode]; const hoursPrice = (mins/60)*rate; const drinksTotal = (s.drinks||[]).reduce((a,b)=>a+(b.price*b.qty),0); total += hoursPrice + drinksTotal; }); todayRevenueEl.textContent = `${Number(total.toFixed(2))} ج`; }
+    function updateSummary(){ 
+        openCountEl.textContent=Object.keys(openSessions).length; 
+        let total=0; 
+        completedSessionsToday.forEach(s=> total += Number(s.price||0)); 
+        const now = nowISO(); 
+        Object.values(openSessions).forEach(s=>{ 
+            const mins = diffMinutes(s.startISO, now); 
+            const rate = RATES[s.rateType][s.mode]; 
+            const hoursPrice = (mins/60)*rate; 
+            const drinksTotal = (s.drinks||[]).reduce((a,b)=>a+(b.price*b.qty),0); 
+            total += hoursPrice + drinksTotal; 
+        }); 
+        todayRevenueEl.textContent = `${Number(total.toFixed(2))} ج`; 
+    }
 
-    function renderCompleted(){ completedTbody.innerHTML=''; completedSessionsToday.slice().reverse().forEach(s=>{ const tr=document.createElement('tr'); const drinksTxt = (s.drinks && s.drinks.length) ? s.drinks.map(d=>`${d.name}×${d.qty}`).join(', ') : '-'; tr.innerHTML = `<td>${s.deviceLabel}</td><td>${format12FromISO(s.startISO)}</td><td>${format12FromISO(s.endISO)}</td><td>${s.duration}</td><td>${drinksTxt}</td><td>${s.price} ج</td>`; completedTbody.appendChild(tr); }); }
+    function renderCompleted(){ 
+        completedTbody.innerHTML=''; 
+        completedSessionsToday.slice().reverse().forEach(s=>{ 
+            const tr=document.createElement('tr'); 
+            const drinksTxt = (s.drinks && s.drinks.length) ? s.drinks.map(d=>`${d.name}×${d.qty}`).join(', ') : '-'; 
+            tr.innerHTML = `<td>${s.deviceLabel}</td><td>${format12FromISO(s.startISO)}</td><td>${format12FromISO(s.endISO)}</td><td>${s.duration}</td><td>${drinksTxt}</td><td>${s.price} ج</td>`; 
+            completedTbody.appendChild(tr); 
+        }); 
+    }
 
     // events delegation for device buttons
-    devicesGrid.addEventListener('click', (e)=>{ const btn = e.target.closest('button'); if(!btn) return; const action = btn.dataset.action; const idx = Number(btn.dataset.idx); if(action === 'start') openStartModal(idx); if(action === 'add') openAddDrinkModal(idx); if(action === 'end') openEndModal(idx); });
+    devicesGrid.addEventListener('click', (e)=>{ 
+        const btn = e.target.closest('button'); 
+        if(!btn) return; 
+        const action = btn.dataset.action; 
+        const idx = Number(btn.dataset.idx); 
+        if(action === 'start') openStartModal(idx); 
+        if(action === 'add') openAddDrinkModal(idx); 
+        if(action === 'end') openEndModal(idx); 
+    });
 
     // start modal
     let selectedIdx = null;
-    function openStartModal(idx){ selectedIdx = idx; const dev = DEVICES[idx]; startDevice.value = dev.label; sessionKind.value = 'open'; sessionEndTime.value = ''; playMode.value = 'single'; endTimeRow.style.display = 'none'; modalStart.classList.add('active'); }
-    sessionKind.addEventListener('change', ()=> { endTimeRow.style.display = sessionKind.value === 'set' ? 'block' : 'none'; });
-    confirmStart.addEventListener('click', async ()=>{ const dev = DEVICES[selectedIdx]; const id = dev.id; const kind = sessionKind.value; let scheduledEndISO = null; if(kind === 'set'){ if(!sessionEndTime.value){ alert('حدد وقت النهاية'); return; } scheduledEndISO = isoFromTimeStr(sessionEndTime.value); } const mode = playMode.value; const startISO = nowISO(); openSessions[id] = { deviceId: id, deviceLabel: dev.label, startISO, scheduledEndISO, mode, drinks: [], rateType: dev.type }; persistLocal(); await saveOpenSessionToFirebase(openSessions[id]); renderDevices(); modalStart.classList.remove('active'); });
+    function openStartModal(idx){ 
+        selectedIdx = idx; 
+        const dev = DEVICES[idx]; 
+        startDevice.value = dev.label; 
+        sessionKind.value = 'open'; 
+        sessionEndTime.value = ''; 
+        playMode.value = 'single'; 
+        endTimeRow.style.display = 'none'; 
+        modalStart.classList.add('active'); 
+    }
+    
+    sessionKind.addEventListener('change', ()=> { 
+        endTimeRow.style.display = sessionKind.value === 'set' ? 'block' : 'none'; 
+    });
+    
+    confirmStart.addEventListener('click', async ()=>{ 
+        const dev = DEVICES[selectedIdx]; 
+        const id = dev.id; 
+        const kind = sessionKind.value; 
+        let scheduledEndISO = null; 
+        if(kind === 'set'){ 
+            if(!sessionEndTime.value){ 
+                alert('حدد وقت النهاية'); 
+                return; 
+            } 
+            scheduledEndISO = isoFromTimeStr(sessionEndTime.value); 
+        } 
+        const mode = playMode.value; 
+        const startISO = nowISO(); 
+        
+        const newSession = { 
+            deviceId: id, 
+            deviceLabel: dev.label, 
+            startISO, 
+            scheduledEndISO, 
+            mode, 
+            drinks: [], 
+            rateType: dev.type 
+        };
+        
+        openSessions[id] = newSession;
+        persistLocal(); 
+        await saveOpenSessionToFirebase(newSession);
+        renderDevices(); 
+        modalStart.classList.remove('active'); 
+    });
+    
     cancelStart.addEventListener('click', ()=> modalStart.classList.remove('active'));
 
     // add drink modal
-    function openAddDrinkModal(idx){ selectedIdx = idx; const dev = DEVICES[idx]; drinkDevice.value = dev.label; drinkSelect.value = ''; drinkQty.value = 1; modalDrink.classList.add('active'); }
-    confirmAddDrink.addEventListener('click', async ()=>{ const sel = drinkSelect.value; const qty = Number(drinkQty.value) || 1; if(!sel) return alert('اختر الطلب'); const dev = DEVICES[selectedIdx]; const id = dev.id; const s = openSessions[id]; if(!s) return alert('الجلسة مقفولة'); let name, price; if(sel === 'متنوع'){ name = prompt('ادخل اسم العنصر') || 'متنوع'; price = Number(prompt('ادخل السعر (جنيه)') || 0); } else { [name, price] = sel.split('|'); price = Number(price); } if(!Array.isArray(s.drinks)) s.drinks = []; s.drinks.push({ name, price, qty }); openSessions[id] = s; persistLocal(); await saveOpenSessionToFirebase(s); renderDevices(); modalDrink.classList.remove('active'); });
+    function openAddDrinkModal(idx){ 
+        selectedIdx = idx; 
+        const dev = DEVICES[idx]; 
+        drinkDevice.value = dev.label; 
+        drinkSelect.value = ''; 
+        drinkQty.value = 1; 
+        modalDrink.classList.add('active'); 
+    }
+    
+    confirmAddDrink.addEventListener('click', async ()=>{ 
+        const sel = drinkSelect.value; 
+        const qty = Number(drinkQty.value) || 1; 
+        if(!sel) return alert('اختر الطلب'); 
+        const dev = DEVICES[selectedIdx]; 
+        const id = dev.id; 
+        const s = openSessions[id]; 
+        if(!s) return alert('الجلسة مقفولة'); 
+        
+        let name, price; 
+        if(sel === 'متنوع'){ 
+            name = prompt('ادخل اسم العنصر') || 'متنوع'; 
+            price = Number(prompt('ادخل السعر (جنيه)') || 0); 
+        } else { 
+            [name, price] = sel.split('|'); 
+            price = Number(price); 
+        } 
+        
+        if(!Array.isArray(s.drinks)) s.drinks = []; 
+        s.drinks.push({ name, price, qty }); 
+        openSessions[id] = s; 
+        persistLocal(); 
+        await saveOpenSessionToFirebase(s); 
+        renderDevices(); 
+        modalDrink.classList.remove('active'); 
+    });
+    
     cancelAddDrink.addEventListener('click', ()=> modalDrink.classList.remove('active'));
 
     // end modal
-    function openEndModal(idx){ selectedIdx = idx; const dev = DEVICES[idx]; const id = dev.id; const s = openSessions[id]; if(!s) return alert('الجلسة غير موجودة'); endDeviceLabel.textContent = s.deviceLabel; endFrom.value = format12FromISO(s.startISO); const endISO = s.scheduledEndISO || nowISO(); endTo.value = format12FromISO(endISO); const mins = diffMinutes(s.startISO, s.scheduledEndISO || nowISO()); endDuration.value = durationText(mins); endDrinks.value = (s.drinks && s.drinks.length) ? s.drinks.map(d=>`${d.name}×${d.qty}`).join(', ') : '-'; const drinksTotal = (s.drinks||[]).reduce((a,b)=>a+(b.price*b.qty),0); const rate = RATES[s.rateType][s.mode]; const price = Number((((mins/60)*rate) + drinksTotal).toFixed(2)); endTotal.value = price; modalEnd.classList.add('active'); }
+    function openEndModal(idx){ 
+        selectedIdx = idx; 
+        const dev = DEVICES[idx]; 
+        const id = dev.id; 
+        const s = openSessions[id]; 
+        if(!s) return alert('الجلسة غير موجودة'); 
+        endDeviceLabel.textContent = s.deviceLabel; 
+        endFrom.value = format12FromISO(s.startISO); 
+        const endISO = s.scheduledEndISO || nowISO(); 
+        endTo.value = format12FromISO(endISO); 
+        const mins = diffMinutes(s.startISO, s.scheduledEndISO || nowISO()); 
+        endDuration.value = durationText(mins); 
+        endDrinks.value = (s.drinks && s.drinks.length) ? s.drinks.map(d=>`${d.name}×${d.qty}`).join(', ') : '-'; 
+        const drinksTotal = (s.drinks||[]).reduce((a,b)=>a+(b.price*b.qty),0); 
+        const rate = RATES[s.rateType][s.mode]; 
+        const price = Number((((mins/60)*rate) + drinksTotal).toFixed(2)); 
+        endTotal.value = price; 
+        modalEnd.classList.add('active'); 
+    }
 
     confirmEnd.addEventListener('click', async ()=>{ 
       const idx = selectedIdx; 
@@ -889,11 +1102,10 @@
           createdBy: user ? user.email : 'local', 
           createdAt: now.toISOString(),
           date: now.toLocaleDateString('ar-EG'),
-          // إضافة الحقول المفقودة لتظهر في صفحة الأدمن
           start: finished.startISO,
           end: finished.endISO,
           mode: s.mode,
-          type: s.mode, // للحفاظ على التوافق
+          type: s.mode,
           deviceLabel: s.deviceLabel,
           price: price,
           drinks: s.drinks || []
@@ -951,9 +1163,7 @@
     syncBtn.addEventListener('click', async () => {
       alert('🔄 جاري مزامنة البيانات مع السحابة...');
       // إعادة تحميل البيانات من Firebase
-      initLocal();
-      renderDevices();
-      alert('✅ تمت المزامنة بنجاح');
+      location.reload();
     });
 
     // close modals on backdrop click
@@ -989,14 +1199,12 @@
         initLocal(); 
         renderDevices(); 
         
-        // بدء استماع للتغييرات من Firebase للجلسات المكتملة
-        syncSessionsFromFirebase();
-        
-        // بدء مزامنة الجلسات المفتوحة
+        // بدء جميع أنظمة المزامنة
         syncOpenSessionsWithFirebase();
-        
-        // بدء استماع لتعديلات الأدمن
+        syncCompletedSessionsFromFirebase();
         listenForAdminUpdates();
+        
+        console.log('✅ تم تهيئة النظام بنجاح');
         
         window.__bianco = { openSessions, completedSessionsToday, persistLocal, renderDevices }; 
     })();
