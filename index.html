@@ -1,531 +1,116 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ar">
 <head>
   <meta charset="utf-8" />
+  <title>Bianco Timer - Admin</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Bianco Timer - إدارة الأجهزة</title>
   <style>
-    :root {
-      --bg1: #050f18;
-      --bg2: #0b1b2b;
-      --card: #093f76;
-      --accent: #00c853;
-      --accent-2: #03a9f4;
-      --muted: #a7b5c4;
-      --danger: #ff5252;
-      --glass: rgba(255, 255, 255, 0.04);
-      --shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    :root{
+      --bg:#0d0d0d; --panel:#121216; --muted:#9aa4b2; --accent:#00c853; --danger:#e53935; --glass:rgba(255,255,255,0.04);
     }
-  
-    * { 
-      box-sizing: border-box; 
-      -webkit-tap-highlight-color: transparent;
-    }
-  
-    body {
-      margin: 0;
-      padding: 12px;
-      font-family: "Cairo", "Segoe UI", sans-serif;
-      color: #eaf2fb;
-      background: linear-gradient(135deg, var(--bg1), var(--bg2));
-      direction: rtl;
-      background: url('https://e0.pxfuel.com/wallpapers/239/293/desktop-wallpaper-playstation-background-playstation-blue-ps4.jpg') center/cover fixed, linear-gradient(135deg, var(--bg1), var(--bg2));
-      backdrop-filter: blur(4px);
-      min-height: 100vh;
-    }
-  
-    .wrap { 
-      max-width: 1100px; 
-      margin: auto; 
-      width: 100%;
-    }
-  
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-      padding-bottom: 12px;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-    }
-  
-    h1 { 
-      margin: 0; 
-      font-size: clamp(18px, 5vw, 22px); 
-      line-height: 1.3;
-    }
-    
-    .small { 
-      color: var(--muted); 
-      font-size: clamp(12px, 3vw, 13px);
-      line-height: 1.4;
-    }
-  
-    .btn {
-      background: var(--accent);
-      border: none;
-      color: #021018;
-      padding: 10px 14px;
-      border-radius: 10px;
-      font-weight: 700;
-      cursor: pointer;
-      box-shadow: var(--shadow);
-      transition: 0.2s;
-      font-size: 14px;
-      min-height: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    
-    .btn:hover, .btn:focus { 
-      transform: scale(1.05); 
-      outline: none;
-    }
-
-    .btn.warning {
-      background: #ff9800;
-      color: #000;
-    }
-  
-    .secondary {
-      background: transparent;
-      border: 1px solid var(--glass);
-      color: var(--muted);
-      padding: 9px 12px;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: 0.2s;
-      font-size: 14px;
-      min-height: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    
-    .secondary:hover, .secondary:focus { 
-      color: #fff; 
-      border-color: #888; 
-      outline: none;
-    }
-  
-    .summary {
-      display: flex;
-      gap: 10px;
-      margin-top: 16px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-  
-    .card {
-      background: var(--card);
-      padding: 12px;
-      border-radius: 10px;
-      border: 1px solid var(--glass);
-      box-shadow: var(--shadow);
-      transition: 0.2s;
-      flex: 1;
-      min-width: 120px;
-      max-width: 180px;
-    }
-  
-    .card:hover { transform: translateY(-2px); }
-    .card.small { text-align: center; }
-  
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap: 12px;
-      margin-top: 16px;
-    }
-    
-    @media (max-width: 480px) {
-      .grid {
-        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-        gap: 10px;
-      }
-    }
-    
-    @media (max-width: 360px) {
-      .grid {
-        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-      }
-    }
-
-    .device {
-      background: var(--card);
-      border: 1px solid var(--glass);
-      border-radius: 12px;
-      padding: 12px;
-      box-shadow: var(--shadow);
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      transition: 0.3s ease;
-      min-height: 160px;
-    }
-  
-    .device:hover { transform: translateY(-3px); }
-  
-    .device .title {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 8px;
-    }
-  
-    .dev-name { 
-      font-weight: 800; 
-      color: #ffffff; 
-      font-size: 16px;
-      line-height: 1.2;
-    }
-    
-    .dev-sub { 
-      font-size: 12px; 
-      color: var(--muted); 
-      margin-top: 4px;
-      line-height: 1.3;
-    }
-  
-    .status {
-      padding: 6px 8px;
-      border-radius: 8px;
-      font-weight: 700;
-      font-size: 12px;
-      white-space: nowrap;
-    }
-  
-    .open { background: #064f2b; color: #a8f7c1; }
-    .idle { background: #09131eae; color: var(--muted); border: 1px solid rgba(255,255,255,0.05); }
-  
-    .controls {
-      display: flex;
-      gap: 6px;
-      margin-top: auto;
-    }
-  
-    .controls button {
-      flex: 1;
-      padding: 10px 8px;
-      border-radius: 8px;
-      border: none;
-      font-weight: 800;
-      touch-action: manipulation;
-      cursor: pointer;
-      font-size: 13px;
-      min-height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-  
-    .start { background: var(--accent); color: #000000; }
-    .add { background: var(--accent-2); color: #fff; }
-    .end { background: var(--danger); color: #fff; }
-  
-    .sessions {
-      margin-top: 20px;
-      background: var(--card);
-      padding: 12px;
-      border-radius: 12px;
-      border: 1px solid var(--glass);
-      box-shadow: var(--shadow);
-      overflow-x: auto;
-    }
-    
-    .sessions-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 12px;
-    }
-    
-    .sessions-header strong {
-      font-size: 16px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 8px;
-      min-width: 600px;
-    }
-  
-    th, td {
-      padding: 10px 8px;
-      text-align: center;
-      border-bottom: 1px solid rgba(255,255,255,0.05);
-      font-size: 13px;
-    }
-  
-    th { color: var(--muted); }
-    
-    @media (max-width: 768px) {
-      th, td {
-        padding: 8px 6px;
-        font-size: 12px;
-      }
-    }
-
-    footer {
-      margin-top: 16px;
-      text-align: center;
-      color: var(--muted);
-      font-size: 12px;
-      padding: 0 8px;
-      line-height: 1.5;
-    }
-  
-    /* مودالات */
-    .modal-back {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.6);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      visibility: hidden;
-      opacity: 0;
-      transition: all 0.2s;
-      z-index: 1000;
-      padding: 16px;
-    }
-  
-    .modal-back.active { 
-      visibility: visible; 
-      opacity: 1; 
-    }
-  
-    .modal {
-      width: 100%;
-      max-width: 360px;
-      background: #081c2c;
-      padding: 16px;
-      border-radius: 12px;
-      border: 1px solid var(--glass);
-      box-shadow: var(--shadow);
-      max-height: 90vh;
-      overflow-y: auto;
-    }
-    
-    .modal h3 {
-      text-align: center;
-      margin-top: 0;
-      margin-bottom: 16px;
-      font-size: 18px;
-    }
-
-    label { 
-      font-size: 13px; 
-      color: var(--muted); 
-      display: block; 
-      margin-top: 10px; 
-      margin-bottom: 4px;
-    }
-    
-    input, select {
-      width: 100%;
-      padding: 12px;
-      margin-top: 4px;
-      border-radius: 8px;
-      border: 1px solid rgba(255,255,255,0.05);
-      background: #0f1b26 !important;
-      color: #fff !important;
-      font-size: 14px;
-      min-height: 44px;
-    }
-    
-    input:focus, select:focus { 
-      outline: 2px solid var(--accent-2); 
-    }
-    
-    .row {
-      display: flex;
-      gap: 10px;
-    }
-    
-    .half {
-      flex: 1;
-    }
-    
-    .center {
-      text-align: center;
-    }
-    
-    @media (max-width: 480px) {
-      body {
-        padding: 8px;
-      }
-      
-      header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
-      }
-      
-      .header-buttons {
-        display: flex;
-        gap: 8px;
-        width: 100%;
-        justify-content: space-between;
-      }
-      
-      .header-buttons .btn,
-      .header-buttons .secondary {
-        flex: 1;
-        font-size: 13px;
-        padding: 10px 8px;
-      }
-      
-      .summary {
-        gap: 8px;
-      }
-      
-      .card {
-        min-width: 100px;
-        padding: 10px;
-      }
-      
-      .sessions {
-        padding: 10px;
-      }
-      
-      .modal {
-        padding: 14px;
-      }
-    }
-    
-    @media (max-height: 500px) and (orientation: landscape) {
-      .modal-back {
-        align-items: flex-start;
-        padding-top: 20px;
-      }
-      
-      .modal {
-        max-height: 80vh;
-      }
+    body{font-family:"Cairo",Arial,sans-serif;background:var(--bg);color:#fff;direction:rtl;padding:14px;margin:0}
+    .container{max-width:1150px;margin:0 auto}
+    .panel{background:var(--panel);padding:14px;border-radius:10px;border:1px solid var(--glass)}
+    header{display:flex;justify-content:space-between;align-items:center;gap:12px}
+    h1{margin:0;font-size:18px}
+    .muted{color:var(--muted);font-size:13px}
+    .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .btn{background:var(--accent);border:none;color:#021018;padding:8px 12px;border-radius:8px;font-weight:700;cursor:pointer}
+    .btn.secondary{background:transparent;border:1px solid var(--glass);color:var(--muted)}
+    .filters{display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap}
+    select, input{padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:inherit}
+    .stats{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+    .card{background:rgba(255,255,255,0.02);padding:10px;border-radius:8px;min-width:160px;text-align:center}
+    table{width:100%;border-collapse:collapse;margin-top:12px}
+    th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,0.03);text-align:center;font-size:13px}
+    th{background:rgba(255,255,255,0.03);color:var(--muted)}
+    .editBtn{background:#ffc107;color:#000;border:none;padding:6px 8px;border-radius:6px;cursor:pointer}
+    .danger{background:var(--danger);border:none;padding:6px 8px;border-radius:6px;color:#fff;cursor:pointer}
+    .modal-back{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;visibility:hidden;opacity:0;transition:all .12s}
+    .modal-back.active{visibility:visible;opacity:1}
+    .modal{background:#0b1a20;padding:14px;border-radius:10px;width:380px;max-width:94%}
+    label{display:block;margin-top:8px;font-size:13px;color:var(--muted)}
+    input[type="time"]{background:transparent}
+    .right{text-align:right}
+    @media(max-width:700px){
+      .filters{flex-direction:column;align-items:stretch}
+      .stats{flex-direction:column}
     }
   </style>
-  
 </head>
 <body>
-  
-  <div class="wrap">
-    <header>
-      <div>
-        <h1>🎮 Bianco Timer - إدارة الأجهزة</h1>
-        <div class="small">بنج + PS4 (1–6) + PS5 (7–15) — تخزين محلي دائم + مزامنة Firebase</div>
+  <div class="container">
+    <div class="panel">
+      <header>
+        <div>
+          <h1>🔑 واجهة المشرف - Bianco Timer</h1>
+          <div class="muted">لوحة التحكم — عرض الجلسات، الفلترة، التصدير والتعديل</div>
+        </div>
+        <div class="controls">
+          <div id="userEmail" class="muted"></div>
+          <button id="logoutBtn" class="btn secondary">تسجيل خروج</button>
+        </div>
+      </header>
+
+      <div class="filters">
+        <div style="display:flex;gap:8px;align-items:center">
+          <label class="muted">اختر تاريخ:</label>
+          <select id="dateFilter"><option value="__all__">جميع التواريخ</option></select>
+        </div>
+
+        <div style="display:flex;gap:8px;align-items:center;margin-left:auto">
+          <button id="refreshBtn" class="btn secondary">🔄 تحديث</button>
+          <button id="exportBtn" class="btn">⬇️ تصدير CSV</button>
+        </div>
       </div>
-      <div class="header-buttons">
-        <div id="userEmail" class="small"></div>
-        <button class="btn" id="goAdmin">صفحة المشرف</button>
-        <button class="btn warning" id="clearDataBtn">🗑️ مسح البيانات</button>
-        <button class="secondary" id="syncBtn">🔄 مزامنة البيانات</button>
-        <button class="secondary" id="logoutBtn">تسجيل الخروج</button>
+
+      <div class="stats">
+        <div class="card">📅 التاريخ الحالي<br><b id="today"></b></div>
+        <div class="card">📊 جلسات مختارة<br><b id="sessionCount">0</b></div>
+        <div class="card">💰 إيرادات مختارة<br><b id="totalRevenue">0</b> ج</div>
       </div>
-    </header>
 
-    <section class="summary">
-      <div class="card small"><div class="small">📅 التاريخ</div><div id="todayStr" style="font-weight:800;margin-top:6px"></div></div>
-      <div class="card small"><div class="small">الجلسات المفتوحة</div><div id="openCount" style="font-weight:800;margin-top:6px">0</div></div>
-      <div class="card small"><div class="small">إجمالي اليوم (تقديري)</div><div id="todayRevenue" style="font-weight:800;margin-top:6px">0 ج</div></div>
-    </section>
-
-    <section class="grid" id="devicesGrid"></section>
-
-    <section class="sessions">
-      <div class="sessions-header">
-        <strong>جلسات اليوم (محلي)</strong>
-        <div class="small">💾 يتم حفظ الجلسات محليًا بشكل دائم + مزامنة مع Firebase</div>
-      </div>
-      <table id="completedTable">
-        <thead><tr><th>جهاز</th><th>من</th><th>إلى</th><th>المدة</th><th>الطلبات</th><th>السعر</th></tr></thead>
-        <tbody></tbody>
-      </table>
-    </section>
-
-    <footer>💾 يتم حفظ الجلسات محليًا بشكل دائم + مزامنة مع Firebase. يمكن مسحها يدويًا باستخدام زر "مسح البيانات".</footer>
-  </div>
-
-  <!-- مودال بدء الجلسة -->
-  <div class="modal-back" id="modalStart">
-    <div class="modal">
-      <h3 class="center">▶ بدء جلسة</h3>
-      <label>الجهاز</label><input id="startDevice" disabled />
-      <label>اختار نوع الجلسة</label>
-      <select id="sessionKind">
-        <option value="open">أوبن (مفتوحة)</option>
-        <option value="set">أحدد وقت النهاية</option>
-      </select>
-      <div id="endTimeRow" style="display:none">
-        <label>وقت النهاية (HH:MM)</label><input type="time" id="sessionEndTime" />
-      </div>
-      <label>نوع اللعب</label>
-      <select id="playMode"><option value="single">فردي</option><option value="double">زوجي</option></select>
-      <div style="display:flex;gap:8px;margin-top:16px;">
-        <button class="btn" id="confirmStart">ابدأ</button>
-        <button class="secondary" id="cancelStart">إلغاء</button>
+      <div style="margin-top:12px;overflow:auto">
+        <table id="sessionsTable">
+          <thead>
+            <tr>
+              <th>الجهاز</th><th>النوع</th><th>من → إلى</th><th>المدة</th><th>السعر</th><th>الطلبات</th><th>أنشئ بواسطة</th><th>التاريخ</th><th>عمليات</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
       </div>
     </div>
   </div>
 
-  <!-- مودال إضافة الطلب -->
-  <div class="modal-back" id="modalDrink">
+  <!-- نافذة التعديل -->
+  <div class="modal-back" id="editModal">
     <div class="modal">
-      <h3 class="center">➕ إضافة طلب</h3>
-      <label>اختيار</label>
-      <select id="drinkSelect" class="drink">
-        <option value="">اختر...</option>
-        <option value="شاي|10">شاي - 10 ج</option>
-        <option value="قهوة|15">قهوة - 15 ج</option>
-        <option value="إندومي صغير|15">إندومي صغير - 15 ج</option>
-        <option value="إندومي كبير|25">إندومي كبير - 25 ج</option>
-        <option value="بيبسي|25">بيبسي - 25 ج</option>
-        <option value="متنوع">إدخال يدوي</option>
-      </select>
-      <label>الكمية</label><input id="drinkQty" type="number" min="1" value="1" />
-      <label>لجهاز</label><input id="drinkDevice" disabled />
-      <div style="display:flex;gap:8px;margin-top:16px;">
-        <button class="btn" id="confirmAddDrink">إضافة</button>
-        <button class="secondary" id="cancelAddDrink">إلغاء</button>
-      </div>
-    </div>
-  </div>
+      <h3 class="right">✏️ تعديل الجلسة</h3>
+      <label>الجهاز</label>
+      <input type="text" id="editDevice" />
 
-  <!-- مودال إنهاء الجلسة -->
-  <div class="modal-back" id="modalEnd">
-    <div class="modal">
-      <h3 class="center">⏱️ إنهاء الجلسة</h3>
-      <div class="small center" id="endDeviceLabel"></div>
-      <div class="row">
-        <div class="half"><label>من</label><input id="endFrom" disabled /></div>
-        <div class="half"><label>إلى</label><input id="endTo" disabled /></div>
-      </div>
-      <label>المدة</label><input id="endDuration" disabled />
-      <label>الطلبات</label><input id="endDrinks" disabled />
-      <label>المجموع (جنيه)</label><input id="endTotal" disabled />
-      <div style="display:flex;gap:8px;margin-top:16px;">
-        <button class="btn" id="confirmEnd">احفظ واحسب</button>
-        <button class="secondary" id="cancelEnd">إلغاء</button>
-      </div>
-    </div>
-  </div>
+      <label>النوع</label>
+      <select id="editType"><option value="single">فردي</option><option value="double">زوجي</option></select>
 
-  <!-- مودال تأكيد مسح البيانات -->
-  <div class="modal-back" id="modalClearData">
-    <div class="modal">
-      <h3 class="center">⚠️ تأكيد مسح البيانات</h3>
-      <p class="center" style="color: var(--muted); margin-bottom: 20px;">
-        هل أنت متأكد من أنك تريد مسح جميع البيانات المحلية؟<br>
-        <strong style="color: #ff5252;">هذا الإجراء لا يمكن التراجع عنه!</strong>
-      </p>
-      <div style="display:flex;gap:8px;margin-top:16px;">
-        <button class="btn warning" id="confirmClearData">نعم، مسح الكل</button>
-        <button class="secondary" id="cancelClearData">إلغاء</button>
+      <label>بداية</label>
+      <input id="editStart" type="time" />
+
+      <label>نهاية</label>
+      <input id="editEnd" type="time" />
+
+      <label>المدة</label>
+      <input id="editDuration" />
+
+      <label>السعر</label>
+      <input id="editPrice" type="number" />
+
+      <label>الطلبات</label>
+      <input id="editDrinks" />
+
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
+        <button id="saveEditBtn" class="btn">💾 حفظ</button>
+        <button id="cancelEditBtn" class="btn secondary">إلغاء</button>
       </div>
     </div>
   </div>
@@ -533,7 +118,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import { getFirestore, collection, addDoc, onSnapshot, query, where, getDocs, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { getFirestore, collection, onSnapshot, query, orderBy, doc, deleteDoc, updateDoc, where, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBFI6W1mCbFsG8MfcGxWL0JonZtJ_7P6W0",
@@ -543,378 +128,268 @@
       messagingSenderId: "699813217029",
       appId: "1:699813217029:web:568e169371a2361358ad6c"
     };
+
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    const RATES = { ping:{single:30,double:40}, ps4:{single:30,double:40}, ps5:{single:40,double:50} };
-    const DEVICES = []; DEVICES.push({id:'ping',label:'Ping',type:'ping'}); for(let i=1;i<=6;i++) DEVICES.push({id:`ps${i}`,label:`PS4-${i}`,type:'ps4'}); for(let i=7;i<=15;i++) DEVICES.push({id:`ps${i}`,label:`PS5-${i}`,type:'ps5'});
+    const todayEl=document.getElementById('today');
+    const tableBody=document.querySelector('#sessionsTable tbody');
+    const sessionCountEl=document.getElementById('sessionCount');
+    const totalRevenueEl=document.getElementById('totalRevenue');
+    const dateFilter=document.getElementById('dateFilter');
+    const refreshBtn=document.getElementById('refreshBtn');
+    const exportBtn=document.getElementById('exportBtn');
+    const logoutBtn=document.getElementById('logoutBtn');
+    const userEmail=document.getElementById('userEmail');
 
-    const STORAGE_KEY='biancoSessionsLocal';
-    
-    // إزالة نظام المسح التلقائي بعد 24 ساعة
-    function getStorage(){ try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}')}catch(e){return{}} }
-    function setStorage(o){ localStorage.setItem(STORAGE_KEY,JSON.stringify(o)) }
-    function todayKey(){ return new Date().toLocaleDateString('ar-EG') }
+    const editModal=document.getElementById('editModal');
+    const editDevice=document.getElementById('editDevice');
+    const editType=document.getElementById('editType');
+    const editStart=document.getElementById('editStart');
+    const editEnd=document.getElementById('editEnd');
+    const editDuration=document.getElementById('editDuration');
+    const editPrice=document.getElementById('editPrice');
+    const editDrinks=document.getElementById('editDrinks');
+    const saveEditBtn=document.getElementById('saveEditBtn');
+    const cancelEditBtn=document.getElementById('cancelEditBtn');
 
-    let openSessions = {}, completedSessionsToday = [];
+    const adminEmails=["moosama@gmail.com","ahmed@gmail.com","mahmoud@gmail.com"];
+    todayEl.textContent=new Date().toLocaleDateString('ar-EG');
 
-    function initLocal(){ 
-      const s=getStorage(); 
-      const t=todayKey(); 
-      if(!s[t]) s[t]={open:{},completed:[]}; 
-      setStorage(s); 
-      openSessions = s[t].open||{}; 
-      completedSessionsToday = s[t].completed||[]; 
-    }
-    
-    function persistLocal(){ 
-      const s=getStorage(); 
-      s[todayKey()] = { open: openSessions, completed: completedSessionsToday }; 
-      setStorage(s); 
-    }
+    let allSessions=[],filteredSessions=[],editingId=null;
 
-    // DOM
-    const devicesGrid = document.getElementById('devicesGrid');
-    const todayStr = document.getElementById('todayStr');
-    const openCountEl = document.getElementById('openCount');
-    const todayRevenueEl = document.getElementById('todayRevenue');
-    const completedTbody = document.querySelector('#completedTable tbody');
-    const userEmailSpan = document.getElementById('userEmail');
-    const logoutBtn = document.getElementById('logoutBtn');
-    const goAdminBtn = document.getElementById('goAdmin');
-    const clearDataBtn = document.getElementById('clearDataBtn');
-    const syncBtn = document.getElementById('syncBtn');
-
-    // modals
-    const modalStart = document.getElementById('modalStart');
-    const startDevice = document.getElementById('startDevice');
-    const sessionKind = document.getElementById('sessionKind');
-    const sessionEndTime = document.getElementById('sessionEndTime');
-    const playMode = document.getElementById('playMode');
-    const confirmStart = document.getElementById('confirmStart');
-    const cancelStart = document.getElementById('cancelStart');
-    const endTimeRow = document.getElementById('endTimeRow');
-
-    const modalDrink = document.getElementById('modalDrink');
-    const drinkSelect = document.getElementById('drinkSelect');
-    const drinkQty = document.getElementById('drinkQty');
-    const drinkDevice = document.getElementById('drinkDevice');
-    const confirmAddDrink = document.getElementById('confirmAddDrink');
-    const cancelAddDrink = document.getElementById('cancelAddDrink');
-
-    const modalEnd = document.getElementById('modalEnd');
-    const endDeviceLabel = document.getElementById('endDeviceLabel');
-    const endFrom = document.getElementById('endFrom');
-    const endTo = document.getElementById('endTo');
-    const endDuration = document.getElementById('endDuration');
-    const endDrinks = document.getElementById('endDrinks');
-    const endTotal = document.getElementById('endTotal');
-    const confirmEnd = document.getElementById('confirmEnd');
-    const cancelEnd = document.getElementById('cancelEnd');
-
-    const modalClearData = document.getElementById('modalClearData');
-    const confirmClearData = document.getElementById('confirmClearData');
-    const cancelClearData = document.getElementById('cancelClearData');
-
-    // helpers
-    function nowISO(){ return new Date().toISOString(); }
-    function diffMinutes(startISO,endISO){ return Math.max(0, Math.floor((new Date(endISO)-new Date(startISO))/60000)); }
-    function format12FromISO(iso){ const d=new Date(iso); if(isNaN(d)) return '-'; let h=d.getHours(), m=d.getMinutes(), suf=h>=12?'مساءً':'صباحًا', hh=h%12||12; return `${hh}:${m.toString().padStart(2,'0')} ${suf}`; }
-    function durationText(mins){ const h=Math.floor(mins/60), m=mins%60; return `${h} س ${m} د`; }
-    function isoFromTimeStr(timeStr){ const [hh,mm]=timeStr.split(':').map(Number); const now=new Date(); const d=new Date(now.getFullYear(),now.getMonth(),now.getDate(),hh,mm,0); if(d<=now) d.setDate(d.getDate()+1); return d.toISOString(); }
-
-    // 🔄 نظام مزامنة الجلسات المفتوحة مع Firebase
-    function syncOpenSessionsWithFirebase() {
-        const openSessionsRef = collection(db, 'openSessions');
-        
-        // الاستماع للتغييرات في الجلسات المفتوحة
-        const unsubscribe = onSnapshot(openSessionsRef, (snapshot) => {
-            const firebaseOpenSessions = {};
-            snapshot.forEach(doc => {
-                const session = doc.data();
-                firebaseOpenSessions[session.deviceId] = session;
-            });
-            
-            console.log('🔄 مزامنة الجلسات المفتوحة من Firebase:', Object.keys(firebaseOpenSessions).length, 'جلسة');
-            
-            // تحديث الجلسات المحلية
-            Object.keys(firebaseOpenSessions).forEach(deviceId => {
-                openSessions[deviceId] = firebaseOpenSessions[deviceId];
-            });
-            
-            persistLocal();
-            renderDevices();
-        });
-        
-        return unsubscribe;
+    function parseToISO(val){
+      if(!val) return null;
+      if(val.includes('T')||val.endsWith('Z')) return val;
+      if(/^\d{1,2}:\d{2}$/.test(val)){
+        const [hh,mm]=val.split(':').map(Number);
+        const now=new Date();
+        const d=new Date(now.getFullYear(),now.getMonth(),now.getDate(),hh,mm,0);
+        return d.toISOString();
+      }
+      const dt=new Date(val);
+      return !isNaN(dt)?dt.toISOString():null;
     }
 
-    // 💾 حفظ الجلسات المفتوحة في Firebase
-    async function saveOpenSessionToFirebase(session) {
+    function formatTime12(val){
+      if(!val) return '-';
+      const iso=parseToISO(val);
+      if(!iso) return val;
+      const d=new Date(iso);
+      const h=d.getHours(),m=d.getMinutes();
+      const suffix=h>=12?'مساءً':'صباحًا';
+      const hh=h%12||12;
+      return `${hh}:${m.toString().padStart(2,'0')} ${suffix}`;
+    }
+
+    // 🔄 دالة لحفظ التعديلات في collection منفصل للمزامنة
+    async function saveEditToSyncCollection(sessionId, updatedData) {
         try {
-            const openSessionsRef = collection(db, 'openSessions');
-            
-            // البحث عن جلسة موجودة لنفس الجهاز
-            const q = query(openSessionsRef, where("deviceId", "==", session.deviceId));
+            const syncRef = collection(db, 'sessionUpdates');
+            const q = query(syncRef, where("sessionId", "==", sessionId));
             const querySnapshot = await getDocs(q);
             
             if (!querySnapshot.empty) {
-                // تحديث الجلسة الموجودة
+                // تحديث السجل الموجود
                 const docId = querySnapshot.docs[0].id;
-                await updateDoc(doc(db, 'openSessions', docId), session);
+                await updateDoc(doc(db, 'sessionUpdates', docId), {
+                    ...updatedData,
+                    updatedAt: new Date().toISOString(),
+                    updatedBy: auth.currentUser.email
+                });
             } else {
-                // إضافة جلسة جديدة
-                await addDoc(openSessionsRef, session);
+                // إنشاء سجل جديد
+                await addDoc(syncRef, {
+                    sessionId,
+                    ...updatedData,
+                    updatedAt: new Date().toISOString(),
+                    updatedBy: auth.currentUser.email,
+                    date: new Date().toLocaleDateString('ar-EG')
+                });
             }
-            console.log('✅ تم حفظ الجلسة المفتوحة في Firebase');
+            console.log('✅ تم حفظ التعديلات في collection المزامنة');
         } catch (error) {
-            console.error('❌ خطأ في حفظ الجلسة المفتوحة:', error);
+            console.error('❌ خطأ في حفظ التعديلات للمزامنة:', error);
         }
     }
 
-    // 🗑️ حذف الجلسة المفتوحة من Firebase
-    async function removeOpenSessionFromFirebase(deviceId) {
-        try {
-            const openSessionsRef = collection(db, 'openSessions');
-            const q = query(openSessionsRef, where("deviceId", "==", deviceId));
-            const querySnapshot = await getDocs(q);
-            
-            if (!querySnapshot.empty) {
-                const docId = querySnapshot.docs[0].id;
-                await deleteDoc(doc(db, 'openSessions', docId));
-                console.log('✅ تم حذف الجلسة المفتوحة من Firebase');
-            }
-        } catch (error) {
-            console.error('❌ خطأ في حذف الجلسة المفتوحة:', error);
-        }
+    const sessionsCol=collection(db,'sessions');
+    const q=query(sessionsCol,orderBy('createdAt','desc'));
+    onSnapshot(q,snap=>{
+      allSessions=[];
+      snap.forEach(docSnap=>allSessions.push({id:docSnap.id,data:docSnap.data()}));
+      populateDates();applyFilter();
+    });
+
+    function populateDates(){
+      const dates=new Set();
+      allSessions.forEach(s=>{
+        const d=s.data.date||(s.data.createdAt?new Date(s.data.createdAt).toLocaleDateString('ar-EG'):null);
+        if(d) dates.add(d);
+      });
+      dateFilter.innerHTML='<option value="__all__">جميع التواريخ</option>';
+      Array.from(dates).forEach(d=>{
+        const opt=document.createElement('option');
+        opt.value=d;opt.textContent=d;
+        dateFilter.appendChild(opt);
+      });
     }
 
-    // render
-    function renderDevices(){ devicesGrid.innerHTML=''; DEVICES.forEach((dev,idx)=>{ const open=openSessions[dev.id]; const statusHtml=open?`<div class="status open">مفتوحة</div>`:`<div class="status idle">خالي</div>`; const infoHtml=open?`<div class="small">${format12FromISO(open.startISO)} ${open.scheduledEndISO? '→ ' + format12FromISO(open.scheduledEndISO): ''}</div><div class="small">نوع: ${open.mode==='single'?'فردي':'زوجي'}</div>`:`<div class="small">اضغط بدء</div>`; const controlsHtml=open?`<button class="end" data-action="end" data-idx="${idx}">إنهاء</button><button class="add" data-action="add" data-idx="${idx}">➕ طلب</button>`:`<button class="start" data-action="start" data-idx="${idx}">بدء جلسة</button>`; const wrapper=document.createElement('div'); wrapper.className='device'; wrapper.innerHTML=`<div class="title"><div><div class="dev-name">${dev.label}</div><div class="dev-sub">سعر/ساعة: ${RATES[dev.type].single}/${RATES[dev.type].double} ج</div></div>${statusHtml}</div><div>${infoHtml}</div><div class="controls">${controlsHtml}</div>`; devicesGrid.appendChild(wrapper); }); updateSummary(); renderCompleted(); }
+    function applyFilter(){
+      const sel=dateFilter.value;
+      filteredSessions=allSessions.filter(x=>{
+        const d=x.data.date||(x.data.createdAt?new Date(x.data.createdAt).toLocaleDateString('ar-EG'):'');
+        return sel==='__all__'||d===sel;
+      });
+      renderTable();calcStats();
+    }
 
-    function updateSummary(){ openCountEl.textContent=Object.keys(openSessions).length; let total=0; completedSessionsToday.forEach(s=> total += Number(s.price||0)); const now = nowISO(); Object.values(openSessions).forEach(s=>{ const mins = diffMinutes(s.startISO, now); const rate = RATES[s.rateType][s.mode]; const hoursPrice = (mins/60)*rate; const drinksTotal = (s.drinks||[]).reduce((a,b)=>a+(b.price*b.qty),0); total += hoursPrice + drinksTotal; }); todayRevenueEl.textContent = `${Number(total.toFixed(2))} ج`; }
+    function renderTable(){
+      tableBody.innerHTML='';
+      filteredSessions.forEach(item=>{
+        const s=item.data,id=item.id;
+        const tr=document.createElement('tr');
+        tr.innerHTML=`
+          <td>${s.deviceLabel||'-'}</td>
+          <td>${(s.mode||s.type)==='double'?'زوجي':'فردي'}</td>
+          <td>${formatTime12(s.startISO||s.start)} → ${formatTime12(s.endISO||s.end)}</td>
+          <td>${s.duration||'-'}</td>
+          <td>${s.price||0} ج</td>
+          <td>${Array.isArray(s.drinks)?s.drinks.map(d=>d.name+'×'+d.qty).join(', '):(s.drinks||'-')}</td>
+          <td>${s.createdBy||'-'}</td>
+          <td>${s.date||'-'}</td>
+          <td>
+            <button class="editBtn" data-id="${id}">✏️</button>
+            <button class="danger" data-id="${id}">🗑</button>
+          </td>`;
+        tableBody.appendChild(tr);
+      });
 
-    function renderCompleted(){ completedTbody.innerHTML=''; completedSessionsToday.slice().reverse().forEach(s=>{ const tr=document.createElement('tr'); const drinksTxt = (s.drinks && s.drinks.length) ? s.drinks.map(d=>`${d.name}×${d.qty}`).join(', ') : '-'; tr.innerHTML = `<td>${s.deviceLabel}</td><td>${format12FromISO(s.startISO)}</td><td>${format12FromISO(s.endISO)}</td><td>${s.duration}</td><td>${drinksTxt}</td><td>${s.price} ج</td>`; completedTbody.appendChild(tr); }); }
+      document.querySelectorAll('.editBtn').forEach(btn=>{
+        btn.onclick=()=>editSession(btn.dataset.id);
+      });
+      document.querySelectorAll('.danger').forEach(btn=>{
+        btn.onclick=()=>deleteSession(btn.dataset.id);
+      });
+    }
 
-    // events delegation for device buttons
-    devicesGrid.addEventListener('click', (e)=>{ const btn = e.target.closest('button'); if(!btn) return; const action = btn.dataset.action; const idx = Number(btn.dataset.idx); if(action === 'start') openStartModal(idx); if(action === 'add') openAddDrinkModal(idx); if(action === 'end') openEndModal(idx); });
+    function calcStats(){
+      const t=filteredSessions.reduce((sum,x)=>sum+(Number(x.data.price)||0),0);
+      totalRevenueEl.textContent=t.toFixed(2);
+      sessionCountEl.textContent=filteredSessions.length;
+    }
 
-    // start modal
-    let selectedIdx = null;
-    function openStartModal(idx){ selectedIdx = idx; const dev = DEVICES[idx]; startDevice.value = dev.label; sessionKind.value = 'open'; sessionEndTime.value = ''; playMode.value = 'single'; endTimeRow.style.display = 'none'; modalStart.classList.add('active'); }
-    sessionKind.addEventListener('change', ()=> { endTimeRow.style.display = sessionKind.value === 'set' ? 'block' : 'none'; });
-    confirmStart.addEventListener('click', async ()=>{ const dev = DEVICES[selectedIdx]; const id = dev.id; const kind = sessionKind.value; let scheduledEndISO = null; if(kind === 'set'){ if(!sessionEndTime.value){ alert('حدد وقت النهاية'); return; } scheduledEndISO = isoFromTimeStr(sessionEndTime.value); } const mode = playMode.value; const startISO = nowISO(); openSessions[id] = { deviceId: id, deviceLabel: dev.label, startISO, scheduledEndISO, mode, drinks: [], rateType: dev.type }; persistLocal(); await saveOpenSessionToFirebase(openSessions[id]); renderDevices(); modalStart.classList.remove('active'); });
-    cancelStart.addEventListener('click', ()=> modalStart.classList.remove('active'));
+    async function editSession(id){
+      const session=allSessions.find(x=>x.id===id);
+      if(!session) return;
+      const s=session.data;
+      editingId=id;
+      editDevice.value=s.deviceLabel||'';
+      editType.value=s.mode||s.type||'single';
+      editStart.value=s.start?new Date(s.startISO||s.start).toTimeString().slice(0,5):'';
+      editEnd.value=s.end?new Date(s.endISO||s.end).toTimeString().slice(0,5):'';
+      editDuration.value=s.duration||'';
+      editPrice.value=s.price||0;
+      editDrinks.value=Array.isArray(s.drinks)?s.drinks.map(d=>`${d.name}×${d.qty}`).join(', '):(s.drinks||'');
+      editModal.classList.add('active');
+    }
 
-    // add drink modal
-    function openAddDrinkModal(idx){ selectedIdx = idx; const dev = DEVICES[idx]; drinkDevice.value = dev.label; drinkSelect.value = ''; drinkQty.value = 1; modalDrink.classList.add('active'); }
-    confirmAddDrink.addEventListener('click', async ()=>{ const sel = drinkSelect.value; const qty = Number(drinkQty.value) || 1; if(!sel) return alert('اختر الطلب'); const dev = DEVICES[selectedIdx]; const id = dev.id; const s = openSessions[id]; if(!s) return alert('الجلسة مقفولة'); let name, price; if(sel === 'متنوع'){ name = prompt('ادخل اسم العنصر') || 'متنوع'; price = Number(prompt('ادخل السعر (جنيه)') || 0); } else { [name, price] = sel.split('|'); price = Number(price); } if(!Array.isArray(s.drinks)) s.drinks = []; s.drinks.push({ name, price, qty }); openSessions[id] = s; persistLocal(); await saveOpenSessionToFirebase(s); renderDevices(); modalDrink.classList.remove('active'); });
-    cancelAddDrink.addEventListener('click', ()=> modalDrink.classList.remove('active'));
-
-    // end modal
-    function openEndModal(idx){ selectedIdx = idx; const dev = DEVICES[idx]; const id = dev.id; const s = openSessions[id]; if(!s) return alert('الجلسة غير موجودة'); endDeviceLabel.textContent = s.deviceLabel; endFrom.value = format12FromISO(s.startISO); const endISO = s.scheduledEndISO || nowISO(); endTo.value = format12FromISO(endISO); const mins = diffMinutes(s.startISO, s.scheduledEndISO || nowISO()); endDuration.value = durationText(mins); endDrinks.value = (s.drinks && s.drinks.length) ? s.drinks.map(d=>`${d.name}×${d.qty}`).join(', ') : '-'; const drinksTotal = (s.drinks||[]).reduce((a,b)=>a+(b.price*b.qty),0); const rate = RATES[s.rateType][s.mode]; const price = Number((((mins/60)*rate) + drinksTotal).toFixed(2)); endTotal.value = price; modalEnd.classList.add('active'); }
-
-    confirmEnd.addEventListener('click', async ()=>{ 
-      const idx = selectedIdx; 
-      const dev = DEVICES[idx]; 
-      const id = dev.id; 
-      const s = openSessions[id]; 
-      if(!s) return alert('الجلسة غير موجودة'); 
-      
-      const endISO = s.scheduledEndISO || nowISO(); 
-      const mins = diffMinutes(s.startISO, endISO); 
-      const drinksTotal = (s.drinks||[]).reduce((a,b)=>a+(b.price*b.qty),0); 
-      const rate = RATES[s.rateType][s.mode]; 
-      const price = Number((((mins/60)*rate) + drinksTotal).toFixed(2)); 
-      
-      const finished = { 
-        deviceId: s.deviceId, 
-        deviceLabel: s.deviceLabel, 
-        startISO: s.startISO, 
-        endISO, 
-        duration: durationText(mins), 
-        drinks: s.drinks || [], 
-        price 
-      }; 
-      
-      completedSessionsToday.push(finished); 
-      delete openSessions[id]; 
-      persistLocal(); 
-      await removeOpenSessionFromFirebase(id);
-      renderDevices(); 
-      modalEnd.classList.remove('active'); 
-      
-      try{ 
-        const user = auth.currentUser; 
-        const now = new Date();
-        const payload = {
-          ...finished, 
-          createdBy: user ? user.email : 'local', 
-          createdAt: now.toISOString(),
-          date: now.toLocaleDateString('ar-EG'),
-          // إضافة الحقول المفقودة لتظهر في صفحة الأدمن
-          start: finished.startISO,
-          end: finished.endISO,
-          mode: s.mode,
-          type: s.mode, // للحفاظ على التوافق
-          deviceLabel: s.deviceLabel,
-          price: price,
-          drinks: s.drinks || []
-        }; 
-        
-        console.log('جاري حفظ الجلسة في Firebase:', payload);
-        await addDoc(collection(db,'sessions'), payload); 
-        console.log('✅ تم حفظ الجلسة في Firebase بنجاح');
-      }catch(err){ 
-        console.error('❌ فشل حفظ الجلسة في Firebase:', err.message); 
-      } 
-      
-      alert('تم إنهاء الجلسة. المجموع: ' + price + ' ج'); 
-    });
-
-    cancelEnd.addEventListener('click', ()=> modalEnd.classList.remove('active'));
-
-    // clear data functionality
-    clearDataBtn.addEventListener('click', () => {
-      modalClearData.classList.add('active');
-    });
-
-    confirmClearData.addEventListener('click', async () => {
-      // مسح جميع البيانات المحلية
-      localStorage.removeItem(STORAGE_KEY);
-      
-      // مسح الجلسات المفتوحة من Firebase
-      try {
-        const openSessionsRef = collection(db, 'openSessions');
-        const querySnapshot = await getDocs(openSessionsRef);
-        const deletePromises = querySnapshot.docs.map(doc => deleteDoc(doc.ref));
-        await Promise.all(deletePromises);
-        console.log('✅ تم مسح جميع الجلسات المفتوحة من Firebase');
-      } catch (error) {
-        console.error('❌ خطأ في مسح الجلسات المفتوحة من Firebase:', error);
+    async function deleteSession(id){
+      if(confirm('هل أنت متأكد من حذف هذه الجلسة؟')){
+        await deleteDoc(doc(db,'sessions',id));
+        alert('🗑️ تم حذف الجلسة بنجاح');
       }
-      
-      // إعادة تهيئة المتغيرات
-      openSessions = {};
-      completedSessionsToday = [];
-      
-      // إعادة التهيئة والعرض
-      initLocal();
-      renderDevices();
-      
-      modalClearData.classList.remove('active');
-      alert('✅ تم مسح جميع البيانات المحلية والجلسات المفتوحة بنجاح');
-    });
-
-    cancelClearData.addEventListener('click', () => {
-      modalClearData.classList.remove('active');
-    });
-
-    // زر المزامنة اليدوية
-    syncBtn.addEventListener('click', async () => {
-      alert('🔄 جاري مزامنة البيانات مع السحابة...');
-      // إعادة تحميل البيانات من Firebase
-      initLocal();
-      renderDevices();
-      alert('✅ تمت المزامنة بنجاح');
-    });
-
-    // close modals on backdrop click
-    document.querySelectorAll('.modal-back').forEach(mb=> mb.addEventListener('click', ev=> { if(ev.target===mb) mb.classList.remove('active'); }));
-
-    // logout
-    logoutBtn.addEventListener('click', async ()=> { try{ await signOut(auth); alert('تم تسجيل الخروج'); window.location.href='login.html'; }catch(e){ alert('خطأ تسجيل الخروج'); } });
-
-    // admin button
-    goAdminBtn.addEventListener('click', ()=> { 
-      const user = auth.currentUser; 
-      if (user) {
-        const adminEmails = ["moosama@gmail.com", "ahmed@gmail.com", "mahmoud@gmail.com"];
-        if (adminEmails.includes(user.email)) {
-          window.location.href = 'welcome.html';
-        } else {
-          alert('ليس لديك صلاحية مشرف');
-        }
-      } else {
-        window.location.href = 'login.html';
-      }
-    });
-
-    // auth display
-    onAuthStateChanged(auth, user => { 
-      if(user) userEmailSpan.textContent = user.email; 
-      else userEmailSpan.textContent=''; 
-    });
-
-    // نظام المزامنة التلقائية مع Firebase للجلسات المكتملة
-    function syncSessionsFromFirebase() {
-        const today = new Date().toLocaleDateString('ar-EG');
-        const sessionsQuery = query(
-            collection(db, 'sessions'),
-            where('date', '==', today)
-        );
-
-        const unsubscribe = onSnapshot(sessionsQuery, (snapshot) => {
-            const firebaseSessions = [];
-            snapshot.forEach(doc => {
-                firebaseSessions.push({ id: doc.id, ...doc.data() });
-            });
-
-            console.log('📡 بيانات Firebase المستلمة:', firebaseSessions.length, 'جلسة');
-            // تحديث الجلسات المكتملة محليًا بناءً على بيانات Firebase
-            updateLocalSessions(firebaseSessions);
-        });
-
-        return unsubscribe;
     }
 
-    // دالة لتحديث الجلسات المحلية بناءً على بيانات Firebase
-    function updateLocalSessions(firebaseSessions) {
-        const storage = getStorage();
-        const today = todayKey();
+    saveEditBtn.onclick=async()=>{
+      if(!editingId) return;
+      const session=allSessions.find(x=>x.id===editingId);
+      if(!session) return;
+      
+      const originalSession=session.data;
+      
+      // البيانات المحدثة
+      const updatedData={
+        deviceLabel:editDevice.value,
+        mode:editType.value,
+        startISO:parseToISO(editStart.value)||originalSession.startISO,
+        endISO:parseToISO(editEnd.value)||originalSession.endISO,
+        duration:editDuration.value,
+        price:Number(editPrice.value),
+        drinks:editDrinks.value,
+        // الحفاظ على البيانات الأصلية المهمة
+        deviceId:originalSession.deviceId,
+        startISO:originalSession.startISO,
+        endISO:originalSession.endISO,
+        createdBy:originalSession.createdBy,
+        date:originalSession.date
+      };
+
+      try{
+        // تحديث الجلسة الأصلية
+        const ref=doc(db,'sessions',editingId);
+        await updateDoc(ref,updatedData);
         
-        if (!storage[today]) return;
-        
-        let updated = false;
-        
-        // تحديث الجلسات المكتملة
-        storage[today].completed = storage[today].completed.map(localSession => {
-            const firebaseSession = firebaseSessions.find(fbSession => 
-                fbSession.deviceId === localSession.deviceId &&
-                fbSession.startISO === localSession.startISO
-            );
-            
-            if (firebaseSession && firebaseSession.price !== localSession.price) {
-                updated = true;
-                return { ...localSession, price: firebaseSession.price };
-            }
-            
-            return localSession;
+        // 🔄 حفظ التعديلات في collection منفصل للمزامنة
+        await saveEditToSyncCollection(editingId, {
+            deviceLabel: updatedData.deviceLabel,
+            price: updatedData.price,
+            drinks: updatedData.drinks,
+            mode: updatedData.mode,
+            duration: updatedData.duration,
+            originalCreatedBy: originalSession.createdBy
         });
         
-        if (updated) {
-            setStorage(storage);
-            initLocal();
-            renderDevices();
-            console.log('✅ تم تحديث البيانات من Firebase');
-        }
-    }
+        editModal.classList.remove('active');
+        alert('✅ تم حفظ التعديلات بنجاح وسيتم مزامنتها مع جميع الأجهزة');
+      }catch(error){
+        alert('❌ حدث خطأ في حفظ التعديلات: '+error.message);
+      }
+    };
 
-    // init
-    (function init(){ 
-        todayStr.textContent = new Date().toLocaleDateString('ar-EG'); 
-        initLocal(); 
-        renderDevices(); 
-        
-        // بدء استماع للتغييرات من Firebase للجلسات المكتملة
-        syncSessionsFromFirebase();
-        
-        // بدء مزامنة الجلسات المفتوحة
-        syncOpenSessionsWithFirebase();
-        
-        window.__bianco = { openSessions, completedSessionsToday, persistLocal, renderDevices }; 
-    })();
+    cancelEditBtn.onclick=()=>editModal.classList.remove('active');
+
+    dateFilter.onchange=applyFilter;
+    refreshBtn.onclick=()=>{applyFilter();alert('تم التحديث');};
+
+    exportBtn.onclick=()=>{
+      if(!filteredSessions.length) return alert('لا توجد بيانات');
+      const rows=[['الجهاز','النوع','من','إلى','المدة','الطلبات','السعر','أنشئ بواسطة','التاريخ']];
+      filteredSessions.forEach(item=>{
+        const s=item.data;
+        rows.push([
+          s.deviceLabel||'-',
+          (s.mode||s.type)==='double'?'زوجي':'فردي',
+          formatTime12(s.startISO||s.start),
+          formatTime12(s.endISO||s.end),
+          s.duration||'',
+          Array.isArray(s.drinks)?s.drinks.map(d=>d.name+'×'+d.qty).join(' | '):(s.drinks||''),
+          s.price||0,
+          s.createdBy||'-',
+          s.date||''
+        ]);
+      });
+      const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+      const bom="\uFEFF";
+      const blob=new Blob([bom+csv],{type:'text/csv;charset=utf-8;'});
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download=`sessions_${dateFilter.value}.csv`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    };
+
+    logoutBtn.onclick=()=>signOut(auth).then(()=>window.location.href='login.html');
+
+    onAuthStateChanged(auth,user=>{
+      if(!user){window.location.href='login.html';return;}
+      userEmail.textContent=user.email;
+      if(!adminEmails.includes(user.email)){
+        alert('ليس لديك صلاحية مشرف');
+        window.location.href='index.html';
+      }
+    });
   </script>
 </body>
 </html>
