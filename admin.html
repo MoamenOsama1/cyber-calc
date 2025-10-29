@@ -32,6 +32,7 @@
     label{display:block;margin-top:8px;font-size:13px;color:var(--muted)}
     input[type="time"]{background:transparent}
     .right{text-align:right}
+    .session-updated { background: rgba(0, 200, 83, 0.1); }
     @media(max-width:700px){
       .filters{flex-direction:column;align-items:stretch}
       .stats{flex-direction:column}
@@ -48,6 +49,7 @@
         </div>
         <div class="controls">
           <div id="userEmail" class="muted"></div>
+          <button id="goToMain" class="btn secondary">الصفحة الرئيسية</button>
           <button id="logoutBtn" class="btn secondary">تسجيل خروج</button>
         </div>
       </header>
@@ -109,7 +111,7 @@
       <input id="editDrinks" />
 
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
-        <button id="saveEditBtn" class="btn">💾 حفظ</button>
+        <button id="saveEditBtn" class="btn">💾 حفظ التعديلات</button>
         <button id="cancelEditBtn" class="btn secondary">إلغاء</button>
       </div>
     </div>
@@ -141,6 +143,7 @@
     const refreshBtn=document.getElementById('refreshBtn');
     const exportBtn=document.getElementById('exportBtn');
     const logoutBtn=document.getElementById('logoutBtn');
+    const goToMain=document.getElementById('goToMain');
     const userEmail=document.getElementById('userEmail');
 
     const editModal=document.getElementById('editModal');
@@ -172,78 +175,77 @@
       return !isNaN(dt)?dt.toISOString():null;
     }
 
-  function formatTime12(val){
-  if(!val) return '-';
-  const iso=parseToISO(val);
-  if(!iso) return val;
-  const d=new Date(iso);
-  const h=d.getHours(),m=d.getMinutes();
-  const suffix=h>=12?'مساءً':'صباحًا';
-  const hh=h%12||12;
-  return `${hh}:${m.toString().padStart(2,'0')} ${suffix}`;
-}
-
-// 🔄 دالة محسنة لحفظ التعديلات - مع بيانات كاملة للمطابقة
-async function saveEditToSyncCollection(sessionId, updatedData, originalSession) {
-    try {
-        const syncRef = collection(db, 'sessionUpdates');
-        const q = query(syncRef, where("sessionId", "==", sessionId));
-        const querySnapshot = await getDocs(q);
-        
-        // تحضير بيانات الطلبات للتخزين
-        let drinksData = updatedData.drinks;
-        if (typeof drinksData === 'string') {
-            // إذا كانت الطلبات نصاً، نحولها لمصفوفة
-            drinksData = drinksData.split(',').map(item => {
-                const [name, qty] = item.split('×');
-                return { 
-                    name: name.trim(), 
-                    qty: parseInt(qty) || 1 
-                };
-            });
-        }
-        
-        const updatePayload = {
-            sessionId: sessionId,
-            deviceLabel: updatedData.deviceLabel,
-            price: updatedData.price,
-            drinks: drinksData,
-            mode: updatedData.mode,
-            duration: updatedData.duration,
-            
-            // بيانات المطابقة مع الجلسة الأصلية
-            originalPrice: originalSession.price,
-            originalCreatedBy: originalSession.createdBy,
-            originalDeviceLabel: originalSession.deviceLabel,
-            originalStartISO: originalSession.startISO,
-            originalEndISO: originalSession.endISO,
-            originalDate: originalSession.date,
-            
-            // معلومات التحديث
-            updatedAt: new Date().toISOString(),
-            updatedBy: auth.currentUser.email,
-            date: originalSession.date,
-            
-            // إضافة علامة أن هذا تحديث من الأدمن
-            isAdminUpdate: true,
-            updateType: 'session_edit'
-        };
-        
-        if (!querySnapshot.empty) {
-            const docId = querySnapshot.docs[0].id;
-            await updateDoc(doc(db, 'sessionUpdates', docId), updatePayload);
-            console.log('✅ تم تحديث سجل المزامنة:', sessionId);
-        } else {
-            await addDoc(syncRef, updatePayload);
-            console.log('✅ تم إنشاء سجل مزامنة جديد:', sessionId);
-        }
-        
-        console.log('✅ تم حفظ التعديلات في collection المزامنة:', updatePayload);
-    } catch (error) {
-        console.error('❌ خطأ في حفظ التعديلات للمزامنة:', error);
-        throw error;
+    function formatTime12(val){
+      if(!val) return '-';
+      const iso=parseToISO(val);
+      if(!iso) return val;
+      const d=new Date(iso);
+      const h=d.getHours(),m=d.getMinutes();
+      const suffix=h>=12?'مساءً':'صباحًا';
+      const hh=h%12||12;
+      return `${hh}:${m.toString().padStart(2,'0')} ${suffix}`;
     }
-}
+
+    // 🔄 دالة محسنة لحفظ التعديلات مع المزامنة الفورية
+    async function saveEditToSyncCollection(sessionId, updatedData, originalSession) {
+        try {
+            const syncRef = collection(db, 'sessionUpdates');
+            const q = query(syncRef, where("sessionId", "==", sessionId));
+            const querySnapshot = await getDocs(q);
+            
+            // تحضير بيانات الطلبات
+            let drinksData = updatedData.drinks;
+            if (typeof drinksData === 'string') {
+                drinksData = drinksData.split(',').map(item => {
+                    const [name, qty] = item.split('×');
+                    return { 
+                        name: name.trim(), 
+                        qty: parseInt(qty) || 1 
+                    };
+                });
+            }
+            
+            const updatePayload = {
+                sessionId: sessionId,
+                deviceLabel: updatedData.deviceLabel,
+                price: updatedData.price,
+                drinks: drinksData,
+                mode: updatedData.mode,
+                duration: updatedData.duration,
+                
+                // بيانات المطابقة مع الجلسة الأصلية
+                originalPrice: originalSession.price,
+                originalCreatedBy: originalSession.createdBy,
+                originalDeviceLabel: originalSession.deviceLabel,
+                originalStartISO: originalSession.startISO,
+                originalEndISO: originalSession.endISO,
+                originalDate: originalSession.date,
+                
+                // معلومات التحديث
+                updatedAt: new Date().toISOString(),
+                updatedBy: auth.currentUser.email,
+                date: originalSession.date,
+                
+                // إشارة أن هذا تحديث من الأدمن
+                isAdminUpdate: true,
+                updateType: 'session_edit'
+            };
+            
+            if (!querySnapshot.empty) {
+                const docId = querySnapshot.docs[0].id;
+                await updateDoc(doc(db, 'sessionUpdates', docId), updatePayload);
+            } else {
+                await addDoc(syncRef, updatePayload);
+            }
+            
+            console.log('✅ تم حفظ التعديلات في collection المزامنة:', updatePayload);
+            return true;
+        } catch (error) {
+            console.error('❌ خطأ في حفظ التعديلات للمزامنة:', error);
+            throw error;
+        }
+    }
+
     const sessionsCol=collection(db,'sessions');
     const q=query(sessionsCol,orderBy('createdAt','desc'));
     onSnapshot(q,snap=>{
@@ -280,6 +282,12 @@ async function saveEditToSyncCollection(sessionId, updatedData, originalSession)
       filteredSessions.forEach(item=>{
         const s=item.data,id=item.id;
         const tr=document.createElement('tr');
+        
+        // إضافة تظليل للجلسات المعدلة
+        if (s.updatedByAdmin) {
+            tr.classList.add('session-updated');
+        }
+        
         tr.innerHTML=`
           <td>${s.deviceLabel||'-'}</td>
           <td>${(s.mode||s.type)==='double'?'زوجي':'فردي'}</td>
@@ -333,52 +341,45 @@ async function saveEditToSyncCollection(sessionId, updatedData, originalSession)
     }
 
     saveEditBtn.onclick = async () => {
-    if (!editingId) return;
-    const session = allSessions.find(x => x.id === editingId);
-    if (!session) return;
-    
-    const originalSession = session.data;
-    
-    const updatedData = {
-        deviceLabel: editDevice.value,
-        mode: editType.value,
-        startISO: parseToISO(editStart.value) || originalSession.startISO,
-        endISO: parseToISO(editEnd.value) || originalSession.endISO,
-        duration: editDuration.value,
-        price: Number(editPrice.value),
-        drinks: editDrinks.value,
-        deviceId: originalSession.deviceId,
-        startISO: originalSession.startISO,
-        endISO: originalSession.endISO,
-        createdBy: originalSession.createdBy,
-        date: originalSession.date
-    };
+        if (!editingId) return;
+        const session = allSessions.find(x => x.id === editingId);
+        if (!session) return;
+        
+        const originalSession = session.data;
+        
+        const updatedData = {
+            deviceLabel: editDevice.value,
+            mode: editType.value,
+            startISO: parseToISO(editStart.value) || originalSession.startISO,
+            endISO: parseToISO(editEnd.value) || originalSession.endISO,
+            duration: editDuration.value,
+            price: Number(editPrice.value),
+            drinks: editDrinks.value,
+            deviceId: originalSession.deviceId,
+            createdBy: originalSession.createdBy,
+            date: originalSession.date,
+            updatedByAdmin: true,
+            lastUpdate: new Date().toISOString()
+        };
 
-    try {
-        // 1. تحديث الجلسة الأصلية في Firebase
-        const ref = doc(db, 'sessions', editingId);
-        await updateDoc(ref, updatedData);
-        console.log('✅ تم تحديث الجلسة الأصلية في Firebase');
-        
-        // 2. 🔄 حفظ التعديلات في collection منفصل للمزامنة
-        await saveEditToSyncCollection(editingId, {
-            deviceLabel: updatedData.deviceLabel,
-            price: updatedData.price,
-            drinks: updatedData.drinks,
-            mode: updatedData.mode,
-            duration: updatedData.duration
-        }, originalSession);
-        
-        editModal.classList.remove('active');
-        alert('✅ تم حفظ التعديلات بنجاح وسيتم مزامنتها مع جميع الأجهزة فوراً');
-        
-        // 3. إعادة تحميل البيانات لعرض التحديثات
-        applyFilter();
-        
-    } catch (error) {
-        alert('❌ حدث خطأ في حفظ التعديلات: ' + error.message);
-    }
-};
+        try {
+            // 1. تحديث الجلسة الأصلية في Firebase
+            const ref = doc(db, 'sessions', editingId);
+            await updateDoc(ref, updatedData);
+            
+            // 2. حفظ التعديلات في collection المزامنة
+            await saveEditToSyncCollection(editingId, updatedData, originalSession);
+            
+            editModal.classList.remove('active');
+            alert('✅ تم حفظ التعديلات بنجاح وسيتم مزامنتها مع جميع الأجهزة فوراً');
+            
+            // 3. إعادة تحميل البيانات
+            applyFilter();
+            
+        } catch (error) {
+            alert('❌ حدث خطأ في حفظ التعديلات: ' + error.message);
+        }
+    };
 
     cancelEditBtn.onclick=()=>editModal.classList.remove('active');
 
@@ -412,6 +413,7 @@ async function saveEditToSyncCollection(sessionId, updatedData, originalSession)
       URL.revokeObjectURL(a.href);
     };
 
+    goToMain.onclick=()=>window.location.href='index.html';
     logoutBtn.onclick=()=>signOut(auth).then(()=>window.location.href='login.html');
 
     onAuthStateChanged(auth,user=>{
