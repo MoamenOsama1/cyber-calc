@@ -183,41 +183,65 @@
   return `${hh}:${m.toString().padStart(2,'0')} ${suffix}`;
 }
 
-// 🔄 دالة محسنة لحفظ التعديلات - تحديث Firebase فقط
+// 🔄 دالة محسنة لحفظ التعديلات - مع بيانات كاملة للمطابقة
 async function saveEditToSyncCollection(sessionId, updatedData, originalSession) {
     try {
         const syncRef = collection(db, 'sessionUpdates');
         const q = query(syncRef, where("sessionId", "==", sessionId));
         const querySnapshot = await getDocs(q);
         
+        // تحضير بيانات الطلبات للتخزين
+        let drinksData = updatedData.drinks;
+        if (typeof drinksData === 'string') {
+            // إذا كانت الطلبات نصاً، نحولها لمصفوفة
+            drinksData = drinksData.split(',').map(item => {
+                const [name, qty] = item.split('×');
+                return { 
+                    name: name.trim(), 
+                    qty: parseInt(qty) || 1 
+                };
+            });
+        }
+        
         const updatePayload = {
             sessionId: sessionId,
             deviceLabel: updatedData.deviceLabel,
             price: updatedData.price,
-            drinks: updatedData.drinks,
+            drinks: drinksData,
             mode: updatedData.mode,
             duration: updatedData.duration,
+            
+            // بيانات المطابقة مع الجلسة الأصلية
             originalPrice: originalSession.price,
             originalCreatedBy: originalSession.createdBy,
-            updatedAt: new Date().toISOString(),
-            updatedBy: auth.currentUser.email,
-            date: originalSession.date,
             originalDeviceLabel: originalSession.deviceLabel,
             originalStartISO: originalSession.startISO,
             originalEndISO: originalSession.endISO,
+            originalDate: originalSession.date,
+            
+            // معلومات التحديث
+            updatedAt: new Date().toISOString(),
+            updatedBy: auth.currentUser.email,
+            date: originalSession.date,
+            
             // إضافة علامة أن هذا تحديث من الأدمن
-            isAdminUpdate: true
+            isAdminUpdate: true,
+            updateType: 'session_edit'
         };
         
         if (!querySnapshot.empty) {
             const docId = querySnapshot.docs[0].id;
             await updateDoc(doc(db, 'sessionUpdates', docId), updatePayload);
+            console.log('✅ تم تحديث سجل المزامنة:', sessionId);
         } else {
             await addDoc(syncRef, updatePayload);
+            console.log('✅ تم إنشاء سجل مزامنة جديد:', sessionId);
         }
-        console.log('✅ تم حفظ التعديلات في collection المزامنة');
+        
+        console.log('✅ تم حفظ التعديلات في collection المزامنة:', updatePayload);
     } catch (error) {
         console.error('❌ خطأ في حفظ التعديلات للمزامنة:', error);
+        throw error;
     }
 }
     const sessionsCol=collection(db,'sessions');
@@ -308,33 +332,35 @@ async function saveEditToSyncCollection(sessionId, updatedData, originalSession)
       }
     }
 
-    saveEditBtn.onclick=async()=>{
-      if(!editingId) return;
-      const session=allSessions.find(x=>x.id===editingId);
-      if(!session) return;
-      
-      const originalSession=session.data;
-      
-      const updatedData={
-        deviceLabel:editDevice.value,
-        mode:editType.value,
-        startISO:parseToISO(editStart.value)||originalSession.startISO,
-        endISO:parseToISO(editEnd.value)||originalSession.endISO,
-        duration:editDuration.value,
-        price:Number(editPrice.value),
-        drinks:editDrinks.value,
-        deviceId:originalSession.deviceId,
-        startISO:originalSession.startISO,
-        endISO:originalSession.endISO,
-        createdBy:originalSession.createdBy,
-        date:originalSession.date
-      };
+    saveEditBtn.onclick = async () => {
+    if (!editingId) return;
+    const session = allSessions.find(x => x.id === editingId);
+    if (!session) return;
+    
+    const originalSession = session.data;
+    
+    const updatedData = {
+        deviceLabel: editDevice.value,
+        mode: editType.value,
+        startISO: parseToISO(editStart.value) || originalSession.startISO,
+        endISO: parseToISO(editEnd.value) || originalSession.endISO,
+        duration: editDuration.value,
+        price: Number(editPrice.value),
+        drinks: editDrinks.value,
+        deviceId: originalSession.deviceId,
+        startISO: originalSession.startISO,
+        endISO: originalSession.endISO,
+        createdBy: originalSession.createdBy,
+        date: originalSession.date
+    };
 
-      try{
-        const ref=doc(db,'sessions',editingId);
-        await updateDoc(ref,updatedData);
+    try {
+        // 1. تحديث الجلسة الأصلية في Firebase
+        const ref = doc(db, 'sessions', editingId);
+        await updateDoc(ref, updatedData);
+        console.log('✅ تم تحديث الجلسة الأصلية في Firebase');
         
-        // 🔄 حفظ التعديلات في collection منفصل للمزامنة
+        // 2. 🔄 حفظ التعديلات في collection منفصل للمزامنة
         await saveEditToSyncCollection(editingId, {
             deviceLabel: updatedData.deviceLabel,
             price: updatedData.price,
@@ -344,11 +370,15 @@ async function saveEditToSyncCollection(sessionId, updatedData, originalSession)
         }, originalSession);
         
         editModal.classList.remove('active');
-        alert('✅ تم حفظ التعديلات بنجاح وسيتم مزامنتها مع جميع الأجهزة');
-      }catch(error){
-        alert('❌ حدث خطأ في حفظ التعديلات: '+error.message);
-      }
-    };
+        alert('✅ تم حفظ التعديلات بنجاح وسيتم مزامنتها مع جميع الأجهزة فوراً');
+        
+        // 3. إعادة تحميل البيانات لعرض التحديثات
+        applyFilter();
+        
+    } catch (error) {
+        alert('❌ حدث خطأ في حفظ التعديلات: ' + error.message);
+    }
+};
 
     cancelEditBtn.onclick=()=>editModal.classList.remove('active');
 
