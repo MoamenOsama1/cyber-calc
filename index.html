@@ -814,7 +814,7 @@ function syncAllCompletedSessions() {
     return unsubscribe;
 }
 
-// 🔄 نظام استماع متقدم لتعديلات الأدمن - بدون مسح البيانات المحلية
+// 🔄 نظام استماع متقدم لتعديلات الأدمن - مزامنة فورية
 function listenForAdminUpdates() {
     console.log('🚀 بدء الاستماع لتحديثات الأدمن...');
     
@@ -829,37 +829,51 @@ function listenForAdminUpdates() {
         
         snapshot.docChanges().forEach((change) => {
             if (change.type === "added" || change.type === "modified") {
-                const update = change.doc.data();
-                console.log('🔄 تحديث مستلم من الأدمن:', update);
+                const adminUpdate = change.doc.data();
+                console.log('🔄 تحديث مستلم من الأدمن:', adminUpdate);
                 
-                // تحديث فقط الجلسات المحددة من قبل الأدمن
+                // تحديث جميع الأيام في التخزين المحلي
                 Object.keys(storage).forEach(dateKey => {
                     if (storage[dateKey] && storage[dateKey].completed) {
                         storage[dateKey].completed = storage[dateKey].completed.map(session => {
-                            // البحث عن الجلسات التي تطابق sessionId فقط
-                            const matchesSessionId = update.sessionId && 
-                                allCompletedSessionsFromFirebase.find(
-                                    fbSession => fbSession.id === update.sessionId &&
-                                    fbSession.deviceId === session.deviceId &&
-                                    fbSession.startISO === session.startISO
-                                );
+                            // البحث عن الجلسات التي تطابق بيانات الجلسة المعدلة
+                            const matchesSession = 
+                                // المطابقة بواسطة sessionId إذا موجود
+                                (adminUpdate.sessionId && session.id === adminUpdate.sessionId) ||
+                                // أو المطابقة بواسطة البيانات الأساسية
+                                (session.deviceLabel === adminUpdate.originalDeviceLabel &&
+                                 session.startISO === adminUpdate.originalStartISO &&
+                                 session.price === adminUpdate.originalPrice);
                             
-                            if (matchesSessionId) {
+                            if (matchesSession) {
                                 console.log('✅找到 الجلسة للتحديث من الأدمن:', session.deviceLabel);
                                 updated = true;
+                                
+                                // معالجة بيانات الطلبات إذا كانت نصاً
+                                let updatedDrinks = session.drinks;
+                                if (typeof adminUpdate.drinks === 'string') {
+                                    updatedDrinks = adminUpdate.drinks.split(',').map(item => {
+                                        const [name, qty] = item.split('×');
+                                        return { 
+                                            name: name.trim(), 
+                                            qty: parseInt(qty) || 1, 
+                                            price: 0 
+                                        };
+                                    });
+                                } else if (adminUpdate.drinks) {
+                                    updatedDrinks = adminUpdate.drinks;
+                                }
+                                
                                 return {
                                     ...session,
-                                    deviceLabel: update.deviceLabel || session.deviceLabel,
-                                    price: update.price !== undefined ? update.price : session.price,
-                                    drinks: typeof update.drinks === 'string' ? 
-                                        update.drinks.split(',').map(item => {
-                                            const [name, qty] = item.split('×');
-                                            return { name: name.trim(), qty: parseInt(qty) || 1, price: 0 };
-                                        }) : (update.drinks || session.drinks),
-                                    mode: update.mode || session.mode,
-                                    duration: update.duration || session.duration,
+                                    deviceLabel: adminUpdate.deviceLabel || session.deviceLabel,
+                                    price: adminUpdate.price !== undefined ? adminUpdate.price : session.price,
+                                    drinks: updatedDrinks,
+                                    mode: adminUpdate.mode || session.mode,
+                                    duration: adminUpdate.duration || session.duration,
                                     // وضع علامة أن هذه الجلسة تم تحديثها من الأدمن
-                                    updatedByAdmin: true
+                                    updatedByAdmin: true,
+                                    lastUpdate: new Date().toISOString()
                                 };
                             }
                             return session;
@@ -871,8 +885,14 @@ function listenForAdminUpdates() {
         
         if (updated) {
             setStorage(storage);
+            initLocal();
             renderDevices();
             console.log('✅ تم تحديث الجلسات المحلية بناءً على تعديلات الأدمن');
+            
+            // إشعار المستخدم بالتحديثات
+            setTimeout(() => {
+                alert('🔄 تم تحديث البيانات من الإدارة');
+            }, 500);
         }
     }, (error) => {
         console.error('❌ خطأ في الاستماع لتحديثات الأدمن:', error);
@@ -880,7 +900,6 @@ function listenForAdminUpdates() {
 
     return unsubscribe;
 }
-
 // 🔄 تحديث الجلسات المكتملة المحلية من Firebase - بدون مسح البيانات
 function updateLocalCompletedSessionsFromFirebase(firebaseSessions) {
     const storage = getStorage();
