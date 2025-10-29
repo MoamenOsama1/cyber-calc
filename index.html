@@ -730,234 +730,211 @@
         }
     }
 
-    // 🔄 نظام مزامنة كامل للجلسات المكتملة
-    function syncAllCompletedSessions() {
-        console.log('🚀 بدء مزامنة جميع الجلسات المكتملة...');
-        
-        const sessionsQuery = query(
-            collection(db, 'sessions'),
-            orderBy('createdAt', 'desc')
-        );
+// 🔄 نظام مزامنة كامل للجلسات المكتملة - بدون مسح البيانات المحلية
+function syncAllCompletedSessions() {
+    console.log('🚀 بدء مزامنة جميع الجلسات المكتملة...');
+    
+    const sessionsQuery = query(
+        collection(db, 'sessions'),
+        orderBy('createdAt', 'desc')
+    );
 
-        const unsubscribe = onSnapshot(sessionsQuery, (snapshot) => {
-            const storage = getStorage();
-            let updated = false;
-            
-            snapshot.forEach(doc => {
-                const session = { id: doc.id, ...doc.data() };
-                const sessionDate = session.date;
-                
-                if (!sessionDate) return;
-                
-                if (!storage[sessionDate]) {
-                    storage[sessionDate] = { open: {}, completed: [] };
-                }
-                
-                const existingIndex = storage[sessionDate].completed.findIndex(
-                    s => s.deviceId === session.deviceId && s.startISO === session.startISO
-                );
-                
-                if (existingIndex === -1) {
-                    storage[sessionDate].completed.push({
-                        deviceId: session.deviceId,
-                        deviceLabel: session.deviceLabel,
-                        startISO: session.startISO,
-                        endISO: session.endISO,
-                        duration: session.duration,
-                        drinks: session.drinks || [],
-                        price: session.price || 0,
-                        mode: session.mode || session.type,
-                        createdAt: session.createdAt
-                    });
-                    updated = true;
-                } else {
-                    const existing = storage[sessionDate].completed[existingIndex];
-                    if (existing.price !== session.price ||
-                        existing.deviceLabel !== session.deviceLabel ||
-                        JSON.stringify(existing.drinks) !== JSON.stringify(session.drinks || []) ||
-                        existing.duration !== session.duration) {
-                        
-                        storage[sessionDate].completed[existingIndex] = {
-                            ...existing,
-                            deviceLabel: session.deviceLabel,
-                            price: session.price,
-                            drinks: session.drinks || [],
-                            duration: session.duration,
-                            mode: session.mode || session.type
-                        };
-                        updated = true;
-                    }
-                }
-            });
-            
-            if (updated) {
-                setStorage(storage);
-                initLocal();
-                renderDevices();
-                console.log('✅ تم مزامنة جميع الجلسات من Firebase');
-            }
-        }, (error) => {
-            console.error('❌ خطأ في مزامنة الجلسات:', error);
-        });
-        
-        return unsubscribe;
-    }
-
-    // 🔄 نظام استماع متقدم لتعديلات الأدمن على الجلسات
-    function listenForAdminUpdates() {
-        console.log('🚀 بدء الاستماع لتحديثات الأدمن...');
-        
-        const updatesQuery = query(
-            collection(db, 'sessionUpdates'),
-            orderBy('updatedAt', 'desc')
-        );
-
-        const unsubscribe = onSnapshot(updatesQuery, (snapshot) => {
-            const storage = getStorage();
-            let updated = false;
-            
-            snapshot.docChanges().forEach((change) => {
-                if (change.type === "added" || change.type === "modified") {
-                    const update = change.doc.data();
-                    console.log('🔄 تحديث مستلم من الأدمن:', update);
-                    
-                    Object.keys(storage).forEach(dateKey => {
-                        if (storage[dateKey] && storage[dateKey].completed) {
-                            storage[dateKey].completed = storage[dateKey].completed.map(session => {
-                                const matchesSessionId = update.sessionId && 
-                                    allCompletedSessionsFromFirebase.find(
-                                        fbSession => fbSession.id === update.sessionId &&
-                                        fbSession.deviceId === session.deviceId &&
-                                        fbSession.startISO === session.startISO
-                                    );
-                                
-                                const matchesSessionData = session.deviceLabel === update.deviceLabel &&
-                                    session.price === update.originalPrice;
-                                
-                                if (matchesSessionId || matchesSessionData) {
-                                    console.log('✅找到 الجلسة للتحديث من الأدمن:', session.deviceLabel);
-                                    updated = true;
-                                    return {
-                                        ...session,
-                                        deviceLabel: update.deviceLabel || session.deviceLabel,
-                                        price: update.price !== undefined ? update.price : session.price,
-                                        drinks: typeof update.drinks === 'string' ? 
-                                            update.drinks.split(',').map(item => {
-                                                const [name, qty] = item.split('×');
-                                                return { name: name.trim(), qty: parseInt(qty) || 1, price: 0 };
-                                            }) : (update.drinks || session.drinks),
-                                        mode: update.mode || session.mode,
-                                        duration: update.duration || session.duration
-                                    };
-                                }
-                                return session;
-                            });
-                        }
-                    });
-                }
-            });
-            
-            if (updated) {
-                setStorage(storage);
-                initLocal();
-                renderDevices();
-                console.log('✅ تم تحديث الجلسات المحلية بناءً على تعديلات الأدمن');
-            }
-        }, (error) => {
-            console.error('❌ خطأ في الاستماع لتحديثات الأدمن:', error);
-        });
-
-        return unsubscribe;
-    }
-
-    let allCompletedSessionsFromFirebase = [];
-
-    // 🔄 مزامنة الجلسات المكتملة من Firebase
-    function syncCompletedSessionsFromFirebase() {
-        console.log('🚀 بدء مزامنة الجلسات المكتملة...');
-        
-        const sessionsQuery = query(
-            collection(db, 'sessions'),
-            where("date", "==", todayKey())
-        );
-
-        const unsubscribe = onSnapshot(sessionsQuery, (snapshot) => {
-            allCompletedSessionsFromFirebase = [];
-            snapshot.forEach(doc => {
-                allCompletedSessionsFromFirebase.push({ 
-                    id: doc.id, 
-                    ...doc.data() 
-                });
-            });
-
-            console.log('📡 تم استلام الجلسات المكتملة من Firebase:', allCompletedSessionsFromFirebase.length);
-            
-            updateLocalCompletedSessionsFromFirebase(allCompletedSessionsFromFirebase);
-        }, (error) => {
-            console.error('❌ خطأ في مزامنة الجلسات المكتملة:', error);
-        });
-
-        return unsubscribe;
-    }
-
-    // 🔄 تحديث الجلسات المكتملة المحلية من Firebase
-    function updateLocalCompletedSessionsFromFirebase(firebaseSessions) {
+    const unsubscribe = onSnapshot(sessionsQuery, (snapshot) => {
         const storage = getStorage();
-        const today = todayKey();
-        
-        if (!storage[today]) return;
-        
         let updated = false;
         
-        firebaseSessions.forEach(fbSession => {
-            const existsLocally = storage[today].completed.some(localSession =>
-                localSession.deviceId === fbSession.deviceId &&
-                localSession.startISO === fbSession.startISO
+        snapshot.forEach(doc => {
+            const session = { id: doc.id, ...doc.data() };
+            const sessionDate = session.date;
+            
+            if (!sessionDate) return;
+            
+            // إنشاء يوم الجلسة إذا لم يكن موجوداً
+            if (!storage[sessionDate]) {
+                storage[sessionDate] = { open: {}, completed: [] };
+            }
+            
+            // البحث إذا كانت الجلسة موجودة بالفعل محلياً
+            const existingIndex = storage[sessionDate].completed.findIndex(
+                s => s.deviceId === session.deviceId && s.startISO === session.startISO
             );
             
-            if (!existsLocally) {
-                storage[today].completed.push({
-                    deviceId: fbSession.deviceId,
-                    deviceLabel: fbSession.deviceLabel,
-                    startISO: fbSession.startISO,
-                    endISO: fbSession.endISO,
-                    duration: fbSession.duration,
-                    drinks: fbSession.drinks || [],
-                    price: fbSession.price || 0
+            if (existingIndex === -1) {
+                // إضافة الجلسة الجديدة فقط (بدون مسح القديمة)
+                storage[sessionDate].completed.push({
+                    deviceId: session.deviceId,
+                    deviceLabel: session.deviceLabel,
+                    startISO: session.startISO,
+                    endISO: session.endISO,
+                    duration: session.duration,
+                    drinks: session.drinks || [],
+                    price: session.price || 0,
+                    mode: session.mode || session.type,
+                    createdAt: session.createdAt,
+                    // إضافة علامة أن هذه الجلسة من Firebase
+                    fromFirebase: true
                 });
                 updated = true;
+                console.log('➕ تمت إضافة جلسة جديدة من Firebase:', session.deviceLabel);
             } else {
-                storage[today].completed = storage[today].completed.map(localSession => {
-                    if (localSession.deviceId === fbSession.deviceId &&
-                        localSession.startISO === fbSession.startISO) {
-                        
-                        if (localSession.price !== fbSession.price ||
-                            localSession.deviceLabel !== fbSession.deviceLabel ||
-                            JSON.stringify(localSession.drinks) !== JSON.stringify(fbSession.drinks || []) ||
-                            localSession.duration !== fbSession.duration) {
+                // تحديث الجلسة الموجودة فقط إذا كانت من Firebase أو تم تعديلها بواسطة الأدمن
+                const existing = storage[sessionDate].completed[existingIndex];
+                
+                // تحديث فقط إذا كانت الجلسة من Firebase أو إذا تغيرت البيانات بشكل ملحوظ
+                if (existing.fromFirebase || 
+                    existing.price !== session.price ||
+                    existing.deviceLabel !== session.deviceLabel) {
+                    
+                    storage[sessionDate].completed[existingIndex] = {
+                        ...existing,
+                        deviceLabel: session.deviceLabel,
+                        price: session.price,
+                        drinks: session.drinks || [],
+                        duration: session.duration,
+                        mode: session.mode || session.type,
+                        // الحفاظ على البيانات المحلية الأصلية
+                        fromFirebase: existing.fromFirebase || false
+                    };
+                    updated = true;
+                    console.log('🔄 تم تحديث جلسة من Firebase:', session.deviceLabel);
+                }
+            }
+        });
+        
+        if (updated) {
+            setStorage(storage);
+            // لا نعيد initLocal() هنا للحفاظ على البيانات المحلية
+            renderDevices();
+            console.log('✅ تم مزامنة الجلسات من Firebase بدون مسح البيانات المحلية');
+        }
+    }, (error) => {
+        console.error('❌ خطأ في مزامنة الجلسات:', error);
+    });
+    
+    return unsubscribe;
+}
+
+// 🔄 نظام استماع متقدم لتعديلات الأدمن - بدون مسح البيانات المحلية
+function listenForAdminUpdates() {
+    console.log('🚀 بدء الاستماع لتحديثات الأدمن...');
+    
+    const updatesQuery = query(
+        collection(db, 'sessionUpdates'),
+        orderBy('updatedAt', 'desc')
+    );
+
+    const unsubscribe = onSnapshot(updatesQuery, (snapshot) => {
+        const storage = getStorage();
+        let updated = false;
+        
+        snapshot.docChanges().forEach((change) => {
+            if (change.type === "added" || change.type === "modified") {
+                const update = change.doc.data();
+                console.log('🔄 تحديث مستلم من الأدمن:', update);
+                
+                // تحديث فقط الجلسات المحددة من قبل الأدمن
+                Object.keys(storage).forEach(dateKey => {
+                    if (storage[dateKey] && storage[dateKey].completed) {
+                        storage[dateKey].completed = storage[dateKey].completed.map(session => {
+                            // البحث عن الجلسات التي تطابق sessionId فقط
+                            const matchesSessionId = update.sessionId && 
+                                allCompletedSessionsFromFirebase.find(
+                                    fbSession => fbSession.id === update.sessionId &&
+                                    fbSession.deviceId === session.deviceId &&
+                                    fbSession.startISO === session.startISO
+                                );
                             
-                            updated = true;
-                            return {
-                                ...localSession,
-                                deviceLabel: fbSession.deviceLabel,
-                                price: fbSession.price,
-                                drinks: fbSession.drinks || [],
-                                duration: fbSession.duration
-                            };
-                        }
+                            if (matchesSessionId) {
+                                console.log('✅找到 الجلسة للتحديث من الأدمن:', session.deviceLabel);
+                                updated = true;
+                                return {
+                                    ...session,
+                                    deviceLabel: update.deviceLabel || session.deviceLabel,
+                                    price: update.price !== undefined ? update.price : session.price,
+                                    drinks: typeof update.drinks === 'string' ? 
+                                        update.drinks.split(',').map(item => {
+                                            const [name, qty] = item.split('×');
+                                            return { name: name.trim(), qty: parseInt(qty) || 1, price: 0 };
+                                        }) : (update.drinks || session.drinks),
+                                    mode: update.mode || session.mode,
+                                    duration: update.duration || session.duration,
+                                    // وضع علامة أن هذه الجلسة تم تحديثها من الأدمن
+                                    updatedByAdmin: true
+                                };
+                            }
+                            return session;
+                        });
                     }
-                    return localSession;
                 });
             }
         });
         
         if (updated) {
             setStorage(storage);
-            initLocal();
             renderDevices();
-            console.log('✅ تم تحديث الجلسات المكتملة من Firebase');
+            console.log('✅ تم تحديث الجلسات المحلية بناءً على تعديلات الأدمن');
         }
+    }, (error) => {
+        console.error('❌ خطأ في الاستماع لتحديثات الأدمن:', error);
+    });
+
+    return unsubscribe;
+}
+
+// 🔄 تحديث الجلسات المكتملة المحلية من Firebase - بدون مسح البيانات
+function updateLocalCompletedSessionsFromFirebase(firebaseSessions) {
+    const storage = getStorage();
+    const today = todayKey();
+    
+    if (!storage[today]) return;
+    
+    let updated = false;
+    
+    // دمج الجلسات من Firebase مع الجلسات المحلية بدون مسح القديمة
+    firebaseSessions.forEach(fbSession => {
+        const existsLocally = storage[today].completed.some(localSession =>
+            localSession.deviceId === fbSession.deviceId &&
+            localSession.startISO === fbSession.startISO
+        );
+        
+        if (!existsLocally) {
+            // إضافة الجلسة الجديدة فقط
+            storage[today].completed.push({
+                deviceId: fbSession.deviceId,
+                deviceLabel: fbSession.deviceLabel,
+                startISO: fbSession.startISO,
+                endISO: fbSession.endISO,
+                duration: fbSession.duration,
+                drinks: fbSession.drinks || [],
+                price: fbSession.price || 0,
+                fromFirebase: true
+            });
+            updated = true;
+            console.log('➕ تمت إضافة جلسة جديدة من Firebase لليوم الحالي:', fbSession.deviceLabel);
+        }
+    });
+    
+    if (updated) {
+        setStorage(storage);
+        renderDevices();
+        console.log('✅ تم تحديث الجلسات المكتملة من Firebase بدون مسح البيانات المحلية');
     }
+}
+
+// زر المزامنة اليدوية المحسن - بدون مسح البيانات
+syncBtn.addEventListener('click', async () => {
+    alert('🔄 جاري مزامنة البيانات الجديدة مع السحابة...');
+    
+    // إعادة تحميل البيانات من Firebase فقط
+    syncOpenSessionsWithFirebase();
+    syncCompletedSessionsFromFirebase();
+    syncAllCompletedSessions();
+    
+    setTimeout(() => {
+        alert('✅ تمت مزامنة البيانات الجديدة بنجاح\nالبيانات المحلية محفوظة');
+        renderDevices();
+    }, 3000);
+});
 
     // render functions
     function renderDevices(){ 
