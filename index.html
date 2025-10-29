@@ -547,6 +547,54 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
+    // 🟢 مراقبة تعديلات الأدمن وتحديث الجلسات عند المستخدم
+import { onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+function listenForAdminUpdates() {
+  const updatesRef = collection(db, "sessionUpdates");
+  const q = query(updatesRef, orderBy("updatedAt", "desc"));
+
+  onSnapshot(q, (snapshot) => {
+    snapshot.docChanges().forEach((change) => {
+      if (change.type === "added" || change.type === "modified") {
+        const update = change.doc.data();
+
+        // ✅ فقط عدّل الجلسات الخاصة بالمستخدم الحالي
+        if (update.originalCreatedBy === auth.currentUser.email) {
+          const sessions = JSON.parse(localStorage.getItem("biancoSessionsLocal") || "[]");
+
+          const matched = sessions.find(
+            (s) =>
+              (s.firebaseId && s.firebaseId === update.sessionId) ||
+              (s.deviceLabel === update.originalDeviceLabel &&
+                Math.abs(new Date(s.startISO) - new Date(update.originalStartISO)) < 60000)
+          );
+
+          if (matched) {
+            matched.deviceLabel = update.deviceLabel || matched.deviceLabel;
+            matched.mode = update.mode || matched.mode;
+            matched.price = update.price || matched.price;
+            matched.duration = update.duration || matched.duration;
+            matched.drinks = update.drinks || matched.drinks;
+
+            localStorage.setItem("biancoSessionsLocal", JSON.stringify(sessions));
+            console.log("✅ تم تحديث الجلسة بناءً على تعديل الأدمن:", matched.deviceLabel);
+
+            // 🔁 إعادة عرض الجلسات بعد التحديث
+            if (typeof renderCompletedSessions === "function") renderCompletedSessions();
+          }
+        }
+      }
+    });
+  });
+}
+
+// استدعاء المراقب بعد تسجيل الدخول
+onAuthStateChanged(auth, (user) => {
+  if (user) listenForAdminUpdates();
+});
+
+
     const RATES = { ping:{single:30,double:40}, ps4:{single:30,double:40}, ps5:{single:40,double:50} };
     const DEVICES = []; DEVICES.push({id:'ping',label:'Ping',type:'ping'}); for(let i=1;i<=6;i++) DEVICES.push({id:`ps${i}`,label:`PS4-${i}`,type:'ps4'}); for(let i=7;i<=15;i++) DEVICES.push({id:`ps${i}`,label:`PS5-${i}`,type:'ps5'});
 
