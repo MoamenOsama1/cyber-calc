@@ -940,6 +940,74 @@ function updateLocalCompletedSessionsFromFirebase(firebaseSessions) {
     }
 }
 
+
+    // 🔍 دالة مساعدة للبحث عن الجلسات المطابقة في Firebase
+function findMatchingFirebaseSession(localSession, firebaseSessions) {
+    return firebaseSessions.find(fbSession => 
+        fbSession.deviceId === localSession.deviceId &&
+        fbSession.startISO === localSession.startISO &&
+        fbSession.deviceLabel === localSession.deviceLabel
+    );
+}
+
+// 🔄 مزامنة إضافية للجلسات المحدثة من الأدمن
+function syncAdminUpdatedSessions() {
+    console.log('🚀 بدء مزامنة الجلسات المحدثة من الأدمن...');
+    
+    const sessionsQuery = query(
+        collection(db, 'sessions'),
+        orderBy('createdAt', 'desc')
+    );
+
+    const unsubscribe = onSnapshot(sessionsQuery, (snapshot) => {
+        const firebaseSessions = [];
+        snapshot.forEach(doc => {
+            firebaseSessions.push({ id: doc.id, ...doc.data() });
+        });
+
+        const storage = getStorage();
+        let updated = false;
+
+        // تحديث الجلسات المحلية بناءً على أحدث بيانات Firebase
+        Object.keys(storage).forEach(dateKey => {
+            if (storage[dateKey] && storage[dateKey].completed) {
+                storage[dateKey].completed = storage[dateKey].completed.map(localSession => {
+                    const matchingFbSession = findMatchingFirebaseSession(localSession, firebaseSessions);
+                    
+                    if (matchingFbSession) {
+                        // إذا وجدت اختلافات، قم بالتحديث
+                        if (localSession.price !== matchingFbSession.price ||
+                            localSession.deviceLabel !== matchingFbSession.deviceLabel ||
+                            localSession.duration !== matchingFbSession.duration) {
+                            
+                            console.log('🔄 تحديث جلسة من Firebase:', localSession.deviceLabel);
+                            updated = true;
+                            return {
+                                ...localSession,
+                                deviceLabel: matchingFbSession.deviceLabel,
+                                price: matchingFbSession.price,
+                                drinks: matchingFbSession.drinks || localSession.drinks,
+                                duration: matchingFbSession.duration,
+                                mode: matchingFbSession.mode || localSession.mode
+                            };
+                        }
+                    }
+                    return localSession;
+                });
+            }
+        });
+
+        if (updated) {
+            setStorage(storage);
+            initLocal();
+            renderDevices();
+            console.log('✅ تم تحديث الجلسات من أحدث بيانات Firebase');
+        }
+    });
+
+    return unsubscribe;
+}
+
 // زر المزامنة اليدوية المحسن - بدون مسح البيانات
 syncBtn.addEventListener('click', async () => {
     alert('🔄 جاري مزامنة البيانات الجديدة مع السحابة...');
@@ -1280,6 +1348,7 @@ syncBtn.addEventListener('click', async () => {
       } 
     });
 
+   
     // init
     (function init(){ 
         todayStr.textContent = new Date().toLocaleDateString('ar-EG'); 
@@ -1290,6 +1359,7 @@ syncBtn.addEventListener('click', async () => {
         syncOpenSessionsWithFirebase();
         syncCompletedSessionsFromFirebase();
         syncAllCompletedSessions();
+        syncAdminUpdatedSessions(); // ⬅️ هذه الجديدة
         listenForAdminUpdates();
         
         console.log('✅ تم تهيئة النظام بنجاح');
