@@ -8,7 +8,7 @@
     :root {
       --bg: #0d0d0d;
       --panel: #121216;
-      --accent: #00c853;
+      --accent: #0000c8;
       --muted: #9aa4b2;
       --glass: rgba(255,255,255,0.04);
     }
@@ -149,8 +149,8 @@
 
       userEmailDisplay.textContent = user.email;
       
+      // 🔧 الإصلاح: إذا كان مستخدم عادي، توجيه للصفحة الرئيسية مباشرة
       if (!adminEmails.includes(user.email)) {
-        // إذا كان مستخدم عادي، توجيه للصفحة الرئيسية
         window.location.href = 'index.html';
       }
     });
