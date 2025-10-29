@@ -1204,31 +1204,32 @@ function syncAdminUpdatedSessions() {
       renderDevices(); 
       modalEnd.classList.remove('active'); 
       
-      try{ 
-        const user = auth.currentUser; 
-        const now = new Date();
-        const payload = {
-          ...finished, 
-          createdBy: user ? user.email : 'local', 
-          createdAt: now.toISOString(),
-          date: now.toLocaleDateString('ar-EG'),
-          start: finished.startISO,
-          end: finished.endISO,
-          mode: s.mode,
-          type: s.mode,
+     try {
+  const user = auth.currentUser;
+  const now = new Date();
+
+  const payload = {
+          deviceId: s.deviceId,
           deviceLabel: s.deviceLabel,
+          mode: s.mode,
+          startISO: s.startISO,
+          endISO: endISO,
+          duration: durationText(mins),
           price: price,
-          drinks: s.drinks || []
-        }; 
-        
-        console.log('جاري حفظ الجلسة في Firebase:', payload);
-        await addDoc(collection(db,'sessions'), payload); 
-        console.log('✅ تم حفظ الجلسة في Firebase بنجاح');
-      }catch(err){ 
-        console.error('❌ فشل حفظ الجلسة في Firebase:', err.message); 
-      } 
-      
-      alert('تم إنهاء الجلسة. المجموع: ' + price + ' ج'); 
+          drinks: s.drinks || [],
+          createdBy: user ? user.email : "local",
+          createdAt: now.toISOString(),
+          date: now.toLocaleDateString("ar-EG")
+        };
+
+        await addDoc(collection(db, "sessions"), payload);
+        console.log("✅ تم حفظ الجلسة في Firebase بنجاح");
+
+        alert('تم إنهاء الجلسة. المجموع: ' + price + ' ج'); 
+      } catch (error) {
+        console.error("❌ خطأ أثناء حفظ الجلسة:", error);
+        alert('❌ حدث خطأ أثناء حفظ الجلسة في Firebase');
+      }
     });
 
     cancelEnd.addEventListener('click', ()=> modalEnd.classList.remove('active'));
