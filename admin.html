@@ -183,30 +183,35 @@
       return `${hh}:${m.toString().padStart(2,'0')} ${suffix}`;
     }
 
-    // 🔄 دالة لحفظ التعديلات في collection منفصل للمزامنة
-    async function saveEditToSyncCollection(sessionId, updatedData) {
+    // 🔄 دالة محسنة لحفظ التعديلات في collection منفصل للمزامنة
+    async function saveEditToSyncCollection(sessionId, updatedData, originalSession) {
         try {
             const syncRef = collection(db, 'sessionUpdates');
             const q = query(syncRef, where("sessionId", "==", sessionId));
             const querySnapshot = await getDocs(q);
             
+            const updatePayload = {
+                sessionId: sessionId,
+                deviceLabel: updatedData.deviceLabel,
+                price: updatedData.price,
+                drinks: updatedData.drinks,
+                mode: updatedData.mode,
+                duration: updatedData.duration,
+                originalPrice: originalSession.price,
+                originalCreatedBy: originalSession.createdBy,
+                updatedAt: new Date().toISOString(),
+                updatedBy: auth.currentUser.email,
+                date: originalSession.date,
+                originalDeviceLabel: originalSession.deviceLabel,
+                originalStartISO: originalSession.startISO,
+                originalEndISO: originalSession.endISO
+            };
+            
             if (!querySnapshot.empty) {
-                // تحديث السجل الموجود
                 const docId = querySnapshot.docs[0].id;
-                await updateDoc(doc(db, 'sessionUpdates', docId), {
-                    ...updatedData,
-                    updatedAt: new Date().toISOString(),
-                    updatedBy: auth.currentUser.email
-                });
+                await updateDoc(doc(db, 'sessionUpdates', docId), updatePayload);
             } else {
-                // إنشاء سجل جديد
-                await addDoc(syncRef, {
-                    sessionId,
-                    ...updatedData,
-                    updatedAt: new Date().toISOString(),
-                    updatedBy: auth.currentUser.email,
-                    date: new Date().toLocaleDateString('ar-EG')
-                });
+                await addDoc(syncRef, updatePayload);
             }
             console.log('✅ تم حفظ التعديلات في collection المزامنة');
         } catch (error) {
@@ -309,7 +314,6 @@
       
       const originalSession=session.data;
       
-      // البيانات المحدثة
       const updatedData={
         deviceLabel:editDevice.value,
         mode:editType.value,
@@ -318,7 +322,6 @@
         duration:editDuration.value,
         price:Number(editPrice.value),
         drinks:editDrinks.value,
-        // الحفاظ على البيانات الأصلية المهمة
         deviceId:originalSession.deviceId,
         startISO:originalSession.startISO,
         endISO:originalSession.endISO,
@@ -327,7 +330,6 @@
       };
 
       try{
-        // تحديث الجلسة الأصلية
         const ref=doc(db,'sessions',editingId);
         await updateDoc(ref,updatedData);
         
@@ -337,9 +339,8 @@
             price: updatedData.price,
             drinks: updatedData.drinks,
             mode: updatedData.mode,
-            duration: updatedData.duration,
-            originalCreatedBy: originalSession.createdBy
-        });
+            duration: updatedData.duration
+        }, originalSession);
         
         editModal.classList.remove('active');
         alert('✅ تم حفظ التعديلات بنجاح وسيتم مزامنتها مع جميع الأجهزة');
