@@ -32,15 +32,15 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
-      const firebaseConfig = {
-  apiKey: "AIzaSyBFI6W1mCbFsG8MfcGxWL0JonZtJ_7P6W0",
-  authDomain: "bianco-playstation.firebaseapp.com",
-  projectId: "bianco-playstation",
-  storageBucket: "bianco-playstation.firebasestorage.app",
-  messagingSenderId: "699813217029",
-  appId: "1:699813217029:web:568e169371a2361358ad6c",
-  measurementId: "G-YE9S5421FR"
-};
+    const firebaseConfig = {
+      apiKey: "AIzaSyBFI6W1mCbFsG8MfcGxWL0JonZtJ_7P6W0",
+      authDomain: "bianco-playstation.firebaseapp.com",
+      projectId: "bianco-playstation",
+      storageBucket: "bianco-playstation.firebasestorage.app",
+      messagingSenderId: "699813217029",
+      appId: "1:699813217029:web:568e169371a2361358ad6c",
+      measurementId: "G-YE9S5421FR"
+    };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
@@ -57,10 +57,11 @@
     loginBtn.onclick = async () => {
       msg.textContent = "";
       try {
-        await signInWithEmailAndPassword(auth, emailInput.value, passInput.value);
-        // النجاح -> توجيه حسب الدور
-        const user = auth.currentUser;
-        if (user && adminEmails.includes(user.email)) {
+        const userCredential = await signInWithEmailAndPassword(auth, emailInput.value, passInput.value);
+        const user = userCredential.user;
+        
+        // التحقق من الصلاحية والتوجيه
+        if (adminEmails.includes(user.email)) {
           window.location.href = "welcome.html"; // للمشرفين
         } else {
           window.location.href = "index.html"; // للمستخدمين العاديين
@@ -73,8 +74,15 @@
     registerBtn.onclick = async () => {
       msg.textContent = "";
       try {
-        await createUserWithEmailAndPassword(auth, emailInput.value, passInput.value);
-        msg.textContent = "تم إنشاء الحساب. الآن سجل الدخول.";
+        const userCredential = await createUserWithEmailAndPassword(auth, emailInput.value, passInput.value);
+        const user = userCredential.user;
+        
+        // بعد التسجيل، توجيه حسب الصلاحية
+        if (adminEmails.includes(user.email)) {
+          window.location.href = "welcome.html";
+        } else {
+          window.location.href = "index.html";
+        }
       } catch (e) {
         msg.textContent = "خطأ: " + e.message;
       }
