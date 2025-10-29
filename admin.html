@@ -183,42 +183,54 @@
       return `${hh}:${m.toString().padStart(2,'0')} ${suffix}`;
     }
 
-    // 🔄 دالة محسنة لحفظ التعديلات في collection منفصل للمزامنة
-    async function saveEditToSyncCollection(sessionId, updatedData, originalSession) {
-        try {
-            const syncRef = collection(db, 'sessionUpdates');
-            const q = query(syncRef, where("sessionId", "==", sessionId));
-            const querySnapshot = await getDocs(q);
-            
-            const updatePayload = {
-                sessionId: sessionId,
-                deviceLabel: updatedData.deviceLabel,
-                price: updatedData.price,
-                drinks: updatedData.drinks,
-                mode: updatedData.mode,
-                duration: updatedData.duration,
-                originalPrice: originalSession.price,
-                originalCreatedBy: originalSession.createdBy,
-                updatedAt: new Date().toISOString(),
-                updatedBy: auth.currentUser.email,
-                date: originalSession.date,
-                originalDeviceLabel: originalSession.deviceLabel,
-                originalStartISO: originalSession.startISO,
-                originalEndISO: originalSession.endISO
-            };
-            
-            if (!querySnapshot.empty) {
-                const docId = querySnapshot.docs[0].id;
-                await updateDoc(doc(db, 'sessionUpdates', docId), updatePayload);
-            } else {
-                await addDoc(syncRef, updatePayload);
-            }
-            console.log('✅ تم حفظ التعديلات في collection المزامنة');
-        } catch (error) {
-            console.error('❌ خطأ في حفظ التعديلات للمزامنة:', error);
-        }
-    }
+  function formatTime12(val){
+  if(!val) return '-';
+  const iso=parseToISO(val);
+  if(!iso) return val;
+  const d=new Date(iso);
+  const h=d.getHours(),m=d.getMinutes();
+  const suffix=h>=12?'مساءً':'صباحًا';
+  const hh=h%12||12;
+  return `${hh}:${m.toString().padStart(2,'0')} ${suffix}`;
+}
 
+// 🔄 دالة محسنة لحفظ التعديلات - تحديث Firebase فقط
+async function saveEditToSyncCollection(sessionId, updatedData, originalSession) {
+    try {
+        const syncRef = collection(db, 'sessionUpdates');
+        const q = query(syncRef, where("sessionId", "==", sessionId));
+        const querySnapshot = await getDocs(q);
+        
+        const updatePayload = {
+            sessionId: sessionId,
+            deviceLabel: updatedData.deviceLabel,
+            price: updatedData.price,
+            drinks: updatedData.drinks,
+            mode: updatedData.mode,
+            duration: updatedData.duration,
+            originalPrice: originalSession.price,
+            originalCreatedBy: originalSession.createdBy,
+            updatedAt: new Date().toISOString(),
+            updatedBy: auth.currentUser.email,
+            date: originalSession.date,
+            originalDeviceLabel: originalSession.deviceLabel,
+            originalStartISO: originalSession.startISO,
+            originalEndISO: originalSession.endISO,
+            // إضافة علامة أن هذا تحديث من الأدمن
+            isAdminUpdate: true
+        };
+        
+        if (!querySnapshot.empty) {
+            const docId = querySnapshot.docs[0].id;
+            await updateDoc(doc(db, 'sessionUpdates', docId), updatePayload);
+        } else {
+            await addDoc(syncRef, updatePayload);
+        }
+        console.log('✅ تم حفظ التعديلات في collection المزامنة');
+    } catch (error) {
+        console.error('❌ خطأ في حفظ التعديلات للمزامنة:', error);
+    }
+}
     const sessionsCol=collection(db,'sessions');
     const q=query(sessionsCol,orderBy('createdAt','desc'));
     onSnapshot(q,snap=>{
