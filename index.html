@@ -1036,21 +1036,44 @@ function syncAdminUpdatedSessions() {
             const mins = diffMinutes(s.startISO, now); 
             const rate = RATES[s.rateType][s.mode]; 
             const hoursPrice = (mins/60)*rate; 
-            const drinksTotal = (s.drinks||[]).reduce((a,b)=>a+(b.price*b.qty),0); 
+            let drinksTotal = 0;
+if (Array.isArray(s.drinks)) {
+  drinksTotal = s.drinks.reduce((a,b)=>a+(b.price*b.qty),0);
+} else if (typeof s.drinks === 'string' && s.drinks.trim() !== '') {
+  // لو النص يحتوي على أسعار أو كميات بصيغة بسيطة زي "شاي×2, قهوة×1"
+  const items = s.drinks.split(',').map(i => i.trim());
+  drinksTotal = items.length * 10; // أو احسبها كما تريد (هنا مثال افتراضي)
+}
+ 
             total += hoursPrice + drinksTotal; 
         }); 
         todayRevenueEl.textContent = `${Number(total.toFixed(2))} ج`; 
     }
 
-    function renderCompleted(){ 
-        completedTbody.innerHTML=''; 
-        completedSessionsToday.slice().reverse().forEach(s=>{ 
-            const tr=document.createElement('tr'); 
-            const drinksTxt = (s.drinks && s.drinks.length) ? s.drinks.map(d=>`${d.name}×${d.qty}`).join(', ') : '-'; 
-            tr.innerHTML = `<td>${s.deviceLabel}</td><td>${format12FromISO(s.startISO)}</td><td>${format12FromISO(s.endISO)}</td><td>${s.duration}</td><td>${drinksTxt}</td><td>${s.price} ج</td>`; 
-            completedTbody.appendChild(tr); 
-        }); 
-    }
+  function renderCompleted() {
+  completedTbody.innerHTML = '';
+  completedSessionsToday.slice().reverse().forEach(s => {
+    const tr = document.createElement('tr');
+
+    // ✅ تأمين عرض الطلبات سواء كانت Array أو String أو فاضية
+    const drinksTxt = Array.isArray(s.drinks)
+      ? s.drinks.map(d => `${d.name}×${d.qty}`).join(', ')
+      : (typeof s.drinks === 'string' && s.drinks.trim() !== ''
+        ? s.drinks
+        : '-');
+
+    tr.innerHTML = `
+      <td>${s.deviceLabel || '-'}</td>
+      <td>${s.mode === 'double' ? 'زوجي' : 'فردي'}</td>
+      <td>${formatTime12(s.startISO)} → ${formatTime12(s.endISO)}</td>
+      <td>${s.duration || '-'}</td>
+      <td>${drinksTxt}</td>
+      <td>${s.price || 0} ج</td>
+    `;
+    completedTbody.appendChild(tr);
+  });
+}
+
 
     // events delegation for device buttons
     devicesGrid.addEventListener('click', (e)=>{ 
