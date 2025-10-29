@@ -384,7 +384,10 @@
     logoutBtn.onclick=()=>signOut(auth).then(()=>window.location.href='login.html');
 
     onAuthStateChanged(auth,user=>{
-      if(!user){window.location.href='login.html';return;}
+      if(!user){
+        window.location.href='login.html';
+        return;
+      }
       userEmail.textContent=user.email;
       if(!adminEmails.includes(user.email)){
         alert('⚠️ ليس لديك صلاحية مشرف');
