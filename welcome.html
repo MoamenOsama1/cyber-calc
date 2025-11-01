@@ -1,3 +1,5 @@
+
+[file content begin]
 <!doctype html>
 <html lang="ar">
 <head>
@@ -6,74 +8,205 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
     :root {
-      --bg: #0d0d0d;
-      --panel: #121216;
-      --accent: #0000c8;
-      --muted: #9aa4b2;
+      --bg1: #050f18;
+      --bg2: #0b1b2b;
+      --card: #093f76;
+      --accent: #00c853;
+      --accent-2: #03a9f4;
+      --muted: #a7b5c4;
       --glass: rgba(255,255,255,0.04);
+      --shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+    
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
     }
     
     body {
-      font-family: "Cairo", Arial, sans-serif;
-      background: var(--bg);
+      font-family: "Cairo", "Segoe UI", sans-serif;
+      background: linear-gradient(135deg, var(--bg1), var(--bg2));
       color: #fff;
       direction: rtl;
       margin: 0;
-      padding: 0;
+      padding: 20px;
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
+      background: url('https://e0.pxfuel.com/wallpapers/239/293/desktop-wallpaper-playstation-background-playstation-blue-ps4.jpg') center/cover fixed, linear-gradient(135deg, var(--bg1), var(--bg2));
+    }
+    
+    .welcome-container {
+      width: 100%;
+      max-width: 500px;
     }
     
     .welcome-card {
-      background: var(--panel);
+      background: var(--card);
       padding: 30px;
-      border-radius: 15px;
+      border-radius: 20px;
       border: 1px solid var(--glass);
       text-align: center;
-      max-width: 500px;
-      width: 90%;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .welcome-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
     }
     
     .welcome-icon {
       font-size: 4rem;
       margin-bottom: 20px;
+      animation: float 3s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
     }
     
     h1 {
       margin: 0 0 15px 0;
       color: var(--accent);
+      font-size: 28px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .subtitle {
+      color: var(--muted);
+      margin-bottom: 25px;
+      font-size: 16px;
+      line-height: 1.5;
     }
     
     .user-info {
       background: rgba(255,255,255,0.05);
-      padding: 15px;
-      border-radius: 10px;
-      margin: 20px 0;
+      padding: 20px;
+      border-radius: 12px;
+      margin: 25px 0;
+      border: 1px solid var(--glass);
+    }
+    
+    .user-detail {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      padding: 8px 0;
+    }
+    
+    .user-detail:last-child {
+      margin-bottom: 0;
+    }
+    
+    .detail-label {
+      color: var(--muted);
+      font-size: 14px;
+    }
+    
+    .detail-value {
+      color: #fff;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    
+    .admin-badge {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #000;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-weight: 800;
+      font-size: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin: 25px 0;
     }
     
     .btn {
       background: var(--accent);
       border: none;
       color: #021018;
-      padding: 12px 24px;
-      border-radius: 8px;
-      font-weight: 700;
+      padding: 14px 24px;
+      border-radius: 12px;
+      font-weight: 800;
       cursor: pointer;
       font-size: 16px;
-      margin: 10px;
-      transition: transform 0.2s;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-decoration: none;
     }
     
     .btn:hover {
-      transform: scale(1.05);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 200, 83, 0.4);
     }
     
     .btn.secondary {
       background: transparent;
+      border: 2px solid var(--glass);
+      color: var(--muted);
+    }
+    
+    .btn.secondary:hover {
+      border-color: var(--accent-2);
+      color: #fff;
+      box-shadow: 0 6px 20px rgba(3, 169, 244, 0.3);
+    }
+    
+    .btn.danger {
+      background: transparent;
+      border: 2px solid #ff5252;
+      color: #ff5252;
+    }
+    
+    .btn.danger:hover {
+      background: #ff5252;
+      color: white;
+      box-shadow: 0 6px 20px rgba(255, 82, 82, 0.4);
+    }
+    
+    .features {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin: 20px 0;
+    }
+    
+    .feature {
+      background: rgba(255,255,255,0.03);
+      padding: 12px;
+      border-radius: 10px;
+      text-align: center;
       border: 1px solid var(--glass);
+    }
+    
+    .feature-icon {
+      font-size: 20px;
+      margin-bottom: 8px;
+    }
+    
+    .feature-text {
+      font-size: 12px;
       color: var(--muted);
     }
     
@@ -81,31 +214,90 @@
       color: var(--muted);
       font-size: 14px;
       margin-top: 20px;
+      line-height: 1.6;
+    }
+    
+    @media (max-width: 480px) {
+      body {
+        padding: 16px;
+      }
+      
+      .welcome-card {
+        padding: 20px;
+      }
+      
+      h1 {
+        font-size: 24px;
+      }
+      
+      .features {
+        grid-template-columns: 1fr;
+      }
+      
+      .btn {
+        padding: 12px 20px;
+        font-size: 14px;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="welcome-card">
-    <div class="welcome-icon">👑</div>
-    <h1>مرحباً بك في لوحة التحكم</h1>
-    <p>أنت الآن مسجّل الدخول كـ <strong style="color: var(--accent);">مشرف</strong> في نظام Bianco Timer</p>
-    
-    <div class="user-info">
-      <div id="userEmailDisplay" class="muted"></div>
-      <div class="muted">وقت الدخول: <span id="loginTime"></span></div>
-      <div class="muted" style="color: var(--accent); margin-top: 8px;">🔐 صلاحية: مشرف كامل</div>
-    </div>
-    
-    <p>من هنا يمكنك إدارة الجلسات، متابعة الإيرادات، وتعديل البيانات</p>
-    
-    <div>
-      <button id="goToAdmin" class="btn">🚀 دخول لوحة التحكم</button>
-      <button id="goToMain" class="btn secondary">📊 الصفحة الرئيسية</button>
-      <button id="logoutBtn" class="btn secondary">تسجيل خروج</button>
-    </div>
-    
-    <div class="muted">
-      يمكنك العودة إلى هذه الصفحة من خلال تسجيل الخروج والدخول مرة أخرى
+  <div class="welcome-container">
+    <div class="welcome-card">
+      <div class="welcome-icon">👑</div>
+      <h1>مرحباً بك في لوحة التحكم</h1>
+      <p class="subtitle">أنت الآن مسجّل الدخول كـ <strong style="color: var(--accent);">مشرف</strong> في نظام Bianco Timer</p>
+      
+      <div class="user-info">
+        <div class="user-detail">
+          <span class="detail-label">👤 المستخدم:</span>
+          <span class="detail-value" id="userEmailDisplay"></span>
+        </div>
+        <div class="user-detail">
+          <span class="detail-label">🕒 وقت الدخول:</span>
+          <span class="detail-value" id="loginTime"></span>
+        </div>
+        <div class="user-detail">
+          <span class="detail-label">🔐 الصلاحية:</span>
+          <span class="admin-badge">👑 مشرف كامل</span>
+        </div>
+      </div>
+      
+      <div class="features">
+        <div class="feature">
+          <div class="feature-icon">📊</div>
+          <div class="feature-text">عرض الإحصائيات</div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">✏️</div>
+          <div class="feature-text">تعديل الجلسات</div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">📤</div>
+          <div class="feature-text">تصدير التقارير</div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">🔄</div>
+          <div class="feature-text">مزامنة البيانات</div>
+        </div>
+      </div>
+      
+      <div class="btn-group">
+        <button id="goToAdmin" class="btn">
+          <span>🚀 دخول لوحة التحكم</span>
+        </button>
+        <button id="goToMain" class="btn secondary">
+          <span>📊 الصفحة الرئيسية</span>
+        </button>
+        <button id="logoutBtn" class="btn danger">
+          <span>تسجيل خروج</span>
+        </button>
+      </div>
+      
+      <div class="muted">
+        يمكنك العودة إلى هذه الصفحة من خلال تسجيل الخروج والدخول مرة أخرى<br>
+        <small>الإصدار 2.0 - نظام إدارة بلايستيشن بيانكو</small>
+      </div>
     </div>
   </div>
 
