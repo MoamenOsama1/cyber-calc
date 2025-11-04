@@ -415,4 +415,66 @@
             const ref = doc(db, 'sessions', editingId);
             await updateDoc(ref, updatedData);
             
-            // 2. حفظ التعديلات في collection الم
+            // 2. حفظ التعديلات في collection المزامنة
+            await saveEditToSyncCollection(editingId, updatedData, originalSession);
+            
+            editModal.classList.remove('active');
+            alert('✅ تم حفظ التعديلات بنجاح وسيتم مزامنتها مع جميع الأجهزة فوراً');
+            
+            // 3. إعادة تحميل البيانات
+            applyFilter();
+            
+        } catch (error) {
+            alert('❌ حدث خطأ في حفظ التعديلات: ' + error.message);
+        }
+    };
+
+    cancelEditBtn.onclick=()=>editModal.classList.remove('active');
+
+    dateFilter.onchange=applyFilter;
+    refreshBtn.onclick=()=>{applyFilter();alert('تم التحديث');};
+
+    exportBtn.onclick=()=>{
+      if(!filteredSessions.length) return alert('لا توجد بيانات');
+      const rows=[['الجهاز','النوع','من','إلى','المدة','الطلبات','السعر','أنشئ بواسطة','التاريخ']];
+      filteredSessions.forEach(item=>{
+        const s=item.data;
+        rows.push([
+          s.deviceLabel||'-',
+          (s.mode||s.type)==='double'?'زوجي':'فردي',
+          formatTime12(s.startISO||s.start),
+          formatTime12(s.endISO||s.end),
+          s.duration||'',
+          Array.isArray(s.drinks)?s.drinks.map(d=>d.name+'×'+d.qty).join(' | '):(s.drinks||''),
+          s.price||0,
+          s.createdBy||'-',
+          s.date||''
+        ]);
+      });
+      const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+      const bom="\uFEFF";
+      const blob=new Blob([bom+csv],{type:'text/csv;charset=utf-8;'});
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download=`sessions_${dateFilter.value}.csv`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    };
+
+    goToMain.onclick=()=>window.location.href='index.html';
+    logoutBtn.onclick=()=>signOut(auth).then(()=>window.location.href='login.html');
+
+    onAuthStateChanged(auth,user=>{
+      if(!user){
+        window.location.href='login.html';
+        return;
+      }
+      userEmail.textContent=user.email;
+      if(!adminEmails.includes(user.email)){
+        alert('⚠️ ليس لديك صلاحية مشرف');
+        window.location.href='index.html';
+      }
+    });
+  </script>
+</body>
+</html>
