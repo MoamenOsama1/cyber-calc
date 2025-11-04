@@ -2,116 +2,125 @@
 <html lang="ar">
 <head>
   <meta charset="utf-8" />
-  <title>مرحباً - Bianco Timer</title>
+  <title>Bianco Timer - Admin</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
-    :root {
-      --bg: #0d0d0d;
-      --panel: #121216;
-      --accent: #0000c8;
-      --muted: #9aa4b2;
-      --glass: rgba(255,255,255,0.04);
+    :root{
+      --bg:#0d0d0d; --panel:#121216; --muted:#9aa4b2; --accent:#00c853; --danger:#e53935; --glass:rgba(255,255,255,0.04);
     }
-    
-    body {
-      font-family: "Cairo", Arial, sans-serif;
-      background: var(--bg);
-      color: #fff;
-      direction: rtl;
-      margin: 0;
-      padding: 0;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    
-    .welcome-card {
-      background: var(--panel);
-      padding: 30px;
-      border-radius: 15px;
-      border: 1px solid var(--glass);
-      text-align: center;
-      max-width: 500px;
-      width: 90%;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    }
-    
-    .welcome-icon {
-      font-size: 4rem;
-      margin-bottom: 20px;
-    }
-    
-    h1 {
-      margin: 0 0 15px 0;
-      color: var(--accent);
-    }
-    
-    .user-info {
-      background: rgba(255,255,255,0.05);
-      padding: 15px;
-      border-radius: 10px;
-      margin: 20px 0;
-    }
-    
-    .btn {
-      background: var(--accent);
-      border: none;
-      color: #021018;
-      padding: 12px 24px;
-      border-radius: 8px;
-      font-weight: 700;
-      cursor: pointer;
-      font-size: 16px;
-      margin: 10px;
-      transition: transform 0.2s;
-    }
-    
-    .btn:hover {
-      transform: scale(1.05);
-    }
-    
-    .btn.secondary {
-      background: transparent;
-      border: 1px solid var(--glass);
-      color: var(--muted);
-    }
-    
-    .muted {
-      color: var(--muted);
-      font-size: 14px;
-      margin-top: 20px;
+    body{font-family:"Cairo",Arial,sans-serif;background:var(--bg);color:#fff;direction:rtl;padding:14px;margin:0}
+    .container{max-width:1150px;margin:0 auto}
+    .panel{background:var(--panel);padding:14px;border-radius:10px;border:1px solid var(--glass)}
+    header{display:flex;justify-content:space-between;align-items:center;gap:12px}
+    h1{margin:0;font-size:18px}
+    .muted{color:var(--muted);font-size:13px}
+    .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .btn{background:var(--accent);border:none;color:#021018;padding:8px 12px;border-radius:8px;font-weight:700;cursor:pointer}
+    .btn.secondary{background:transparent;border:1px solid var(--glass);color:var(--muted)}
+    .filters{display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap}
+    select, input{padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:inherit}
+    .stats{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+    .card{background:rgba(255,255,255,0.02);padding:10px;border-radius:8px;min-width:160px;text-align:center}
+    table{width:100%;border-collapse:collapse;margin-top:12px}
+    th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,0.03);text-align:center;font-size:13px}
+    th{background:rgba(255,255,255,0.03);color:var(--muted)}
+    .editBtn{background:#ffc107;color:#000;border:none;padding:6px 8px;border-radius:6px;cursor:pointer}
+    .danger{background:var(--danger);border:none;padding:6px 8px;border-radius:6px;color:#fff;cursor:pointer}
+    .modal-back{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;visibility:hidden;opacity:0;transition:all .12s}
+    .modal-back.active{visibility:visible;opacity:1}
+    .modal{background:#0b1a20;padding:14px;border-radius:10px;width:380px;max-width:94%}
+    label{display:block;margin-top:8px;font-size:13px;color:var(--muted)}
+    input[type="time"]{background:transparent}
+    .right{text-align:right}
+    .session-updated { background: rgba(0, 200, 83, 0.1); }
+    @media(max-width:700px){
+      .filters{flex-direction:column;align-items:stretch}
+      .stats{flex-direction:column}
     }
   </style>
 </head>
 <body>
-  <div class="welcome-card">
-    <div class="welcome-icon">👑</div>
-    <h1>مرحباً بك في لوحة التحكم</h1>
-    <p>أنت الآن مسجّل الدخول كـ <strong style="color: var(--accent);">مشرف</strong> في نظام Bianco Timer</p>
-    
-    <div class="user-info">
-      <div id="userEmailDisplay" class="muted"></div>
-      <div class="muted">وقت الدخول: <span id="loginTime"></span></div>
-      <div class="muted" style="color: var(--accent); margin-top: 8px;">🔐 صلاحية: مشرف كامل</div>
+  <div class="container">
+    <div class="panel">
+      <header>
+        <div>
+          <h1>🔑 واجهة المشرف - Bianco Timer</h1>
+          <div class="muted">لوحة التحكم — عرض الجلسات، الفلترة، التصدير والتعديل</div>
+        </div>
+        <div class="controls">
+          <div id="userEmail" class="muted"></div>
+          <button id="goToMain" class="btn secondary">الصفحة الرئيسية</button>
+          <button id="logoutBtn" class="btn secondary">تسجيل خروج</button>
+        </div>
+      </header>
+
+      <div class="filters">
+        <div style="display:flex;gap:8px;align-items:center">
+          <label class="muted">اختر تاريخ:</label>
+          <select id="dateFilter"><option value="__all__">جميع التواريخ</option></select>
+        </div>
+
+        <div style="display:flex;gap:8px;align-items:center;margin-left:auto">
+          <button id="refreshBtn" class="btn secondary">🔄 تحديث</button>
+          <button id="exportBtn" class="btn">⬇️ تصدير CSV</button>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="card">📅 التاريخ الحالي<br><b id="today"></b></div>
+        <div class="card">📊 جلسات مختارة<br><b id="sessionCount">0</b></div>
+        <div class="card">💰 إيرادات مختارة<br><b id="totalRevenue">0</b> ج</div>
+      </div>
+
+      <div style="margin-top:12px;overflow:auto">
+        <table id="sessionsTable">
+          <thead>
+            <tr>
+              <th>الجهاز</th><th>النوع</th><th>من → إلى</th><th>المدة</th><th>السعر</th><th>الطلبات</th><th>أنشئ بواسطة</th><th>التاريخ</th><th>عمليات</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
     </div>
-    
-    <p>من هنا يمكنك إدارة الجلسات، متابعة الإيرادات، وتعديل البيانات</p>
-    
-    <div>
-      <button id="goToAdmin" class="btn">🚀 دخول لوحة التحكم</button>
-      <button id="goToMain" class="btn secondary">📊 الصفحة الرئيسية</button>
-      <button id="logoutBtn" class="btn secondary">تسجيل خروج</button>
-    </div>
-    
-    <div class="muted">
-      يمكنك العودة إلى هذه الصفحة من خلال تسجيل الخروج والدخول مرة أخرى
+  </div>
+
+  <!-- نافذة التعديل -->
+  <div class="modal-back" id="editModal">
+    <div class="modal">
+      <h3 class="right">✏️ تعديل الجلسة</h3>
+      <label>الجهاز</label>
+      <input type="text" id="editDevice" />
+
+      <label>النوع</label>
+      <select id="editType"><option value="single">فردي</option><option value="double">زوجي</option></select>
+
+      <label>بداية</label>
+      <input id="editStart" type="time" />
+
+      <label>نهاية</label>
+      <input id="editEnd" type="time" />
+
+      <label>المدة</label>
+      <input id="editDuration" />
+
+      <label>السعر</label>
+      <input id="editPrice" type="number" />
+
+      <label>الطلبات</label>
+      <input id="editDrinks" />
+
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
+        <button id="saveEditBtn" class="btn">💾 حفظ التعديلات</button>
+        <button id="cancelEditBtn" class="btn secondary">إلغاء</button>
+      </div>
     </div>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { getFirestore, collection, onSnapshot, query, orderBy, doc, deleteDoc, updateDoc, where, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBFI6W1mCbFsG8MfcGxWL0JonZtJ_7P6W0",
@@ -124,53 +133,300 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const db = getFirestore(app);
 
-    const userEmailDisplay = document.getElementById('userEmailDisplay');
-    const loginTime = document.getElementById('loginTime');
-    const goToAdmin = document.getElementById('goToAdmin');
-    const goToMain = document.getElementById('goToMain');
-    const logoutBtn = document.getElementById('logoutBtn');
+    const todayEl=document.getElementById('today');
+    const tableBody=document.querySelector('#sessionsTable tbody');
+    const sessionCountEl=document.getElementById('sessionCount');
+    const totalRevenueEl=document.getElementById('totalRevenue');
+    const dateFilter=document.getElementById('dateFilter');
+    const refreshBtn=document.getElementById('refreshBtn');
+    const exportBtn=document.getElementById('exportBtn');
+    const logoutBtn=document.getElementById('logoutBtn');
+    const goToMain=document.getElementById('goToMain');
+    const userEmail=document.getElementById('userEmail');
 
-    // قائمة المشرفين المسموح لهم
-    const adminEmails = ["moosama@gmail.com", "ahmed@gmail.com", "mahmoud@gmail.com"];
+    const editModal=document.getElementById('editModal');
+    const editDevice=document.getElementById('editDevice');
+    const editType=document.getElementById('editType');
+    const editStart=document.getElementById('editStart');
+    const editEnd=document.getElementById('editEnd');
+    const editDuration=document.getElementById('editDuration');
+    const editPrice=document.getElementById('editPrice');
+    const editDrinks=document.getElementById('editDrinks');
+    const saveEditBtn=document.getElementById('saveEditBtn');
+    const cancelEditBtn=document.getElementById('cancelEditBtn');
 
-    // عرض وقت الدخول
-    loginTime.textContent = new Date().toLocaleString('ar-EG', {
-      dateStyle: 'medium',
-      timeStyle: 'medium'
+    const adminEmails=["moosama@gmail.com","ahmed@gmail.com","mahmoud@gmail.com"];
+    todayEl.textContent=new Date().toLocaleDateString('ar-EG');
+
+    let allSessions=[],filteredSessions=[],editingId=null;
+
+    function parseToISO(val){
+      if(!val) return null;
+      if(val.includes('T')||val.endsWith('Z')) return val;
+      if(/^\d{1,2}:\d{2}$/.test(val)){
+        const [hh,mm]=val.split(':').map(Number);
+        const now=new Date();
+        const d=new Date(now.getFullYear(),now.getMonth(),now.getDate(),hh,mm,0);
+        return d.toISOString();
+      }
+      const dt=new Date(val);
+      return !isNaN(dt)?dt.toISOString():null;
+    }
+
+    function formatTime12(val){
+      if(!val) return '-';
+      const iso=parseToISO(val);
+      if(!iso) return val;
+      const d=new Date(iso);
+      const h=d.getHours(),m=d.getMinutes();
+      const suffix=h>=12?'مساءً':'صباحًا';
+      const hh=h%12||12;
+      return `${hh}:${m.toString().padStart(2,'0')} ${suffix}`;
+    }
+
+    // 🔄 دالة محسنة لحفظ التعديلات مع المزامنة الفورية
+    async function saveEditToSyncCollection(sessionId, updatedData, originalSession) {
+        try {
+            const syncRef = collection(db, 'sessionUpdates');
+            const q = query(syncRef, where("sessionId", "==", sessionId));
+            const querySnapshot = await getDocs(q);
+            
+            // تحضير بيانات الطلبات
+            let drinksData = updatedData.drinks;
+            if (typeof drinksData === 'string') {
+                drinksData = drinksData.split(',').map(item => {
+                    const [name, qty] = item.split('×');
+                    return { 
+                        name: name.trim(), 
+                        qty: parseInt(qty) || 1 
+                    };
+                });
+            }
+            
+            const updatePayload = {
+                sessionId: sessionId,
+                deviceLabel: updatedData.deviceLabel,
+                price: updatedData.price,
+                drinks: drinksData,
+                mode: updatedData.mode,
+                duration: updatedData.duration,
+                
+                // بيانات المطابقة مع الجلسة الأصلية
+                originalPrice: originalSession.price,
+                originalCreatedBy: originalSession.createdBy,
+                originalDeviceLabel: originalSession.deviceLabel,
+                originalStartISO: originalSession.startISO,
+                originalEndISO: originalSession.endISO,
+                originalDate: originalSession.date,
+                
+                // معلومات التحديث
+                updatedAt: new Date().toISOString(),
+                updatedBy: auth.currentUser.email,
+                date: originalSession.date,
+                
+                // إشارة أن هذا تحديث من الأدمن
+                isAdminUpdate: true,
+                updateType: 'session_edit'
+            };
+            
+            if (!querySnapshot.empty) {
+                const docId = querySnapshot.docs[0].id;
+                await updateDoc(doc(db, 'sessionUpdates', docId), updatePayload);
+            } else {
+                await addDoc(syncRef, updatePayload);
+            }
+            
+            console.log('✅ تم حفظ التعديلات في collection المزامنة:', updatePayload);
+            return true;
+        } catch (error) {
+            console.error('❌ خطأ في حفظ التعديلات للمزامنة:', error);
+            throw error;
+        }
+    }
+
+    const sessionsCol=collection(db,'sessions');
+    const q=query(sessionsCol,orderBy('createdAt','desc'));
+    onSnapshot(q,snap=>{
+      allSessions=[];
+      snap.forEach(docSnap=>allSessions.push({id:docSnap.id,data:docSnap.data()}));
+      populateDates();applyFilter();
     });
 
-    // التحقق من صلاحية المستخدم
-    onAuthStateChanged(auth, user => {
-      if (!user) {
-        window.location.href = 'login.html';
+    function populateDates(){
+      const dates=new Set();
+      allSessions.forEach(s=>{
+        const d=s.data.date||(s.data.createdAt?new Date(s.data.createdAt).toLocaleDateString('ar-EG'):null);
+        if(d) dates.add(d);
+      });
+      dateFilter.innerHTML='<option value="__all__">جميع التواريخ</option>';
+      Array.from(dates).forEach(d=>{
+        const opt=document.createElement('option');
+        opt.value=d;opt.textContent=d;
+        dateFilter.appendChild(opt);
+      });
+    }
+
+    function applyFilter(){
+      const sel=dateFilter.value;
+      filteredSessions=allSessions.filter(x=>{
+        const d=x.data.date||(x.data.createdAt?new Date(x.data.createdAt).toLocaleDateString('ar-EG'):'');
+        return sel==='__all__'||d===sel;
+      });
+      renderTable();calcStats();
+    }
+
+    function renderTable(){
+      tableBody.innerHTML='';
+      filteredSessions.forEach(item=>{
+        const s=item.data,id=item.id;
+        const tr=document.createElement('tr');
+        
+        // إضافة تظليل للجلسات المعدلة
+        if (s.updatedByAdmin) {
+            tr.classList.add('session-updated');
+        }
+        
+        tr.innerHTML=`
+          <td>${s.deviceLabel||'-'}</td>
+          <td>${(s.mode||s.type)==='double'?'زوجي':'فردي'}</td>
+          <td>${formatTime12(s.startISO||s.start)} → ${formatTime12(s.endISO||s.end)}</td>
+          <td>${s.duration||'-'}</td>
+          <td>${s.price||0} ج</td>
+          <td>${Array.isArray(s.drinks)?s.drinks.map(d=>d.name+'×'+d.qty).join(', '):(s.drinks||'-')}</td>
+          <td>${s.createdBy||'-'}</td>
+          <td>${s.date||'-'}</td>
+          <td>
+            <button class="editBtn" data-id="${id}">✏️</button>
+            <button class="danger" data-id="${id}">🗑</button>
+          </td>`;
+        tableBody.appendChild(tr);
+      });
+
+      document.querySelectorAll('.editBtn').forEach(btn=>{
+        btn.onclick=()=>editSession(btn.dataset.id);
+      });
+      document.querySelectorAll('.danger').forEach(btn=>{
+        btn.onclick=()=>deleteSession(btn.dataset.id);
+      });
+    }
+
+    function calcStats(){
+      const t=filteredSessions.reduce((sum,x)=>sum+(Number(x.data.price)||0),0);
+      totalRevenueEl.textContent=t.toFixed(2);
+      sessionCountEl.textContent=filteredSessions.length;
+    }
+
+    async function editSession(id){
+      const session=allSessions.find(x=>x.id===id);
+      if(!session) return;
+      const s=session.data;
+      editingId=id;
+      editDevice.value=s.deviceLabel||'';
+      editType.value=s.mode||s.type||'single';
+      editStart.value=s.start?new Date(s.startISO||s.start).toTimeString().slice(0,5):'';
+      editEnd.value=s.end?new Date(s.endISO||s.end).toTimeString().slice(0,5):'';
+      editDuration.value=s.duration||'';
+      editPrice.value=s.price||0;
+      editDrinks.value=Array.isArray(s.drinks)?s.drinks.map(d=>`${d.name}×${d.qty}`).join(', '):(s.drinks||'');
+      editModal.classList.add('active');
+    }
+
+    async function deleteSession(id){
+      if(confirm('هل أنت متأكد من حذف هذه الجلسة؟')){
+        await deleteDoc(doc(db,'sessions',id));
+        alert('🗑️ تم حذف الجلسة بنجاح');
+      }
+    }
+
+    saveEditBtn.onclick = async () => {
+        if (!editingId) return;
+        const session = allSessions.find(x => x.id === editingId);
+        if (!session) return;
+        
+        const originalSession = session.data;
+        
+        const updatedData = {
+            deviceLabel: editDevice.value,
+            mode: editType.value,
+            startISO: parseToISO(editStart.value) || originalSession.startISO,
+            endISO: parseToISO(editEnd.value) || originalSession.endISO,
+            duration: editDuration.value,
+            price: Number(editPrice.value),
+            drinks: editDrinks.value,
+            deviceId: originalSession.deviceId,
+            createdBy: originalSession.createdBy,
+            date: originalSession.date,
+            updatedByAdmin: true,
+            lastUpdate: new Date().toISOString()
+        };
+
+        try {
+            // 1. تحديث الجلسة الأصلية في Firebase
+            const ref = doc(db, 'sessions', editingId);
+            await updateDoc(ref, updatedData);
+            
+            // 2. حفظ التعديلات في collection المزامنة
+            await saveEditToSyncCollection(editingId, updatedData, originalSession);
+            
+            editModal.classList.remove('active');
+            alert('✅ تم حفظ التعديلات بنجاح وسيتم مزامنتها مع جميع الأجهزة فوراً');
+            
+            // 3. إعادة تحميل البيانات
+            applyFilter();
+            
+        } catch (error) {
+            alert('❌ حدث خطأ في حفظ التعديلات: ' + error.message);
+        }
+    };
+
+    cancelEditBtn.onclick=()=>editModal.classList.remove('active');
+
+    dateFilter.onchange=applyFilter;
+    refreshBtn.onclick=()=>{applyFilter();alert('تم التحديث');};
+
+    exportBtn.onclick=()=>{
+      if(!filteredSessions.length) return alert('لا توجد بيانات');
+      const rows=[['الجهاز','النوع','من','إلى','المدة','الطلبات','السعر','أنشئ بواسطة','التاريخ']];
+      filteredSessions.forEach(item=>{
+        const s=item.data;
+        rows.push([
+          s.deviceLabel||'-',
+          (s.mode||s.type)==='double'?'زوجي':'فردي',
+          formatTime12(s.startISO||s.start),
+          formatTime12(s.endISO||s.end),
+          s.duration||'',
+          Array.isArray(s.drinks)?s.drinks.map(d=>d.name+'×'+d.qty).join(' | '):(s.drinks||''),
+          s.price||0,
+          s.createdBy||'-',
+          s.date||''
+        ]);
+      });
+      const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+      const bom="\uFEFF";
+      const blob=new Blob([bom+csv],{type:'text/csv;charset=utf-8;'});
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download=`sessions_${dateFilter.value}.csv`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    };
+
+    goToMain.onclick=()=>window.location.href='index.html';
+    logoutBtn.onclick=()=>signOut(auth).then(()=>window.location.href='login.html');
+
+    onAuthStateChanged(auth,user=>{
+      if(!user){
+        window.location.href='login.html';
         return;
       }
-
-      userEmailDisplay.textContent = user.email;
-      
-      // 🔧 الإصلاح: إذا كان مستخدم عادي، توجيه للصفحة الرئيسية مباشرة
-      if (!adminEmails.includes(user.email)) {
-        window.location.href = 'index.html';
+      userEmail.textContent=user.email;
+      if(!adminEmails.includes(user.email)){
+        alert('⚠️ ليس لديك صلاحية مشرف');
+        window.location.href='index.html';
       }
     });
-
-    // الانتقال إلى لوحة التحكم
-    goToAdmin.onclick = () => {
-      window.location.href = 'admin.html';
-    };
-
-    // الانتقال إلى الصفحة الرئيسية
-    goToMain.onclick = () => {
-      window.location.href = 'index.html';
-    };
-
-    // تسجيل الخروج
-    logoutBtn.onclick = () => {
-      signOut(auth).then(() => {
-        window.location.href = 'login.html';
-      });
-    };
   </script>
 </body>
 </html>
