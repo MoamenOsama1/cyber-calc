@@ -6,60 +6,80 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
     :root {
-      --bg1: #050f18;
-      --bg2: #0b1b2b;
-      --card: #093f76;
-      --accent: #00c853;
-      --accent-2: #03a9f4;
-      --muted: #a7b5c4;
-      --danger: #ff5252;
-      --glass: rgba(255,255,255,0.04);
-      --shadow: 0 8px 32px rgba(0,0,0,0.3);
+      --primary: #00c853;
+      --primary-dark: #009624;
+      --secondary: #03a9f4;
+      --dark: #0d0d0d;
+      --dark-light: #1a1a2e;
+      --light: #ffffff;
+      --gray: #9aa4b2;
+      --gray-light: #f4f7fb;
+      --error: #f44336;
+      --success: #4caf50;
     }
     
     * {
+      margin: 0;
+      padding: 0;
       box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
     }
     
     body {
-      font-family: "Cairo", "Segoe UI", sans-serif;
-      background: linear-gradient(135deg, var(--bg1), var(--bg2));
-      color: #fff;
+      font-family: "Cairo", "Segoe UI", Arial, sans-serif;
+      background: linear-gradient(135deg, var(--dark) 0%, var(--dark-light) 100%);
+      color: var(--light);
       direction: rtl;
-      margin: 0;
-      padding: 20px;
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: url('https://e0.pxfuel.com/wallpapers/239/293/desktop-wallpaper-playstation-background-playstation-blue-ps4.jpg') center/cover fixed, linear-gradient(135deg, var(--bg1), var(--bg2));
-    }
-    
-    .login-container {
-      width: 100%;
-      max-width: 420px;
-    }
-    
-    .login-card {
-      background: var(--card);
-      padding: 30px;
-      border-radius: 20px;
-      border: 1px solid var(--glass);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(10px);
+      padding: 20px;
+      background-image: 
+        radial-gradient(circle at 20% 80%, rgba(0, 200, 83, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(3, 169, 244, 0.1) 0%, transparent 50%);
       position: relative;
-      overflow: hidden;
+      overflow-x: hidden;
     }
-    
-    .login-card::before {
+
+    body::before {
       content: '';
       position: absolute;
       top: 0;
       left: 0;
       right: 0;
-      height: 4px;
-      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      bottom: 0;
+      background: 
+        linear-gradient(45deg, transparent 65%, rgba(0, 200, 83, 0.05) 65%, rgba(0, 200, 83, 0.05) 70%, transparent 70%),
+        linear-gradient(-45deg, transparent 65%, rgba(3, 169, 244, 0.05) 65%, rgba(3, 169, 244, 0.05) 70%, transparent 70%);
+      background-size: 60px 60px;
+      pointer-events: none;
+    }
+    
+    .login-container {
+      width: 100%;
+      max-width: 450px;
+      position: relative;
+      z-index: 2;
+    }
+    
+    .login-card {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 40px 35px;
+      border-radius: 20px;
+      box-shadow: 
+        0 25px 50px rgba(0, 0, 0, 0.25),
+        0 10px 20px rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      transform: translateY(0);
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .login-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 
+        0 35px 60px rgba(0, 0, 0, 0.3),
+        0 15px 25px rgba(0, 0, 0, 0.15);
     }
     
     .logo {
@@ -68,260 +88,308 @@
     }
     
     .logo-icon {
-      font-size: 3rem;
-      margin-bottom: 10px;
-      display: block;
+      font-size: 4rem;
+      margin-bottom: 15px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 4px 8px rgba(0, 200, 83, 0.3));
+      display: inline-block;
     }
     
-    h1 {
-      margin: 0 0 8px 0;
-      color: var(--accent);
-      font-size: 28px;
-      text-align: center;
+    .logo h1 {
+      font-size: 1.8rem;
+      color: var(--dark);
+      margin-bottom: 8px;
+      font-weight: 800;
     }
     
-    .subtitle {
-      color: var(--muted);
-      text-align: center;
-      margin-bottom: 30px;
-      font-size: 16px;
+    .logo p {
+      color: var(--gray);
+      font-size: 1rem;
     }
     
-    .input-group {
-      margin-bottom: 20px;
+    .form-group {
+      margin-bottom: 25px;
+      position: relative;
     }
     
-    label {
+    .form-label {
       display: block;
       margin-bottom: 8px;
-      color: var(--muted);
-      font-size: 14px;
+      color: var(--dark);
       font-weight: 600;
+      font-size: 0.95rem;
     }
     
-    input {
+    .form-input {
       width: 100%;
-      padding: 14px 16px;
+      padding: 15px 20px;
+      border: 2px solid #e1e5e9;
       border-radius: 12px;
-      border: 2px solid var(--glass);
-      background: rgba(255,255,255,0.05);
-      color: #fff;
-      font-size: 16px;
+      font-size: 1rem;
+      background: var(--light);
+      color: var(--dark);
       transition: all 0.3s ease;
+      font-family: "Cairo", sans-serif;
     }
     
-    input:focus {
+    .form-input:focus {
       outline: none;
-      border-color: var(--accent-2);
-      box-shadow: 0 0 0 3px rgba(3, 169, 244, 0.2);
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(0, 200, 83, 0.1);
+      transform: translateY(-2px);
     }
     
-    input::placeholder {
-      color: var(--muted);
+    .form-input::placeholder {
+      color: var(--gray);
+    }
+    
+    .password-container {
+      position: relative;
+    }
+    
+    .toggle-password {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--gray);
+      cursor: pointer;
+      font-size: 1.2rem;
+      transition: color 0.3s ease;
+    }
+    
+    .toggle-password:hover {
+      color: var(--primary);
     }
     
     .btn-group {
       display: flex;
       flex-direction: column;
       gap: 12px;
-      margin: 25px 0;
+      margin: 30px 0 20px;
     }
     
     .btn {
-      background: var(--accent);
+      padding: 16px 24px;
       border: none;
-      color: #021018;
-      padding: 14px 24px;
       border-radius: 12px;
-      font-weight: 800;
+      font-size: 1.05rem;
+      font-weight: 700;
       cursor: pointer;
-      font-size: 16px;
-      transition: all 0.3s ease;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      font-family: "Cairo", sans-serif;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      gap: 10px;
+      position: relative;
+      overflow: hidden;
     }
     
-    .btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(0, 200, 83, 0.4);
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.6s;
     }
     
-    .btn.secondary {
+    .btn:hover::before {
+      left: 100%;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+      box-shadow: 0 8px 25px rgba(0, 200, 83, 0.3);
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 35px rgba(0, 200, 83, 0.4);
+    }
+    
+    .btn-secondary {
       background: transparent;
-      border: 2px solid var(--glass);
-      color: var(--muted);
+      border: 2px solid var(--secondary);
+      color: var(--secondary);
     }
     
-    .btn.secondary:hover {
-      border-color: var(--accent-2);
-      color: #fff;
-      box-shadow: 0 6px 20px rgba(3, 169, 244, 0.3);
+    .btn-secondary:hover {
+      background: rgba(3, 169, 244, 0.1);
+      transform: translateY(-5px);
     }
     
     .message {
-      text-align: center;
-      padding: 12px;
+      padding: 12px 16px;
       border-radius: 10px;
-      margin: 15px 0;
-      font-size: 14px;
+      margin: 20px 0;
+      text-align: center;
+      font-size: 0.9rem;
       display: none;
     }
     
     .message.error {
-      background: rgba(255, 82, 82, 0.1);
-      color: #ff5252;
-      border: 1px solid rgba(255, 82, 82, 0.3);
+      background: rgba(244, 67, 54, 0.1);
+      color: var(--error);
+      border: 1px solid rgba(244, 67, 54, 0.2);
       display: block;
     }
     
     .message.success {
-      background: rgba(0, 200, 83, 0.1);
-      color: var(--accent);
-      border: 1px solid rgba(0, 200, 83, 0.3);
+      background: rgba(76, 175, 80, 0.1);
+      color: var(--success);
+      border: 1px solid rgba(76, 175, 80, 0.2);
       display: block;
     }
     
-    .features {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-      margin: 25px 0;
-    }
-    
-    .feature {
-      background: rgba(255,255,255,0.03);
-      padding: 12px;
-      border-radius: 10px;
+    .welcome-text {
       text-align: center;
-      border: 1px solid var(--glass);
-    }
-    
-    .feature-icon {
-      font-size: 18px;
-      margin-bottom: 6px;
-    }
-    
-    .feature-text {
-      font-size: 11px;
-      color: var(--muted);
-    }
-    
-    .footer {
-      text-align: center;
-      color: var(--muted);
-      font-size: 14px;
-      margin-top: 20px;
+      color: var(--gray);
+      margin-top: 25px;
+      font-size: 0.9rem;
       line-height: 1.6;
+      border-top: 1px solid rgba(0, 0, 0, 0.1);
+      padding-top: 20px;
     }
     
-    .admin-notice {
-      background: rgba(255, 193, 7, 0.1);
-      border: 1px solid rgba(255, 193, 7, 0.3);
-      border-radius: 10px;
-      padding: 12px;
-      margin: 15px 0;
-      text-align: center;
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
     }
     
-    .admin-notice .title {
-      color: #ffc107;
-      font-weight: 700;
-      font-size: 12px;
-      margin-bottom: 4px;
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
     
-    .admin-notice .content {
-      color: var(--muted);
-      font-size: 11px;
+    .particles {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+    
+    .particle {
+      position: absolute;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      animation: float-particle 20s infinite linear;
+    }
+    
+    @keyframes float-particle {
+      0% { transform: translateY(100vh) rotate(0deg); }
+      100% { transform: translateY(-100px) rotate(360deg); }
+    }
+    
+    /* تصميم متجاوب */
+    @media (max-width: 768px) {
+      .login-card {
+        padding: 30px 25px;
+      }
+      
+      .logo-icon {
+        font-size: 3.5rem;
+      }
+      
+      .logo h1 {
+        font-size: 1.6rem;
+      }
+      
+      .btn {
+        padding: 14px 20px;
+      }
     }
     
     @media (max-width: 480px) {
       body {
-        padding: 16px;
+        padding: 15px;
       }
       
       .login-card {
-        padding: 20px;
+        padding: 25px 20px;
       }
       
-      h1 {
-        font-size: 24px;
+      .logo-icon {
+        font-size: 3rem;
       }
       
-      .features {
-        grid-template-columns: 1fr;
+      .logo h1 {
+        font-size: 1.4rem;
       }
       
-      .btn {
-        padding: 12px 20px;
-        font-size: 14px;
-      }
-      
-      input {
-        padding: 12px 14px;
+      .form-input {
+        padding: 12px 16px;
       }
     }
   </style>
 </head>
 <body>
+  <!-- جسيمات الخلفية -->
+  <div class="particles" id="particles"></div>
+
   <div class="login-container">
     <div class="login-card">
       <div class="logo">
-        <span class="logo-icon">🎮</span>
+        <div class="logo-icon">🎮</div>
         <h1>Bianco Timer</h1>
-        <p class="subtitle">نظام إدارة بلايستيشن بيانكو</p>
+        <p>نظام إدارة البلايستيشن المتكامل</p>
       </div>
       
-      <div class="admin-notice">
-        <div class="title">👑 صلاحيات المشرف</div>
-        <div class="content">المشرفون لديهم صلاحية الوصول الكامل لجميع الميزات</div>
-      </div>
-
-      <div class="input-group">
-        <label for="email">📧 البريد الإلكتروني</label>
-        <input id="email" type="email" placeholder="ادخل بريدك الإلكتروني" />
+      <div class="message" id="message"></div>
+      
+      <div class="form-group">
+        <label class="form-label" for="email">البريد الإلكتروني</label>
+        <input 
+          type="email" 
+          id="email" 
+          class="form-input" 
+          placeholder="ادخل بريدك الإلكتروني"
+          autocomplete="email"
+        />
       </div>
       
-      <div class="input-group">
-        <label for="password">🔒 كلمة المرور</label>
-        <input id="password" type="password" placeholder="ادخل كلمة المرور" />
+      <div class="form-group">
+        <label class="form-label" for="password">كلمة المرور</label>
+        <div class="password-container">
+          <input 
+            type="password" 
+            id="password" 
+            class="form-input" 
+            placeholder="ادخل كلمة المرور"
+            autocomplete="current-password"
+          />
+          <button type="button" class="toggle-password" id="togglePassword">👁️</button>
+        </div>
       </div>
-
-      <div id="message" class="message"></div>
-
+      
       <div class="btn-group">
-        <button id="loginBtn" class="btn">
-          <span>🚀 تسجيل الدخول</span>
+        <button id="loginBtn" class="btn btn-primary">
+          <span>🔐</span>
+          <span>تسجيل الدخول</span>
         </button>
-        <button id="registerBtn" class="btn secondary">
-          <span>📝 إنشاء حساب جديد</span>
+        <button id="registerBtn" class="btn btn-secondary">
+          <span>📝</span>
+          <span>إنشاء حساب جديد</span>
         </button>
       </div>
       
-      <div class="features">
-        <div class="feature">
-          <div class="feature-icon">⏱️</div>
-          <div class="feature-text">إدارة الجلسات</div>
-        </div>
-        <div class="feature">
-          <div class="feature-icon">💰</div>
-          <div class="feature-text">تتبع الإيرادات</div>
-        </div>
-        <div class="feature">
-          <div class="feature-icon">📊</div>
-          <div class="feature-text">تقارير مفصلة</div>
-        </div>
-        <div class="feature">
-          <div class="feature-icon">☁️</div>
-          <div class="feature-text">مزامنة سحابية</div>
-        </div>
-      </div>
-      
-      <div class="footer">
-        نظام متكامل لإدارة أجهزة البلايستيشن<br>
-        <small>الإصدار 2.0 - تطوير خاص لبلايستيشن بيانكو</small>
+      <div class="welcome-text">
+        مرحباً بك في بلايستيشن بيانكو - نظام متكامل لإدارة الجلسات والمبيعات
       </div>
     </div>
   </div>
@@ -344,48 +412,122 @@
     const auth = getAuth(app);
 
     const emailInput = document.getElementById('email');
-    const passInput = document.getElementById('password');
+    const passwordInput = document.getElementById('password');
     const loginBtn = document.getElementById('loginBtn');
     const registerBtn = document.getElementById('registerBtn');
-    const messageDiv = document.getElementById('message');
+    const messageEl = document.getElementById('message');
+    const togglePasswordBtn = document.getElementById('togglePassword');
 
     // قائمة المشرفين المسموح لهم
     const adminEmails = ["moosama@gmail.com", "ahmed@gmail.com", "mahmoud@gmail.com"];
 
+    // إنشاء جسيمات الخلفية
+    function createParticles() {
+      const particlesContainer = document.getElementById('particles');
+      const particleCount = 12;
+      
+      for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        
+        const size = Math.random() * 5 + 2;
+        const left = Math.random() * 100;
+        const animationDuration = Math.random() * 25 + 15;
+        const animationDelay = Math.random() * 5;
+        
+        particle.style.width = `${size}px`;
+        particle.style.height = `${size}px`;
+        particle.style.left = `${left}%`;
+        particle.style.animationDuration = `${animationDuration}s`;
+        particle.style.animationDelay = `${animationDelay}s`;
+        
+        particlesContainer.appendChild(particle);
+      }
+    }
+
+    // تبديل عرض كلمة المرور
+    togglePasswordBtn.addEventListener('click', () => {
+      const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+      passwordInput.setAttribute('type', type);
+      togglePasswordBtn.textContent = type === 'password' ? '👁️' : '🔒';
+    });
+
+    // عرض رسالة
     function showMessage(text, type = 'error') {
-      messageDiv.textContent = text;
-      messageDiv.className = `message ${type}`;
-      messageDiv.style.display = 'block';
+      messageEl.textContent = text;
+      messageEl.className = `message ${type}`;
       
       if (type === 'success') {
         setTimeout(() => {
-          messageDiv.style.display = 'none';
+          messageEl.style.display = 'none';
         }, 3000);
       }
     }
 
-    function hideMessage() {
-      messageDiv.style.display = 'none';
+    // تعطيل/تمكين الأزرار أثناء التحميل
+    function setLoading(loading) {
+      loginBtn.disabled = loading;
+      registerBtn.disabled = loading;
+      
+      if (loading) {
+        loginBtn.innerHTML = '<div class="loading"></div><span>جاري المعالجة...</span>';
+        registerBtn.style.opacity = '0.6';
+      } else {
+        loginBtn.innerHTML = '<span>🔐</span><span>تسجيل الدخول</span>';
+        registerBtn.innerHTML = '<span>📝</span><span>إنشاء حساب جديد</span>';
+        registerBtn.style.opacity = '1';
+      }
     }
 
-    loginBtn.onclick = async () => {
+    // التحقق من صحة الإيميل
+    function isValidEmail(email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return emailRegex.test(email);
+    }
+
+    // التحقق من صحة المدخلات
+    function validateInputs() {
       const email = emailInput.value.trim();
-      const password = passInput.value.trim();
+      const password = passwordInput.value.trim();
       
-      if (!email || !password) {
-        showMessage('⚠️ يرجى ملء جميع الحقول');
-        return;
+      if (!email) {
+        showMessage('يرجى إدخال البريد الإلكتروني');
+        emailInput.focus();
+        return false;
       }
       
-      hideMessage();
-      loginBtn.disabled = true;
-      loginBtn.innerHTML = '<span>⏳ جاري التسجيل...</span>';
+      if (!isValidEmail(email)) {
+        showMessage('يرجى إدخال بريد إلكتروني صحيح');
+        emailInput.focus();
+        return false;
+      }
+      
+      if (!password) {
+        showMessage('يرجى إدخال كلمة المرور');
+        passwordInput.focus();
+        return false;
+      }
+      
+      if (password.length < 6) {
+        showMessage('كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+        passwordInput.focus();
+        return false;
+      }
+      
+      return true;
+    }
+
+    // تسجيل الدخول
+    loginBtn.onclick = async () => {
+      if (!validateInputs()) return;
+      
+      setLoading(true);
       
       try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const userCredential = await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
         const user = userCredential.user;
         
-        showMessage('✅ تم تسجيل الدخول بنجاح!', 'success');
+        showMessage('تم تسجيل الدخول بنجاح!', 'success');
         
         // التحقق من الصلاحية والتوجيه
         setTimeout(() => {
@@ -396,54 +538,42 @@
           }
         }, 1500);
         
-      } catch (e) {
+      } catch (error) {
         let errorMessage = "فشل تسجيل الدخول: ";
-        switch(e.code) {
-          case 'auth/invalid-email':
-            errorMessage += 'البريد الإلكتروني غير صحيح';
-            break;
-          case 'auth/user-disabled':
-            errorMessage += 'هذا الحساب معطل';
-            break;
+        
+        switch (error.code) {
           case 'auth/user-not-found':
-            errorMessage += 'لا يوجد حساب بهذا البريد';
+            errorMessage += 'البريد الإلكتروني غير مسجل';
             break;
           case 'auth/wrong-password':
             errorMessage += 'كلمة المرور غير صحيحة';
             break;
+          case 'auth/invalid-email':
+            errorMessage += 'بريد إلكتروني غير صحيح';
+            break;
+          case 'auth/too-many-requests':
+            errorMessage += 'تم محاولة الدخول مرات كثيرة، حاول لاحقاً';
+            break;
           default:
-            errorMessage += e.message;
+            errorMessage += error.message;
         }
+        
         showMessage(errorMessage);
-      } finally {
-        loginBtn.disabled = false;
-        loginBtn.innerHTML = '<span>🚀 تسجيل الدخول</span>';
+        setLoading(false);
       }
     };
 
+    // إنشاء حساب جديد
     registerBtn.onclick = async () => {
-      const email = emailInput.value.trim();
-      const password = passInput.value.trim();
+      if (!validateInputs()) return;
       
-      if (!email || !password) {
-        showMessage('⚠️ يرجى ملء جميع الحقول');
-        return;
-      }
-      
-      if (password.length < 6) {
-        showMessage('⚠️ كلمة المرور يجب أن تكون 6 أحرف على الأقل');
-        return;
-      }
-      
-      hideMessage();
-      registerBtn.disabled = true;
-      registerBtn.innerHTML = '<span>⏳ جاري الإنشاء...</span>';
+      setLoading(true);
       
       try {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const userCredential = await createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
         const user = userCredential.user;
         
-        showMessage('✅ تم إنشاء الحساب بنجاح!', 'success');
+        showMessage('تم إنشاء الحساب بنجاح!', 'success');
         
         // بعد التسجيل، توجيه حسب الصلاحية
         setTimeout(() => {
@@ -454,29 +584,29 @@
           }
         }, 1500);
         
-      } catch (e) {
+      } catch (error) {
         let errorMessage = "خطأ في إنشاء الحساب: ";
-        switch(e.code) {
+        
+        switch (error.code) {
           case 'auth/email-already-in-use':
-            errorMessage += 'هذا البريد الإلكتروني مستخدم بالفعل';
-            break;
-          case 'auth/invalid-email':
-            errorMessage += 'البريد الإلكتروني غير صحيح';
+            errorMessage += 'البريد الإلكتروني مستخدم بالفعل';
             break;
           case 'auth/weak-password':
-            errorMessage += 'كلمة المرور ضعيفة جداً';
+            errorMessage += 'كلمة المرور ضعيفة، يجب أن تكون 6 أحرف على الأقل';
+            break;
+          case 'auth/invalid-email':
+            errorMessage += 'بريد إلكتروني غير صحيح';
             break;
           default:
-            errorMessage += e.message;
+            errorMessage += error.message;
         }
+        
         showMessage(errorMessage);
-      } finally {
-        registerBtn.disabled = false;
-        registerBtn.innerHTML = '<span>📝 إنشاء حساب جديد</span>';
+        setLoading(false);
       }
     };
 
-    // لو المستخدم مُسجل بالفعل نوجّهه تلقائياً حسب الصلاحية
+    // التحقق التلقائي من حالة المستخدم
     onAuthStateChanged(auth, user => {
       if (user) {
         if (adminEmails.includes(user.email)) {
@@ -487,17 +617,15 @@
       }
     });
 
-    // إدخال البيانات عند الضغط على Enter
-    [emailInput, passInput].forEach(input => {
-      input.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-          loginBtn.click();
-        }
-      });
+    // السماح بالدخول باستخدام زر Enter
+    document.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        loginBtn.click();
+      }
     });
 
-    // تركيز على حقل الإيميل عند تحميل الصفحة
-    emailInput.focus();
+    // تهيئة الجسيمات عند تحميل الصفحة
+    document.addEventListener('DOMContentLoaded', createParticles);
   </script>
 </body>
 </html>
