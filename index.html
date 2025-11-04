@@ -9,7 +9,7 @@
       --bg1: #050f18;
       --bg2: #0b1b2b;
       --card: #093f76;
-     --accent: #0039c8;
+      --accent: #00c853;
       --accent-2: #03a9f4;
       --muted: #a7b5c4;
       --danger: #ff5252;
@@ -428,6 +428,12 @@
       animation: highlight 2s ease;
     }
     
+    .session-deleted {
+      opacity: 0.6;
+      background: rgba(229, 57, 53, 0.1) !important;
+      text-decoration: line-through;
+    }
+    
     @keyframes highlight {
       0% { background: rgba(0, 200, 83, 0.3); }
       100% { background: transparent; }
@@ -620,23 +626,26 @@
     let currentTab = 'today';
 
     function initLocal(){ 
-      const s=getStorage(); 
-      const t=todayKey(); 
-      if(!s[t]) s[t]={open:{},completed:[]}; 
+      const s = getStorage(); 
+      const t = todayKey(); 
+      if (!s[t]) s[t] = { open: {}, completed: [] }; 
       setStorage(s); 
-      openSessions = s[t].open||{}; 
-      completedSessionsToday = s[t].completed||[]; 
+      openSessions = s[t].open || {}; 
+      completedSessionsToday = s[t].completed || []; 
       
-      // تحميل جميع الجلسات
+      // تحميل جميع الجلسات مع تنظيف البيانات القديمة
       allSessions = [];
       Object.keys(s).forEach(date => {
         if (s[date].completed) {
           s[date].completed.forEach(session => {
-            allSessions.push({
-              ...session,
-              date: date,
-              isToday: date === t
-            });
+            // تنظيف الجلسات التي تم حذفها
+            if (!session.isDeleted) {
+              allSessions.push({
+                ...session,
+                date: date,
+                isToday: date === t
+              });
+            }
           });
         }
       });
@@ -647,38 +656,6 @@
       s[todayKey()] = { open: openSessions, completed: completedSessionsToday }; 
       setStorage(s); 
       initLocal(); // إعادة تحميل جميع الجلسات
-    }
-
-    // 🔧 منع الجلسات المكررة
-    function removeDuplicateSessions() {
-      const storage = getStorage();
-      let hasDuplicates = false;
-      
-      Object.keys(storage).forEach(date => {
-        const sessions = storage[date].completed;
-        const uniqueSessions = [];
-        const seen = new Set();
-        
-        sessions.forEach(session => {
-          const key = `${session.deviceLabel}-${session.startISO}-${session.endISO}`;
-          if (!seen.has(key)) {
-            seen.add(key);
-            uniqueSessions.push(session);
-          } else {
-            hasDuplicates = true;
-            console.log('🔍 تم اكتشاف جلسة مكررة وحذفها:', session.deviceLabel);
-          }
-        });
-        
-        storage[date].completed = uniqueSessions;
-      });
-      
-      if (hasDuplicates) {
-        setStorage(storage);
-        initLocal();
-      }
-      
-      return hasDuplicates;
     }
 
     // DOM
@@ -733,7 +710,7 @@
     function durationText(mins){ const h=Math.floor(mins/60), m=mins%60; return `${h} س ${m} د`; }
     function isoFromTimeStr(timeStr){ const [hh,mm]=timeStr.split(':').map(Number); const now=new Date(); const d=new Date(now.getFullYear(),now.getMonth(),now.getDate(),hh,mm,0); if(d<=now) d.setDate(d.getDate()+1); return d.toISOString(); }
 
-    // 🔄 نظام المزامنة المحسن مع تحديثات الأدمن
+    // 🔄 نظام المزامنة المحسن مع معالجة الحذف والتحديث
     function setupRealTimeSync() {
         console.log('🚀 بدء المزامنة الفورية...');
         
@@ -786,8 +763,12 @@
             const storage = getStorage();
             let hasUpdates = false;
             
+            // إنشاء مجموعة من الجلسات الحالية في Firebase
+            const firebaseSessionIds = new Set();
             snapshot.forEach(doc => {
                 const firebaseSession = { id: doc.id, ...doc.data() };
+                firebaseSessionIds.add(doc.id);
+                
                 const sessionDate = firebaseSession.date || todayKey();
                 
                 if (!storage[sessionDate]) {
@@ -795,7 +776,7 @@
                 }
                 
                 const existingIndex = storage[sessionDate].completed.findIndex(
-                    s => s.deviceId === firebaseSession.deviceId && s.startISO === firebaseSession.startISO
+                    s => s.id === firebaseSession.id
                 );
                 
                 if (existingIndex === -1) {
@@ -817,6 +798,28 @@
                 }
             });
             
+            // حذف الجلسات التي لم تعد موجودة في Firebase
+            Object.keys(storage).forEach(date => {
+                const originalLength = storage[date].completed.length;
+                storage[date].completed = storage[date].completed.filter(session => {
+                    // إذا كانت الجلسة لها معرف وتوجد في Firebase، ابقها
+                    if (session.id && firebaseSessionIds.has(session.id)) {
+                        return true;
+                    }
+                    // إذا كانت الجلسة بدون معرف (قديمة)، ابقها مؤقتاً
+                    if (!session.id) {
+                        return true;
+                    }
+                    // حذف الجلسات التي لم تعد في Firebase
+                    console.log('🗑️ حذف جلسة غير موجودة في Firebase:', session.deviceLabel);
+                    return false;
+                });
+                
+                if (storage[date].completed.length !== originalLength) {
+                    hasUpdates = true;
+                }
+            });
+            
             if (hasUpdates) {
                 setStorage(storage);
                 initLocal();
@@ -826,7 +829,7 @@
             hideSyncIndicator();
         });
 
-        // 🔧 الاستماع لعمليات الحذف من الأدمن
+        // الاستماع لتحديثات الأدمن المباشرة (بما في ذلك الحذف)
         const updatesQuery = query(collection(db, 'sessionUpdates'), orderBy('updatedAt', 'desc'));
         onSnapshot(updatesQuery, (snapshot) => {
             showSyncIndicator();
@@ -834,12 +837,13 @@
             let hasChanges = false;
             
             snapshot.docChanges().forEach((change) => {
-                if (change.type === "added") {
-                    const update = change.doc.data();
+                const update = change.doc.data();
+                
+                if (change.type === "added" || change.type === "modified") {
                     console.log('🔄 تحديث مستلم من الأدمن:', update);
                     
-                    if (update.action === 'delete') {
-                        // البحث عن الجلسة وحذفها من التخزين المحلي
+                    // معالجة الحذف
+                    if (update.updateType === 'session_delete' && update.isDeleted) {
                         Object.keys(storage).forEach(date => {
                             const originalLength = storage[date].completed.length;
                             storage[date].completed = storage[date].completed.filter(session => {
@@ -849,8 +853,7 @@
                                      session.startISO === update.originalStartISO);
                                 
                                 if (matches) {
-                                    hasChanges = true;
-                                    console.log('🗑️ تم حذف جلسة بناءً على طلب الأدمن:', session.deviceLabel);
+                                    console.log('🗑️ حذف جلسة بناءً على طلب الأدمن:', session.deviceLabel);
                                     return false;
                                 }
                                 return true;
@@ -860,8 +863,10 @@
                                 hasChanges = true;
                             }
                         });
-                    } else if (change.type === "added" || change.type === "modified") {
-                        // تحديثات التعديل العادية
+                    }
+                    
+                    // معالجة التعديل
+                    if (update.updateType === 'session_edit' && !update.isDeleted) {
                         Object.keys(storage).forEach(date => {
                             storage[date].completed = storage[date].completed.map(session => {
                                 const matches = 
@@ -869,7 +874,7 @@
                                     (session.deviceLabel === update.originalDeviceLabel &&
                                      session.startISO === update.originalStartISO);
                                 
-                                if (matches && update.action !== 'delete') {
+                                if (matches) {
                                     hasChanges = true;
                                     return {
                                         ...session,
@@ -1009,7 +1014,10 @@
         completedTbody.innerHTML = '';
         const sessionsToShow = currentTab === 'today' ? completedSessionsToday : allSessions;
         
-        sessionsToShow.slice().reverse().forEach((s, index) => {
+        // تصفية الجلسات المحذوفة
+        const filteredSessions = sessionsToShow.filter(session => !session.isDeleted);
+        
+        filteredSessions.slice().reverse().forEach((s, index) => {
             const tr = document.createElement('tr');
             if (s.updatedByAdmin) {
                 tr.classList.add('session-updated');
@@ -1230,39 +1238,25 @@
 
     cancelEnd.addEventListener('click', ()=> modalEnd.classList.remove('active'));
 
-    // clear data functionality - تم التحديث
+    // clear data functionality
     clearDataBtn.addEventListener('click', () => {
         modalClearData.classList.add('active');
     });
 
     confirmClearData.addEventListener('click', async () => {
-        // 1. مسح التخزين المحلي
         localStorage.removeItem(STORAGE_KEY);
         
         try {
-            // 2. مسح جميع الجلسات المفتوحة من Firebase
             const openSessionsRef = collection(db, 'openSessions');
             const querySnapshot = await getDocs(openSessionsRef);
             const deletePromises = querySnapshot.docs.map(doc => deleteDoc(doc.ref));
             await Promise.all(deletePromises);
-            
-            // 3. مسح جميع الجلسات المحلية من Firebase (اختياري)
-            const user = auth.currentUser;
-            if (user) {
-                const sessionsQuery = query(collection(db, 'sessions'), where('createdBy', '==', user.email));
-                const sessionsSnapshot = await getDocs(sessionsQuery);
-                const deleteSessionsPromises = sessionsSnapshot.docs.map(doc => deleteDoc(doc.ref));
-                await Promise.all(deleteSessionsPromises);
-            }
-            
         } catch (error) {
-            console.error('❌ خطأ في مسح البيانات من Firebase:', error);
+            console.error('❌ خطأ في مسح الجلسات المفتوحة من Firebase:', error);
         }
         
-        // 4. إعادة تعيين البيانات المحلية
         openSessions = {};
         completedSessionsToday = [];
-        allSessions = [];
         
         initLocal();
         renderDevices();
@@ -1340,12 +1334,6 @@
     (function init(){ 
         todayStr.textContent = new Date().toLocaleDateString('ar-EG'); 
         initLocal(); 
-        
-        // تنظيف الجلسات المكررة
-        if (removeDuplicateSessions()) {
-            console.log('🧹 تم تنظيف الجلسات المكررة');
-        }
-        
         renderDevices(); 
         
         // بدء نظام المزامنة الفورية
