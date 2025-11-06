@@ -5,40 +5,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Bianco Timer - إدارة الأجهزة</title>
   <style>
-    /* إضافة أنماط CSS للمصروفات */
-    .expenses-section {
-      margin-top: 20px;
-      background: var(--card);
-      padding: 12px;
-      border-radius: 12px;
-      border: 1px solid var(--glass);
-      box-shadow: var(--shadow);
-      overflow-x: auto;
-    }
-    
-    .expenses-summary {
-      display: flex;
-      gap: 10px;
-      margin: 12px 0;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-    
-    .expense-item {
-      background: rgba(255, 255, 255, 0.05);
-      padding: 10px;
-      border-radius: 8px;
-      margin-bottom: 8px;
-      border-left: 4px solid var(--danger);
-    }
-    
-    /* إزالة زر الحذف من جدول المصروفات */
-    #expensesTable th:last-child,
-    #expensesTable td:last-child {
-      display: none;
-    }
-    
-    /* باقي الأنماط كما هي */
     :root {
       --bg1: #050f18;
       --bg2: #0b1b2b;
@@ -502,6 +468,19 @@
       background: var(--accent);
       color: #000;
     }
+
+    /* أنماط المصروفات */
+    .expense-row {
+      background: rgba(255, 87, 34, 0.05);
+    }
+    
+    .financial-summary {
+      background: rgba(255, 255, 255, 0.03);
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
   </style>
   
 </head>
@@ -546,39 +525,29 @@
     </section>
 
     <!-- قسم المصروفات -->
-    <section class="expenses-section">
+    <section class="history-section">
       <div class="sessions-header">
         <strong>💸 المصروفات اليومية</strong>
         <button class="btn" id="addExpenseBtn">➕ إضافة مصروف</button>
       </div>
-      
-      <div class="expenses-summary">
-        <div class="card small">
-          <div class="small">إجمالي الإيرادات</div>
-          <div id="totalRevenueBeforeExpenses" style="font-weight:800;margin-top:6px">0 ج</div>
-        </div>
-        <div class="card small">
-          <div class="small">إجمالي المصروفات</div>
-          <div id="totalExpenses" style="font-weight:800;margin-top:6px">0 ج</div>
-        </div>
-        <div class="card small">
-          <div class="small">صافي الربح</div>
-          <div id="netProfit" style="font-weight:800;margin-top:6px;color:var(--accent)">0 ج</div>
-        </div>
-      </div>
-      
       <table id="expensesTable">
-        <thead>
-          <tr>
-            <th>اسم المصروف</th>
-            <th>المبلغ</th>
-            <th>التاريخ</th>
-            <th>تم الإضافة بواسطة</th>
-            <!-- تم إزالة عمود العمليات -->
-          </tr>
-        </thead>
+        <thead><tr><th>اسم المصروف</th><th>المبلغ</th><th>التاريخ</th><th>عمليات</th></tr></thead>
         <tbody></tbody>
       </table>
+      <div class="financial-summary">
+        <div style="display: flex; justify-content: space-between;">
+          <span>الإيرادات الإجمالية:</span>
+          <span id="grossRevenue">0 ج</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+          <span>إجمالي المصروفات:</span>
+          <span id="totalExpenses">0 ج</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-top: 5px; font-weight: bold; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 5px;">
+          <span>صافي الإيرادات:</span>
+          <span id="netRevenue">0 ج</span>
+        </div>
+      </div>
     </section>
 
     <footer>💾 يتم حفظ الجلسات محليًا بشكل دائم + مزامنة مع Firebase. يتم تحديث الجلسات تلقائياً عند تعديلها من قبل المشرف.</footer>
@@ -651,6 +620,21 @@
     </div>
   </div>
 
+  <!-- مودال إضافة مصروف -->
+  <div class="modal-back" id="modalExpense">
+    <div class="modal">
+      <h3 class="center">💸 إضافة مصروف</h3>
+      <label>اسم المصروف</label>
+      <input id="expenseName" placeholder="مثال: شراء مشروبات، صيانة، إلخ" />
+      <label>المبلغ (جنيه)</label>
+      <input id="expenseAmount" type="number" min="1" value="1" />
+      <div style="display:flex;gap:8px;margin-top:16px;">
+        <button class="btn" id="confirmAddExpense">إضافة</button>
+        <button class="secondary" id="cancelAddExpense">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
   <!-- مودال تأكيد مسح البيانات -->
   <div class="modal-back" id="modalClearData">
     <div class="modal">
@@ -662,23 +646,6 @@
       <div style="display:flex;gap:8px;margin-top:16px;">
         <button class="btn warning" id="confirmClearData">نعم، مسح الكل</button>
         <button class="secondary" id="cancelClearData">إلغاء</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- مودال إضافة مصروف -->
-  <div class="modal-back" id="modalExpense">
-    <div class="modal">
-      <h3 class="center">💸 إضافة مصروف جديد</h3>
-      <label>اسم المصروف</label>
-      <input id="expenseName" placeholder="مثال: شراء مشروبات، صيانة، الخ..." />
-      
-      <label>المبلغ (جنيه)</label>
-      <input id="expenseAmount" type="number" min="0" step="0.01" placeholder="0.00" />
-      
-      <div style="display:flex;gap:8px;margin-top:16px;">
-        <button class="btn" id="confirmAddExpense">إضافة</button>
-        <button class="secondary" id="cancelAddExpense">إلغاء</button>
       </div>
     </div>
   </div>
@@ -704,14 +671,9 @@
     const DEVICES = []; DEVICES.push({id:'ping',label:'Ping',type:'ping'}); for(let i=1;i<=6;i++) DEVICES.push({id:`ps${i}`,label:`PS4-${i}`,type:'ps4'}); for(let i=7;i<=15;i++) DEVICES.push({id:`ps${i}`,label:`PS5-${i}`,type:'ps5'});
 
     const STORAGE_KEY='biancoSessionsLocal';
-    const EXPENSES_KEY='biancoExpensesLocal';
     
     function getStorage(){ try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}')}catch(e){return{}} }
     function setStorage(o){ localStorage.setItem(STORAGE_KEY,JSON.stringify(o)) }
-    
-    function getExpensesStorage(){ try{return JSON.parse(localStorage.getItem(EXPENSES_KEY)||'{}')}catch(e){return{}} }
-    function setExpensesStorage(o){ localStorage.setItem(EXPENSES_KEY,JSON.stringify(o)) }
-    
     function todayKey(){ return new Date().toLocaleDateString('ar-EG') }
 
     let openSessions = {}, completedSessionsToday = [], allSessions = [], expensesToday = [];
@@ -720,45 +682,62 @@
     function initLocal(){ 
       const s = getStorage(); 
       const t = todayKey(); 
-      if (!s[t]) s[t] = { open: {}, completed: [] }; 
+      if (!s[t]) s[t] = { open: {}, completed: [], expenses: [] }; 
       setStorage(s); 
       openSessions = s[t].open || {}; 
       completedSessionsToday = s[t].completed || []; 
+      expensesToday = s[t].expenses || [];
       
-      // تحميل جميع الجلسات
+      // تحميل جميع الجلسات مع تنظيف البيانات المكررة
       allSessions = [];
+      const sessionMap = new Map();
+      
       Object.keys(s).forEach(date => {
           if (s[date].completed) {
               s[date].completed.forEach(session => {
                   if (!session.isDeleted) {
-                      allSessions.push({
-                          ...session,
-                          date: date,
-                          isToday: date === t
-                      });
+                      const sessionKey = session.id || 
+                          `${session.deviceLabel}_${session.startISO}_${session.endISO}`;
+                      
+                      if (!sessionMap.has(sessionKey)) {
+                          sessionMap.set(sessionKey, {
+                              ...session,
+                              date: date,
+                              isToday: date === t
+                          });
+                      }
                   }
               });
           }
       });
       
-      // تحميل المصروفات
-      const expensesStorage = getExpensesStorage();
-      expensesToday = expensesStorage[t] || [];
+      allSessions = Array.from(sessionMap.values());
     }
 
     function persistLocal(){ 
       const s = getStorage(); 
       const t = todayKey(); 
       
-      s[t] = { open: openSessions, completed: completedSessionsToday }; 
+      if (s[t] && s[t].completed) {
+          const uniqueSessions = [];
+          const sessionKeys = new Set();
+          
+          s[t].completed.forEach(session => {
+              const sessionKey = session.id || 
+                  `${session.deviceLabel}_${session.startISO}_${session.endISO}`;
+              
+              if (!sessionKeys.has(sessionKey)) {
+                  sessionKeys.add(sessionKey);
+                  uniqueSessions.push(session);
+              }
+          });
+          
+          s[t].completed = uniqueSessions;
+      }
+      
+      s[t] = { open: openSessions, completed: completedSessionsToday, expenses: expensesToday }; 
       setStorage(s); 
-      
-      // حفظ المصروفات
-      const expensesStorage = getExpensesStorage();
-      expensesStorage[t] = expensesToday;
-      setExpensesStorage(expensesStorage);
-      
-      initLocal(); // إعادة تحميل جميع الجلسات
+      initLocal();
     }
 
     // DOM
@@ -775,29 +754,24 @@
     const syncIndicator = document.getElementById('syncIndicator');
     const tabButtons = document.querySelectorAll('.tab-btn');
 
-    // عناصر المصروفات
-    const addExpenseBtn = document.getElementById('addExpenseBtn');
+    // expense elements
     const modalExpense = document.getElementById('modalExpense');
     const expenseName = document.getElementById('expenseName');
     const expenseAmount = document.getElementById('expenseAmount');
     const confirmAddExpense = document.getElementById('confirmAddExpense');
     const cancelAddExpense = document.getElementById('cancelAddExpense');
-    const expensesTbody = document.querySelector('#expensesTable tbody');
-    const totalRevenueBeforeExpensesEl = document.getElementById('totalRevenueBeforeExpenses');
-    const totalExpensesEl = document.getElementById('totalExpenses');
-    const netProfitEl = document.getElementById('netProfit');
+    const addExpenseBtn = document.getElementById('addExpenseBtn');
 
-    // مودال بدء الجلسة
+    // modals
     const modalStart = document.getElementById('modalStart');
     const startDevice = document.getElementById('startDevice');
     const sessionKind = document.getElementById('sessionKind');
-    const endTimeRow = document.getElementById('endTimeRow');
     const sessionEndTime = document.getElementById('sessionEndTime');
     const playMode = document.getElementById('playMode');
     const confirmStart = document.getElementById('confirmStart');
     const cancelStart = document.getElementById('cancelStart');
+    const endTimeRow = document.getElementById('endTimeRow');
 
-    // مودال إضافة الطلب
     const modalDrink = document.getElementById('modalDrink');
     const drinkSelect = document.getElementById('drinkSelect');
     const drinkQty = document.getElementById('drinkQty');
@@ -805,7 +779,6 @@
     const confirmAddDrink = document.getElementById('confirmAddDrink');
     const cancelAddDrink = document.getElementById('cancelAddDrink');
 
-    // مودال إنهاء الجلسة
     const modalEnd = document.getElementById('modalEnd');
     const endDeviceLabel = document.getElementById('endDeviceLabel');
     const endFrom = document.getElementById('endFrom');
@@ -816,515 +789,787 @@
     const confirmEnd = document.getElementById('confirmEnd');
     const cancelEnd = document.getElementById('cancelEnd');
 
-    // مودال مسح البيانات
     const modalClearData = document.getElementById('modalClearData');
     const confirmClearData = document.getElementById('confirmClearData');
     const cancelClearData = document.getElementById('cancelClearData');
 
-    let currentDevice = null;
-    let currentEndDevice = null;
+    // helpers
+    function nowISO(){ return new Date().toISOString(); }
+    function diffMinutes(startISO,endISO){ return Math.max(0, Math.floor((new Date(endISO)-new Date(startISO))/60000)); }
+    function format12FromISO(iso){ const d=new Date(iso); if(isNaN(d)) return '-'; let h=d.getHours(), m=d.getMinutes(), suf=h>=12?'مساءً':'صباحًا', hh=h%12||12; return `${hh}:${m.toString().padStart(2,'0')} ${suf}`; }
+    function durationText(mins){ const h=Math.floor(mins/60), m=mins%60; return `${h} س ${m} د`; }
+    function isoFromTimeStr(timeStr){ const [hh,mm]=timeStr.split(':').map(Number); const now=new Date(); const d=new Date(now.getFullYear(),now.getMonth(),now.getDate(),hh,mm,0); if(d<=now) d.setDate(d.getDate()+1); return d.toISOString(); }
 
-    // التبويبات
-    tabButtons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        tabButtons.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentTab = btn.dataset.tab;
-        renderCompletedSessions();
-      });
-    });
+    // 🔄 نظام المزامنة المحسن مع منع التكرار
+    function setupRealTimeSync() {
+        console.log('🚀 بدء المزامنة الفورية...');
+        
+        // الاستماع للجلسات المفتوحة
+        const openSessionsRef = collection(db, 'openSessions');
+        onSnapshot(openSessionsRef, (snapshot) => {
+            showSyncIndicator();
+            const firebaseOpenSessions = {};
+            snapshot.forEach(doc => {
+                const session = doc.data();
+                firebaseOpenSessions[session.deviceId] = {
+                    ...session,
+                    firebaseId: doc.id
+                };
+            });
+            
+            let hasChanges = false;
+            Object.keys(firebaseOpenSessions).forEach(deviceId => {
+                const firebaseSession = firebaseOpenSessions[deviceId];
+                const localSession = openSessions[deviceId];
+                
+                if (!localSession || 
+                    localSession.startISO !== firebaseSession.startISO ||
+                    localSession.mode !== firebaseSession.mode) {
+                    
+                    openSessions[deviceId] = firebaseSession;
+                    hasChanges = true;
+                }
+            });
+            
+            Object.keys(openSessions).forEach(deviceId => {
+                if (!firebaseOpenSessions[deviceId]) {
+                    delete openSessions[deviceId];
+                    hasChanges = true;
+                }
+            });
+            
+            if (hasChanges) {
+                persistLocal();
+                renderDevices();
+                console.log('✅ تم تحديث الجلسات المفتوحة من Firebase');
+            }
+            hideSyncIndicator();
+        });
 
-    // تسجيل الخروج
-    logoutBtn.addEventListener('click', () => {
-      signOut(auth).then(() => {
-        window.location.href = 'login.html';
-      });
-    });
+        // الاستماع للجلسات المكتملة
+        const sessionsQuery = query(collection(db, 'sessions'), orderBy('createdAt', 'desc'));
+        onSnapshot(sessionsQuery, (snapshot) => {
+            showSyncIndicator();
+            const storage = getStorage();
+            let hasUpdates = false;
+            
+            // إنشاء مجموعة من الجلسات الحالية في Firebase
+            const firebaseSessionIds = new Set();
+            const firebaseSessionsMap = new Map();
+            
+            snapshot.forEach(doc => {
+                const firebaseSession = { id: doc.id, ...doc.data() };
+                firebaseSessionIds.add(doc.id);
+                firebaseSessionsMap.set(doc.id, firebaseSession);
+                
+                const sessionDate = firebaseSession.date || todayKey();
+                
+                if (!storage[sessionDate]) {
+                    storage[sessionDate] = { open: {}, completed: [] };
+                }
+                
+                // البحث عن الجلسة باستخدام المعرف أولاً
+                const existingIndex = storage[sessionDate].completed.findIndex(
+                    s => s.id === firebaseSession.id
+                );
+                
+                if (existingIndex === -1) {
+                    // جلسة جديدة - التحقق من عدم التكرار بالمفتاح الفريد
+                    const sessionKey = `${firebaseSession.deviceLabel}_${firebaseSession.startISO}_${firebaseSession.endISO}`;
+                    const isDuplicate = storage[sessionDate].completed.some(s => 
+                        !s.id && `${s.deviceLabel}_${s.startISO}_${s.endISO}` === sessionKey
+                    );
+                    
+                    if (!isDuplicate) {
+                        storage[sessionDate].completed.push(firebaseSession);
+                        hasUpdates = true;
+                        console.log('➕ إضافة جلسة جديدة:', firebaseSession.deviceLabel);
+                    } else {
+                        console.log('🔄 تجاهل جلسة مكررة:', firebaseSession.deviceLabel);
+                    }
+                } else {
+                    // تحديث جلسة موجودة
+                    const existing = storage[sessionDate].completed[existingIndex];
+                    if (JSON.stringify(existing) !== JSON.stringify(firebaseSession)) {
+                        storage[sessionDate].completed[existingIndex] = {
+                            ...firebaseSession,
+                            updatedByAdmin: true,
+                            lastUpdate: new Date().toISOString()
+                        };
+                        hasUpdates = true;
+                        console.log('🔄 تم تحديث جلسة من الأدمن:', firebaseSession.deviceLabel);
+                    }
+                }
+            });
+            
+            // حذف الجلسات التي لم تعد موجودة في Firebase
+            Object.keys(storage).forEach(date => {
+                const originalLength = storage[date].completed.length;
+                storage[date].completed = storage[date].completed.filter(session => {
+                    // إذا كانت الجلسة لها معرف وتوجد في Firebase، ابقها
+                    if (session.id && firebaseSessionIds.has(session.id)) {
+                        return true;
+                    }
+                    // إذا كانت الجلسة بدون معرف (قديمة)، ابقها مؤقتاً
+                    if (!session.id) {
+                        return true;
+                    }
+                    // حذف الجلسات التي لم تعد في Firebase
+                    console.log('🗑️ حذف جلسة غير موجودة في Firebase:', session.deviceLabel);
+                    return false;
+                });
+                
+                if (storage[date].completed.length !== originalLength) {
+                    hasUpdates = true;
+                }
+            });
+            
+            if (hasUpdates) {
+                setStorage(storage);
+                initLocal();
+                renderDevices();
+                showNotification('تم تحديث الجلسات من الإدارة');
+            }
+            hideSyncIndicator();
+        });
 
-    // الانتقال إلى صفحة المشرف
-    goAdminBtn.addEventListener('click', () => {
-      window.location.href = 'admin.html';
-    });
-
-    // مسح البيانات
-    clearDataBtn.addEventListener('click', () => {
-      modalClearData.classList.add('active');
-    });
-
-    confirmClearData.addEventListener('click', () => {
-      localStorage.removeItem(STORAGE_KEY);
-      localStorage.removeItem(EXPENSES_KEY);
-      window.location.reload();
-    });
-
-    cancelClearData.addEventListener('click', () => {
-      modalClearData.classList.remove('active');
-    });
-
-    // المزامنة
-    syncBtn.addEventListener('click', syncData);
-
-    // بدء الجلسة
-    function setupStartModal(device) {
-      currentDevice = device;
-      startDevice.value = device.label;
-      modalStart.classList.add('active');
+        // الاستماع لتحديثات الأدمن المباشرة (بما في ذلك الحذف)
+        const updatesQuery = query(collection(db, 'sessionUpdates'), orderBy('updatedAt', 'desc'));
+        onSnapshot(updatesQuery, (snapshot) => {
+            showSyncIndicator();
+            const storage = getStorage();
+            let hasChanges = false;
+            
+            snapshot.docChanges().forEach((change) => {
+                const update = change.doc.data();
+                
+                if (change.type === "added" || change.type === "modified") {
+                    console.log('🔄 تحديث مستلم من الأدمن:', update);
+                    
+                    // معالجة الحذف
+                    if (update.updateType === 'session_delete' && update.isDeleted) {
+                        Object.keys(storage).forEach(date => {
+                            const originalLength = storage[date].completed.length;
+                            storage[date].completed = storage[date].completed.filter(session => {
+                                const matches = 
+                                    (update.sessionId && session.id === update.sessionId) ||
+                                    (session.deviceLabel === update.originalDeviceLabel &&
+                                     session.startISO === update.originalStartISO);
+                                
+                                if (matches) {
+                                    console.log('🗑️ حذف جلسة بناءً على طلب الأدمن:', session.deviceLabel);
+                                    return false;
+                                }
+                                return true;
+                            });
+                            
+                            if (storage[date].completed.length !== originalLength) {
+                                hasChanges = true;
+                            }
+                        });
+                    }
+                    
+                    // معالجة التعديل
+                    if (update.updateType === 'session_edit' && !update.isDeleted) {
+                        Object.keys(storage).forEach(date => {
+                            storage[date].completed = storage[date].completed.map(session => {
+                                const matches = 
+                                    (update.sessionId && session.id === update.sessionId) ||
+                                    (session.deviceLabel === update.originalDeviceLabel &&
+                                     session.startISO === update.originalStartISO);
+                                
+                                if (matches) {
+                                    hasChanges = true;
+                                    return {
+                                        ...session,
+                                        deviceLabel: update.deviceLabel || session.deviceLabel,
+                                        price: update.price !== undefined ? update.price : session.price,
+                                        drinks: update.drinks || session.drinks,
+                                        mode: update.mode || session.mode,
+                                        duration: update.duration || session.duration,
+                                        updatedByAdmin: true,
+                                        lastUpdate: new Date().toISOString()
+                                    };
+                                }
+                                return session;
+                            });
+                        });
+                    }
+                }
+            });
+            
+            if (hasChanges) {
+                setStorage(storage);
+                initLocal();
+                renderDevices();
+                showNotification('تم تحديث الجلسات من الإدارة');
+            }
+            hideSyncIndicator();
+        });
     }
 
-    sessionKind.addEventListener('change', () => {
-      endTimeRow.style.display = sessionKind.value === 'set' ? 'block' : 'none';
-    });
-
-    confirmStart.addEventListener('click', () => {
-      const device = currentDevice;
-      const now = new Date();
-      const startISO = now.toISOString();
-      const startStr = now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
-      const kind = sessionKind.value;
-      const mode = playMode.value;
-      let endISO = null, endStr = null;
-
-      if (kind === 'set') {
-        const [hours, minutes] = sessionEndTime.value.split(':').map(Number);
-        const endTime = new Date(now);
-        endTime.setHours(hours, minutes, 0, 0);
-        if (endTime <= now) endTime.setDate(endTime.getDate() + 1);
-        endISO = endTime.toISOString();
-        endStr = endTime.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
-      }
-
-      const session = {
-        deviceId: device.id,
-        deviceLabel: device.label,
-        deviceType: device.type,
-        startISO,
-        startStr,
-        endISO,
-        endStr,
-        kind,
-        playMode: mode,
-        drinks: [],
-        total: 0,
-        status: 'open'
-      };
-
-      openSessions[device.id] = session;
-      persistLocal();
-      renderDevices();
-      modalStart.classList.remove('active');
-      syncData();
-    });
-
-    cancelStart.addEventListener('click', () => {
-      modalStart.classList.remove('active');
-    });
-
-    // إضافة الطلب
-    function setupDrinkModal(device) {
-      currentDevice = device;
-      drinkDevice.value = device.label;
-      modalDrink.classList.add('active');
+    // وظائف المساعدة للمزامنة
+    function showSyncIndicator() {
+        syncIndicator.style.display = 'block';
     }
 
-    drinkSelect.addEventListener('change', () => {
-      if (drinkSelect.value === 'متنوع') {
-        const name = prompt('اسم الطلب:');
-        const price = parseFloat(prompt('السعر (جنيه):'));
-        if (name && !isNaN(price)) {
-          drinkSelect.options[drinkSelect.selectedIndex].text = `${name} - ${price} ج`;
-          drinkSelect.options[drinkSelect.selectedIndex].value = `${name}|${price}`;
-        } else {
-          drinkSelect.selectedIndex = 0;
+    function hideSyncIndicator() {
+        setTimeout(() => {
+            syncIndicator.style.display = 'none';
+        }, 1000);
+    }
+
+    function showNotification(message) {
+        const notification = document.createElement('div');
+        notification.textContent = message;
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--accent);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            z-index: 10000;
+            box-shadow: var(--shadow);
+        `;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
+    }
+
+    // حفظ الجلسات في Firebase
+    async function saveOpenSessionToFirebase(session) {
+        try {
+            const openSessionsRef = collection(db, 'openSessions');
+            
+            if (session.firebaseId) {
+                await updateDoc(doc(db, 'openSessions', session.firebaseId), session);
+            } else {
+                const q = query(openSessionsRef, where("deviceId", "==", session.deviceId));
+                const querySnapshot = await getDocs(q);
+                
+                if (!querySnapshot.empty) {
+                    const docId = querySnapshot.docs[0].id;
+                    await updateDoc(doc(db, 'openSessions', docId), session);
+                } else {
+                    const docRef = await addDoc(openSessionsRef, session);
+                    session.firebaseId = docRef.id;
+                }
+            }
+        } catch (error) {
+            console.error('❌ خطأ في حفظ الجلسة المفتوحة:', error);
         }
-      }
-    });
-
-    confirmAddDrink.addEventListener('click', () => {
-      const device = currentDevice;
-      if (!drinkSelect.value) return alert('اختر طلباً');
-      const [name, price] = drinkSelect.value.split('|');
-      const qty = parseInt(drinkQty.value) || 1;
-      const drink = { name, price: parseFloat(price), qty };
-      openSessions[device.id].drinks.push(drink);
-      persistLocal();
-      renderDevices();
-      modalDrink.classList.remove('active');
-      syncData();
-    });
-
-    cancelAddDrink.addEventListener('click', () => {
-      modalDrink.classList.remove('active');
-    });
-
-    // إنهاء الجلسة
-    function setupEndModal(device) {
-      currentEndDevice = device;
-      const session = openSessions[device.id];
-      const start = new Date(session.startISO);
-      const end = session.endISO ? new Date(session.endISO) : new Date();
-      const durationMs = end - start;
-      const durationMins = Math.floor(durationMs / 60000);
-      const hours = Math.floor(durationMins / 60);
-      const mins = durationMins % 60;
-      const durationStr = `${hours} س ${mins} د`;
-
-      const drinksTotal = session.drinks.reduce((sum, d) => sum + (d.price * d.qty), 0);
-      const rate = RATES[device.type][session.playMode];
-      const timeTotal = hours * rate + (mins * rate / 60);
-      const total = Math.round(timeTotal + drinksTotal);
-
-      endDeviceLabel.textContent = device.label;
-      endFrom.value = session.startStr;
-      endTo.value = session.endStr || end.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
-      endDuration.value = durationStr;
-      endDrinks.value = session.drinks.map(d => `${d.name} (${d.qty})`).join('، ') || 'لا يوجد';
-      endTotal.value = total + ' ج';
-
-      modalEnd.classList.add('active');
     }
 
-    confirmEnd.addEventListener('click', () => {
-      const device = currentEndDevice;
-      const session = openSessions[device.id];
-      const start = new Date(session.startISO);
-      const end = session.endISO ? new Date(session.endISO) : new Date();
-      const durationMs = end - start;
-      const durationMins = Math.floor(durationMs / 60000);
-      const hours = Math.floor(durationMins / 60);
-      const mins = durationMins % 60;
-      const durationStr = `${hours} س ${mins} د`;
+    async function removeOpenSessionFromFirebase(deviceId) {
+        try {
+            const openSessionsRef = collection(db, 'openSessions');
+            const q = query(openSessionsRef, where("deviceId", "==", deviceId));
+            const querySnapshot = await getDocs(q);
+            
+            if (!querySnapshot.empty) {
+                const deletePromises = querySnapshot.docs.map(doc => deleteDoc(doc.ref));
+                await Promise.all(deletePromises);
+            }
+        } catch (error) {
+            console.error('❌ خطأ في حذف الجلسة المفتوحة:', error);
+        }
+    }
 
-      const drinksTotal = session.drinks.reduce((sum, d) => sum + (d.price * d.qty), 0);
-      const rate = RATES[device.type][session.playMode];
-      const timeTotal = hours * rate + (mins * rate / 60);
-      const total = Math.round(timeTotal + drinksTotal);
+    // render functions
+    function renderDevices(){ 
+        devicesGrid.innerHTML=''; 
+        DEVICES.forEach((dev,idx)=>{ 
+            const open=openSessions[dev.id]; 
+            const statusHtml=open?`<div class="status open">مفتوحة</div>`:`<div class="status idle">خالي</div>`; 
+            const infoHtml=open?`<div class="small">${format12FromISO(open.startISO)} ${open.scheduledEndISO? '→ ' + format12FromISO(open.scheduledEndISO): ''}</div><div class="small">نوع: ${open.mode==='single'?'فردي':'زوجي'}</div>`:`<div class="small">اضغط بدء</div>`; 
+            const controlsHtml=open?`<button class="end" data-action="end" data-idx="${idx}">إنهاء</button><button class="add" data-action="add" data-idx="${idx}">➕ طلب</button>`:`<button class="start" data-action="start" data-idx="${idx}">بدء جلسة</button>`; 
+            const wrapper=document.createElement('div'); 
+            wrapper.className='device'; 
+            wrapper.innerHTML=`<div class="title"><div><div class="dev-name">${dev.label}</div><div class="dev-sub">سعر/ساعة: ${RATES[dev.type].single}/${RATES[dev.type].double} ج</div></div>${statusHtml}</div><div>${infoHtml}</div><div class="controls">${controlsHtml}</div>`; 
+            devicesGrid.appendChild(wrapper); 
+        }); 
+        updateSummary(); 
+        renderCompleted(); 
+        renderExpenses();
+    }
 
-      const completedSession = {
-        ...session,
-        endISO: end.toISOString(),
-        endStr: end.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
-        duration: durationStr,
-        durationMins,
-        drinksTotal,
-        timeTotal,
-        total,
-        status: 'completed',
-        completedAt: new Date().toISOString()
-      };
+    function updateSummary(){ 
+        openCountEl.textContent=Object.keys(openSessions).length; 
+        let total=0; 
+        completedSessionsToday.forEach(s=> total += Number(s.price||0)); 
+        const now = nowISO(); 
+        Object.values(openSessions).forEach(s=>{ 
+            const mins = diffMinutes(s.startISO, now); 
+            const rate = RATES[s.rateType][s.mode]; 
+            const hoursPrice = (mins/60)*rate; 
+            let drinksTotal = 0;
+            if (Array.isArray(s.drinks)) {
+                drinksTotal = s.drinks.reduce((a,b)=>a+(b.price*b.qty),0);
+            }
+            total += hoursPrice + drinksTotal; 
+        }); 
+        todayRevenueEl.textContent = `${Number(total.toFixed(2))} ج`; 
+    }
 
-      completedSessionsToday.push(completedSession);
-      delete openSessions[device.id];
-      persistLocal();
-      renderDevices();
-      renderCompletedSessions();
-      modalEnd.classList.remove('active');
-      syncData();
+    function renderCompleted() {
+        completedTbody.innerHTML = '';
+        const sessionsToShow = currentTab === 'today' ? completedSessionsToday : allSessions;
+        
+        // تصفية الجلسات المحذوفة
+        const filteredSessions = sessionsToShow.filter(session => !session.isDeleted);
+        
+        filteredSessions.slice().reverse().forEach((s, index) => {
+            const tr = document.createElement('tr');
+            if (s.updatedByAdmin) {
+                tr.classList.add('session-updated');
+            }
+
+            const drinksTxt = Array.isArray(s.drinks)
+                ? s.drinks.map(d => `${d.name}×${d.qty}`).join(', ')
+                : (typeof s.drinks === 'string' && s.drinks.trim() !== ''
+                    ? s.drinks
+                    : '-');
+
+            const status = s.updatedByAdmin ? 
+                '<span style="color: var(--accent);">🔄 محدث</span>' : 
+                '<span style="color: var(--muted);">✅ محفوظ</span>';
+
+            tr.innerHTML = `
+                <td>${s.deviceLabel || '-'}</td>
+                <td>${s.mode === 'double' ? 'زوجي' : 'فردي'}</td>
+                <td>${format12FromISO(s.startISO)}</td>
+                <td>${format12FromISO(s.endISO)}</td>
+                <td>${s.duration || '-'}</td>
+                <td>${drinksTxt}</td>
+                <td>${s.price || 0} ج</td>
+                <td>${status}</td>
+            `;
+            completedTbody.appendChild(tr);
+        });
+    }
+
+    function renderExpenses() {
+      const expensesTbody = document.querySelector('#expensesTable tbody');
+      expensesTbody.innerHTML = '';
+      
+      expensesToday.forEach((expense, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${expense.name}</td>
+          <td>${expense.amount} ج</td>
+          <td>${new Date().toLocaleDateString('ar-EG')}</td>
+          <td><button class="danger" data-expense-index="${index}" style="padding: 4px 8px; font-size: 12px;">حذف</button></td>
+        `;
+        expensesTbody.appendChild(tr);
+      });
+      
+      updateRevenueSummary();
+    }
+
+    function updateRevenueSummary() {
+      const grossRevenueEl = document.getElementById('grossRevenue');
+      const totalExpensesEl = document.getElementById('totalExpenses');
+      const netRevenueEl = document.getElementById('netRevenue');
+      
+      let totalRevenue = 0;
+      completedSessionsToday.forEach(s => totalRevenue += Number(s.price || 0));
+      
+      const now = nowISO();
+      Object.values(openSessions).forEach(s => {
+        const mins = diffMinutes(s.startISO, now);
+        const rate = RATES[s.rateType][s.mode];
+        const hoursPrice = (mins / 60) * rate;
+        let drinksTotal = 0;
+        if (Array.isArray(s.drinks)) {
+          drinksTotal = s.drinks.reduce((a, b) => a + (b.price * b.qty), 0);
+        }
+        totalRevenue += hoursPrice + drinksTotal;
+      });
+      
+      const totalExpenses = expensesToday.reduce((sum, expense) => sum + Number(expense.amount), 0);
+      const netRevenue = totalRevenue - totalExpenses;
+      
+      grossRevenueEl.textContent = `${Number(totalRevenue.toFixed(2))} ج`;
+      totalExpensesEl.textContent = `${Number(totalExpenses.toFixed(2))} ج`;
+      netRevenueEl.textContent = `${Number(netRevenue.toFixed(2))} ج`;
+    }
+
+    // events delegation for device buttons
+    devicesGrid.addEventListener('click', (e)=>{ 
+        const btn = e.target.closest('button'); 
+        if(!btn) return; 
+        const action = btn.dataset.action; 
+        const idx = Number(btn.dataset.idx); 
+        if(action === 'start') openStartModal(idx); 
+        if(action === 'add') openAddDrinkModal(idx); 
+        if(action === 'end') openEndModal(idx); 
     });
 
-    cancelEnd.addEventListener('click', () => {
-      modalEnd.classList.remove('active');
+    // نظام التبويب
+    tabButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            tabButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentTab = btn.dataset.tab;
+            renderCompleted();
+        });
     });
 
-    // إدارة المصروفات
+    // expense modal events
     addExpenseBtn.addEventListener('click', () => {
       expenseName.value = '';
-      expenseAmount.value = '';
+      expenseAmount.value = '1';
       modalExpense.classList.add('active');
     });
 
     confirmAddExpense.addEventListener('click', () => {
       const name = expenseName.value.trim();
-      const amount = parseFloat(expenseAmount.value);
+      const amount = Number(expenseAmount.value);
       
       if (!name) {
         alert('يرجى إدخال اسم المصروف');
         return;
       }
       
-      if (isNaN(amount) || amount <= 0) {
+      if (!amount || amount <= 0) {
         alert('يرجى إدخال مبلغ صحيح');
         return;
       }
       
-      const expense = {
-        id: Date.now().toString(),
+      expensesToday.push({
         name,
         amount,
-        date: new Date().toISOString(),
-        dateStr: new Date().toLocaleString('ar-EG'),
-        addedBy: auth.currentUser?.email || 'مستخدم غير معروف'
-      };
+        date: new Date().toISOString()
+      });
       
-      expensesToday.push(expense);
       persistLocal();
       renderExpenses();
       modalExpense.classList.remove('active');
-      syncData();
     });
 
     cancelAddExpense.addEventListener('click', () => {
       modalExpense.classList.remove('active');
     });
 
-    // عرض الأجهزة
-    function renderDevices() {
-      devicesGrid.innerHTML = '';
-      let openCount = 0;
-      let todayRevenue = 0;
-
-      DEVICES.forEach(device => {
-        const session = openSessions[device.id];
-        const isOpen = !!session;
-        if (isOpen) openCount++;
-
-        const deviceEl = document.createElement('div');
-        deviceEl.className = 'device';
-        deviceEl.innerHTML = `
-          <div class="title">
-            <div>
-              <div class="dev-name">${device.label}</div>
-              <div class="dev-sub">${device.type.toUpperCase()}</div>
-            </div>
-            <div class="status ${isOpen ? 'open' : 'idle'}">${isOpen ? '🟢 مفتوحة' : '🔴 متاحة'}</div>
-          </div>
-          <div class="controls">
-            ${!isOpen ? `
-              <button class="start" data-device="${device.id}">▶ ابدأ</button>
-              <button class="add" data-device="${device.id}">➕ طلب</button>
-            ` : `
-              <button class="add" data-device="${device.id}">➕ طلب</button>
-              <button class="end" data-device="${device.id}">⏹️ أنهِ</button>
-            `}
-          </div>
-        `;
-        devicesGrid.appendChild(deviceEl);
-      });
-
-      // حساب الإيرادات التقديرية
-      Object.values(openSessions).forEach(session => {
-        const start = new Date(session.startISO);
-        const now = new Date();
-        const durationMs = now - start;
-        const durationMins = Math.floor(durationMs / 60000);
-        const hours = Math.floor(durationMins / 60);
-        const mins = durationMins % 60;
-        const rate = RATES[session.deviceType][session.playMode];
-        const timeTotal = hours * rate + (mins * rate / 60);
-        const drinksTotal = session.drinks.reduce((sum, d) => sum + (d.price * d.qty), 0);
-        todayRevenue += Math.round(timeTotal + drinksTotal);
-      });
-
-      // إضافة إيرادات الجلسات المكتملة اليوم
-      completedSessionsToday.forEach(session => {
-        todayRevenue += session.total || 0;
-      });
-
-      openCountEl.textContent = openCount;
-      todayRevenueEl.textContent = todayRevenue + ' ج';
-      todayStr.textContent = todayKey();
-
-      // إضافة المستمعين للأزرار
-      document.querySelectorAll('.device .start').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const deviceId = btn.dataset.device;
-          const device = DEVICES.find(d => d.id === deviceId);
-          setupStartModal(device);
-        });
-      });
-
-      document.querySelectorAll('.device .add').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const deviceId = btn.dataset.device;
-          const device = DEVICES.find(d => d.id === deviceId);
-          setupDrinkModal(device);
-        });
-      });
-
-      document.querySelectorAll('.device .end').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const deviceId = btn.dataset.device;
-          const device = DEVICES.find(d => d.id === deviceId);
-          setupEndModal(device);
-        });
-      });
-    }
-
-    // عرض الجلسات المكتملة
-    function renderCompletedSessions() {
-      completedTbody.innerHTML = '';
-      const sessionsToShow = currentTab === 'today' ? completedSessionsToday : allSessions;
-
-      sessionsToShow.forEach(session => {
-        if (session.isDeleted) return;
-        
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${session.deviceLabel}</td>
-          <td>${session.playMode === 'single' ? 'فردي' : 'زوجي'}</td>
-          <td>${session.startStr}</td>
-          <td>${session.endStr || 'مستمرة'}</td>
-          <td>${session.duration || 'جارية'}</td>
-          <td>${session.drinks.map(d => `${d.name} (${d.qty})`).join('، ') || 'لا يوجد'}</td>
-          <td>${session.total || 0} ج</td>
-          <td>${session.status === 'open' ? '🟢 مفتوحة' : '⏹️ مكتملة'}</td>
-        `;
-        completedTbody.appendChild(tr);
-      });
-    }
-
-    // عرض المصروفات
-    function renderExpenses() {
-      expensesTbody.innerHTML = '';
-      
-      let totalExpenses = 0;
-      
-      expensesToday.forEach(expense => {
-        totalExpenses += expense.amount;
-        
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${expense.name}</td>
-          <td>${expense.amount.toFixed(2)} ج</td>
-          <td>${expense.dateStr}</td>
-          <td>${expense.addedBy}</td>
-        `;
-        expensesTbody.appendChild(tr);
-      });
-      
-      // حساب الإيرادات الإجمالية
-      let totalRevenue = 0;
-      completedSessionsToday.forEach(session => {
-        totalRevenue += session.total || 0;
-      });
-      
-      // حساب صافي الربح
-      const netProfit = totalRevenue - totalExpenses;
-      
-      // تحديث الإحصائيات
-      totalRevenueBeforeExpensesEl.textContent = totalRevenue.toFixed(2) + ' ج';
-      totalExpensesEl.textContent = totalExpenses.toFixed(2) + ' ج';
-      netProfitEl.textContent = netProfit.toFixed(2) + ' ج';
-    }
-
-    // المزامنة مع Firebase
-    async function syncData() {
-      syncIndicator.style.display = 'block';
-      const user = auth.currentUser;
-      if (!user) {
-        syncIndicator.style.display = 'none';
-        return;
-      }
-
-      try {
-        const today = todayKey();
-        const sessionsRef = collection(db, 'sessions');
-        const expensesRef = collection(db, 'expenses');
-        
-        // مزامنة الجلسات المفتوحة
-        for (const session of Object.values(openSessions)) {
-          if (!session.firebaseId) {
-            const docRef = await addDoc(sessionsRef, {
-              ...session,
-              userId: user.uid,
-              userEmail: user.email,
-              date: today,
-              lastUpdated: new Date().toISOString()
-            });
-            session.firebaseId = docRef.id;
-          }
+    // حذف المصروفات
+    document.addEventListener('click', (e) => {
+      if (e.target.classList.contains('danger') && e.target.dataset.expenseIndex) {
+        const index = Number(e.target.dataset.expenseIndex);
+        if (confirm('هل أنت متأكد من حذف هذا المصروف؟')) {
+          expensesToday.splice(index, 1);
+          persistLocal();
+          renderExpenses();
         }
-        
-        // مزامنة الجلسات المكتملة
-        for (const session of completedSessionsToday) {
-          if (!session.firebaseId) {
-            const docRef = await addDoc(sessionsRef, {
-              ...session,
-              userId: user.uid,
-              userEmail: user.email,
-              date: today,
-              lastUpdated: new Date().toISOString()
-            });
-            session.firebaseId = docRef.id;
-          }
-        }
-        
-        // مزامنة المصروفات
-        for (const expense of expensesToday) {
-          if (!expense.firebaseId) {
-            const docRef = await addDoc(expensesRef, {
-              ...expense,
-              userId: user.uid,
-              userEmail: user.email,
-              date: today,
-              lastUpdated: new Date().toISOString()
-            });
-            expense.firebaseId = docRef.id;
-          }
-        }
-        
-        persistLocal();
-        syncIndicator.style.display = 'none';
-        console.log('✅ تمت المزامنة بنجاح');
-      } catch (error) {
-        console.error('❌ خطأ في المزامنة:', error);
-        syncIndicator.style.display = 'none';
-      }
-    }
-
-    // الاستماع للتغييرات في Firebase
-    function setupFirebaseListeners() {
-      const user = auth.currentUser;
-      if (!user) return;
-
-      const today = todayKey();
-      
-      // الاستماع للجلسات
-      const sessionsQuery = query(
-        collection(db, 'sessions'), 
-        where('date', '==', today),
-        orderBy('lastUpdated', 'desc')
-      );
-      
-      onSnapshot(sessionsQuery, (snapshot) => {
-        snapshot.docChanges().forEach((change) => {
-          if (change.type === 'modified' || change.type === 'added') {
-            const sessionData = change.doc.data();
-            console.log('🔄 تحديث جلسة من Firebase:', sessionData.deviceLabel);
-          }
-        });
-      });
-      
-      // الاستماع للمصروفات
-      const expensesQuery = query(
-        collection(db, 'expenses'), 
-        where('date', '==', today),
-        orderBy('lastUpdated', 'desc')
-      );
-      
-      onSnapshot(expensesQuery, (snapshot) => {
-        snapshot.docChanges().forEach((change) => {
-          if (change.type === 'modified' || change.type === 'added') {
-            const expenseData = change.doc.data();
-            console.log('🔄 تحديث مصروف من Firebase:', expenseData.name);
-          }
-        });
-      });
-    }
-
-    // التهيئة
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        userEmailSpan.textContent = user.email;
-        initLocal();
-        renderDevices();
-        renderCompletedSessions();
-        renderExpenses();
-        setupFirebaseListeners();
-        syncData(); // مزامنة أولية
-      } else {
-        window.location.href = 'login.html';
       }
     });
+
+    // start modal
+    let selectedIdx = null;
+    function openStartModal(idx){ 
+        selectedIdx = idx; 
+        const dev = DEVICES[idx]; 
+        startDevice.value = dev.label; 
+        sessionKind.value = 'open'; 
+        sessionEndTime.value = ''; 
+        playMode.value = 'single'; 
+        endTimeRow.style.display = 'none'; 
+        modalStart.classList.add('active'); 
+    }
+    
+    sessionKind.addEventListener('change', ()=> { 
+        endTimeRow.style.display = sessionKind.value === 'set' ? 'block' : 'none'; 
+    });
+    
+    confirmStart.addEventListener('click', async ()=>{ 
+        const dev = DEVICES[selectedIdx]; 
+        const id = dev.id; 
+        const kind = sessionKind.value; 
+        let scheduledEndISO = null; 
+        if(kind === 'set'){ 
+            if(!sessionEndTime.value){ 
+                alert('حدد وقت النهاية'); 
+                return; 
+            } 
+            scheduledEndISO = isoFromTimeStr(sessionEndTime.value); 
+        } 
+        const mode = playMode.value; 
+        const startISO = nowISO(); 
+        
+        const newSession = { 
+            deviceId: id, 
+            deviceLabel: dev.label, 
+            startISO, 
+            scheduledEndISO, 
+            mode, 
+            drinks: [], 
+            rateType: dev.type 
+        };
+        
+        openSessions[id] = newSession;
+        persistLocal(); 
+        await saveOpenSessionToFirebase(newSession);
+        renderDevices(); 
+        modalStart.classList.remove('active'); 
+    });
+    
+    cancelStart.addEventListener('click', ()=> modalStart.classList.remove('active'));
+
+    // add drink modal
+    function openAddDrinkModal(idx){ 
+        selectedIdx = idx; 
+        const dev = DEVICES[idx]; 
+        drinkDevice.value = dev.label; 
+        drinkSelect.value = ''; 
+        drinkQty.value = 1; 
+        modalDrink.classList.add('active'); 
+    }
+    
+    confirmAddDrink.addEventListener('click', async ()=>{ 
+        const sel = drinkSelect.value; 
+        const qty = Number(drinkQty.value) || 1; 
+        if(!sel) return alert('اختر الطلب'); 
+        const dev = DEVICES[selectedIdx]; 
+        const id = dev.id; 
+        const s = openSessions[id]; 
+        if(!s) return alert('الجلسة مقفولة'); 
+        
+        let name, price; 
+        if(sel === 'متنوع'){ 
+            name = prompt('ادخل اسم العنصر') || 'متنوع'; 
+            price = Number(prompt('ادخل السعر (جنيه)') || 0); 
+        } else { 
+            [name, price] = sel.split('|'); 
+            price = Number(price); 
+        } 
+        
+        if(!Array.isArray(s.drinks)) s.drinks = []; 
+        s.drinks.push({ name, price, qty }); 
+        openSessions[id] = s; 
+        persistLocal(); 
+        await saveOpenSessionToFirebase(s); 
+        renderDevices(); 
+        modalDrink.classList.remove('active'); 
+    });
+    
+    cancelAddDrink.addEventListener('click', ()=> modalDrink.classList.remove('active'));
+
+    // end modal
+    function openEndModal(idx){ 
+        selectedIdx = idx; 
+        const dev = DEVICES[idx]; 
+        const id = dev.id; 
+        const s = openSessions[id]; 
+        if(!s) return alert('الجلسة غير موجودة'); 
+        endDeviceLabel.textContent = s.deviceLabel; 
+        endFrom.value = format12FromISO(s.startISO); 
+        const endISO = s.scheduledEndISO || nowISO(); 
+        endTo.value = format12FromISO(endISO); 
+        const mins = diffMinutes(s.startISO, s.scheduledEndISO || nowISO()); 
+        endDuration.value = durationText(mins); 
+        endDrinks.value = (s.drinks && s.drinks.length) ? s.drinks.map(d=>`${d.name}×${d.qty}`).join(', ') : '-'; 
+        const drinksTotal = (s.drinks||[]).reduce((a,b)=>a+(b.price*b.qty),0); 
+        const rate = RATES[s.rateType][s.mode]; 
+        const price = Number((((mins/60)*rate) + drinksTotal).toFixed(2)); 
+        endTotal.value = price; 
+        modalEnd.classList.add('active'); 
+    }
+
+    confirmEnd.addEventListener('click', async ()=>{ 
+    const idx = selectedIdx; 
+    const dev = DEVICES[idx]; 
+    const id = dev.id; 
+    const s = openSessions[id]; 
+    if(!s) return alert('الجلسة غير موجودة'); 
+    
+    const endISO = s.scheduledEndISO || nowISO(); 
+    const mins = diffMinutes(s.startISO, endISO); 
+    const drinksTotal = (s.drinks||[]).reduce((a,b)=>a+(b.price*b.qty),0); 
+    const rate = RATES[s.rateType][s.mode]; 
+    const price = Number((((mins/60)*rate) + drinksTotal).toFixed(2)); 
+    
+    const finished = { 
+        deviceId: s.deviceId, 
+        deviceLabel: s.deviceLabel, 
+        startISO: s.startISO, 
+        endISO, 
+        duration: durationText(mins), 
+        drinks: s.drinks || [], 
+        price,
+        // إضافة معرف فريد لمنع التكرار
+        sessionId: `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    }; 
+    
+    // التحقق من عدم وجود جلسة مكررة قبل الإضافة
+    const isDuplicate = completedSessionsToday.some(existingSession => 
+        existingSession.deviceLabel === finished.deviceLabel &&
+        existingSession.startISO === finished.startISO &&
+        existingSession.endISO === finished.endISO
+    );
+    
+    if (isDuplicate) {
+        alert('⚠️ هذه الجلسة موجودة مسبقاً');
+        return;
+    }
+    
+    completedSessionsToday.push(finished); 
+    delete openSessions[id]; 
+    persistLocal(); 
+    await removeOpenSessionFromFirebase(id);
+    renderDevices(); 
+    modalEnd.classList.remove('active'); 
+    
+    try {
+        const user = auth.currentUser;
+        const now = new Date();
+
+        const payload = {
+            deviceId: s.deviceId,
+            deviceLabel: s.deviceLabel,
+            mode: s.mode,
+            startISO: s.startISO,
+            endISO: endISO,
+            duration: durationText(mins),
+            price: price,
+            drinks: s.drinks || [],
+            createdBy: user ? user.email : "local",
+            createdAt: now.toISOString(),
+            date: now.toLocaleDateString("ar-EG"),
+            // نفس المعرف لمنع التكرار في المزامنة
+            sessionId: finished.sessionId
+        };
+
+        await addDoc(collection(db, "sessions"), payload);
+        console.log("✅ تم حفظ الجلسة في Firebase بنجاح");
+        alert('تم إنهاء الجلسة. المجموع: ' + price + ' ج'); 
+    } catch (error) {
+        console.error("❌ خطأ أثناء حفظ الجلسة:", error);
+        alert('❌ حدث خطأ أثناء حفظ الجلسة في Firebase');
+    }
+});
+    cancelEnd.addEventListener('click', ()=> modalEnd.classList.remove('active'));
+
+    // clear data functionality - محدث ليمسح تماماً
+clearDataBtn.addEventListener('click', () => {
+    modalClearData.classList.add('active');
+});
+
+confirmClearData.addEventListener('click', async () => {
+    try {
+        // 1. مسح التخزين المحلي بالكامل
+        localStorage.removeItem(STORAGE_KEY);
+        
+        // 2. مسح الجلسات المفتوحة من Firebase
+        const openSessionsRef = collection(db, 'openSessions');
+        const querySnapshot = await getDocs(openSessionsRef);
+        const deletePromises = querySnapshot.docs.map(doc => deleteDoc(doc.ref));
+        await Promise.all(deletePromises);
+        
+        // 3. إعادة تعيين جميع المتغيرات
+        openSessions = {};
+        completedSessionsToday = [];
+        allSessions = [];
+        expensesToday = [];
+        
+        // 4. إعادة التهيئة
+        initLocal();
+        renderDevices();
+        
+        modalClearData.classList.remove('active');
+        alert('✅ تم مسح جميع البيانات المحلية والجلسات المفتوحة بنجاح');
+        
+        // 5. إعادة تحميل الصفحة للتأكد من النظافة الكاملة
+        setTimeout(() => {
+            location.reload();
+        }, 1000);
+        
+    } catch (error) {
+        console.error('❌ خطأ في مسح البيانات:', error);
+        alert('❌ حدث خطأ أثناء مسح البيانات');
+    }
+});
+
+cancelClearData.addEventListener('click', () => {
+    modalClearData.classList.remove('active');
+});
+
+    // زر المزامنة اليدوية
+    syncBtn.addEventListener('click', async () => {
+        showSyncIndicator();
+        initLocal();
+        renderDevices();
+        setTimeout(() => {
+            hideSyncIndicator();
+            showNotification('✅ تم تحديث البيانات من السحابة بنجاح');
+        }, 1500);
+    });
+
+    // close modals on backdrop click
+    document.querySelectorAll('.modal-back').forEach(mb=> mb.addEventListener('click', ev=> { if(ev.target===mb) mb.classList.remove('active'); }));
+
+    // logout
+    logoutBtn.addEventListener('click', async ()=> { 
+        try{ 
+            await signOut(auth); 
+            alert('تم تسجيل الخروج'); 
+            window.location.href='login.html'; 
+        }catch(e){ 
+            alert('خطأ تسجيل الخروج'); 
+        } 
+    });
+
+    // admin button - التحقق من الصلاحية
+    goAdminBtn.addEventListener('click', ()=> { 
+        const user = auth.currentUser; 
+        if (user) {
+            const adminEmails = ["moosama@gmail.com", "ahmed@gmail.com", "mahmoud@gmail.com"];
+            if (adminEmails.includes(user.email)) {
+                window.location.href = 'welcome.html';
+            } else {
+                alert('⚠️ ليس لديك صلاحية مشرف\nيمكنك فقط استخدام الصفحة الرئيسية');
+            }
+        } else {
+            window.location.href = 'login.html';
+        }
+    });
+
+    // auth display and protection
+    onAuthStateChanged(auth, user => { 
+        if(user) {
+            userEmailSpan.textContent = user.email; 
+            
+            // 🔧 منع المستخدمين العاديين من الوصول لصفحات الأدمن
+            const adminEmails = ["moosama@gmail.com", "ahmed@gmail.com", "mahmoud@gmail.com"];
+            if (window.location.pathname.includes('welcome.html') || window.location.pathname.includes('admin.html')) {
+                if (!adminEmails.includes(user.email)) {
+                    window.location.href = 'index.html';
+                }
+            }
+        } else {
+            userEmailSpan.textContent='';
+            // إذا لم يكن مسجل دخول، يوجه لصفحة Login
+            if (!window.location.pathname.includes('login.html')) {
+                window.location.href = 'login.html';
+            }
+        } 
+    });
+
+    // init
+    (function init(){ 
+        todayStr.textContent = new Date().toLocaleDateString('ar-EG'); 
+        initLocal(); 
+        renderDevices(); 
+        
+        // بدء نظام المزامنة الفورية
+        setupRealTimeSync();
+        
+        console.log('✅ تم تهيئة النظام بنجاح');
+        
+        window.__bianco = { openSessions, completedSessionsToday, allSessions, expensesToday, persistLocal, renderDevices }; 
+    })();
   </script>
 </body>
 </html>
