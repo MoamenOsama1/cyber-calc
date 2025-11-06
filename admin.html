@@ -33,9 +33,32 @@
     input[type="time"]{background:transparent}
     .right{text-align:right}
     .session-updated { background: rgba(0, 200, 83, 0.1); }
+    
+    /* أنماط المصروفات */
+    .expenses-section {
+      margin-top: 20px;
+      background: var(--panel);
+      padding: 14px;
+      border-radius: 10px;
+      border: 1px solid var(--glass);
+    }
+    
+    .expenses-summary {
+      display: flex;
+      gap: 10px;
+      margin: 12px 0;
+      flex-wrap: wrap;
+    }
+    
+    .net-profit {
+      color: var(--accent);
+      font-weight: bold;
+    }
+    
     @media(max-width:700px){
       .filters{flex-direction:column;align-items:stretch}
       .stats{flex-direction:column}
+      .expenses-summary { flex-direction: column; }
     }
   </style>
 </head>
@@ -70,6 +93,9 @@
         <div class="card">📅 التاريخ الحالي<br><b id="today"></b></div>
         <div class="card">📊 جلسات مختارة<br><b id="sessionCount">0</b></div>
         <div class="card">💰 إيرادات مختارة<br><b id="totalRevenue">0</b> ج</div>
+        <!-- إضافة بطاقات المصروفات -->
+        <div class="card">💸 إجمالي المصروفات<br><b id="totalExpensesAdmin">0</b> ج</div>
+        <div class="card">📈 صافي الربح<br><b id="netProfitAdmin" class="net-profit">0</b> ج</div>
       </div>
 
       <div style="margin-top:12px;overflow:auto">
@@ -77,6 +103,29 @@
           <thead>
             <tr>
               <th>الجهاز</th><th>النوع</th><th>من → إلى</th><th>المدة</th><th>السعر</th><th>الطلبات</th><th>أنشئ بواسطة</th><th>التاريخ</th><th>عمليات</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <!-- قسم المصروفات -->
+      <div class="expenses-section">
+        <div class="sessions-header">
+          <strong>💸 المصروفات</strong>
+          <div class="filters">
+            <select id="expenseDateFilter"><option value="__all__">جميع التواريخ</option></select>
+          </div>
+        </div>
+        
+        <table id="expensesTable">
+          <thead>
+            <tr>
+              <th>اسم المصروف</th>
+              <th>المبلغ</th>
+              <th>التاريخ</th>
+              <th>تم الإضافة بواسطة</th>
+              <th>عمليات</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -139,7 +188,10 @@
     const tableBody=document.querySelector('#sessionsTable tbody');
     const sessionCountEl=document.getElementById('sessionCount');
     const totalRevenueEl=document.getElementById('totalRevenue');
+    const totalExpensesAdminEl=document.getElementById('totalExpensesAdmin');
+    const netProfitAdminEl=document.getElementById('netProfitAdmin');
     const dateFilter=document.getElementById('dateFilter');
+    const expenseDateFilter=document.getElementById('expenseDateFilter');
     const refreshBtn=document.getElementById('refreshBtn');
     const exportBtn=document.getElementById('exportBtn');
     const logoutBtn=document.getElementById('logoutBtn');
@@ -157,10 +209,13 @@
     const saveEditBtn=document.getElementById('saveEditBtn');
     const cancelEditBtn=document.getElementById('cancelEditBtn');
 
+    const expensesTableBody=document.querySelector('#expensesTable tbody');
+
     const adminEmails=["moosama@gmail.com","ahmed@gmail.com","mahmoud@gmail.com"];
     todayEl.textContent=new Date().toLocaleDateString('ar-EG');
 
-    let allSessions=[],filteredSessions=[],editingId=null;
+    let allSessions=[], filteredSessions=[], editingId=null;
+    let allExpenses=[], filteredExpenses=[];
 
     function parseToISO(val){
       if(!val) return null;
@@ -301,12 +356,36 @@
         }
     }
 
+    // دالة حذف المصروف
+    async function deleteExpense(id) {
+        if (!confirm('هل أنت متأكد من حذف هذا المصروف؟')) return;
+        
+        try {
+            await deleteDoc(doc(db, 'expenses', id));
+            alert('🗑️ تم حذف المصروف بنجاح');
+        } catch (error) {
+            alert('❌ حدث خطأ في حذف المصروف: ' + error.message);
+        }
+    }
+
+    // تحميل الجلسات
     const sessionsCol=collection(db,'sessions');
     const q=query(sessionsCol,orderBy('createdAt','desc'));
     onSnapshot(q,snap=>{
       allSessions=[];
       snap.forEach(docSnap=>allSessions.push({id:docSnap.id,data:docSnap.data()}));
-      populateDates();applyFilter();
+      populateDates();
+      applyFilter();
+    });
+
+    // تحميل المصروفات
+    const expensesCol=collection(db,'expenses');
+    const expensesQuery=query(expensesCol,orderBy('date','desc'));
+    onSnapshot(expensesQuery,snap=>{
+      allExpenses=[];
+      snap.forEach(docSnap=>allExpenses.push({id:docSnap.id,data:docSnap.data()}));
+      populateExpenseDates();
+      applyExpenseFilter();
     });
 
     function populateDates(){
@@ -323,13 +402,38 @@
       });
     }
 
+    function populateExpenseDates(){
+      const dates=new Set();
+      allExpenses.forEach(s=>{
+        const d=s.data.date||(s.data.createdAt?new Date(s.data.createdAt).toLocaleDateString('ar-EG'):null);
+        if(d) dates.add(d);
+      });
+      expenseDateFilter.innerHTML='<option value="__all__">جميع التواريخ</option>';
+      Array.from(dates).forEach(d=>{
+        const opt=document.createElement('option');
+        opt.value=d;opt.textContent=d;
+        expenseDateFilter.appendChild(opt);
+      });
+    }
+
     function applyFilter(){
       const sel=dateFilter.value;
       filteredSessions=allSessions.filter(x=>{
         const d=x.data.date||(x.data.createdAt?new Date(x.data.createdAt).toLocaleDateString('ar-EG'):'');
         return sel==='__all__'||d===sel;
       });
-      renderTable();calcStats();
+      renderTable();
+      calcStats();
+    }
+
+    function applyExpenseFilter(){
+      const sel=expenseDateFilter.value;
+      filteredExpenses=allExpenses.filter(x=>{
+        const d=x.data.date||(x.data.createdAt?new Date(x.data.createdAt).toLocaleDateString('ar-EG'):'');
+        return sel==='__all__'||d===sel;
+      });
+      renderExpensesTable();
+      calcStats();
     }
 
     function renderTable(){
@@ -367,10 +471,44 @@
       });
     }
 
+    function renderExpensesTable(){
+      expensesTableBody.innerHTML='';
+      filteredExpenses.forEach(item=>{
+        const s=item.data,id=item.id;
+        const tr=document.createElement('tr');
+        
+        tr.innerHTML=`
+          <td>${s.name||'-'}</td>
+          <td>${s.amount||0} ج</td>
+          <td>${s.date||'-'}</td>
+          <td>${s.addedBy||s.userEmail||'-'}</td>
+          <td>
+            <button class="danger" data-id="${id}" onclick="deleteExpense('${id}')">🗑</button>
+          </td>`;
+        expensesTableBody.appendChild(tr);
+      });
+    }
+
     function calcStats(){
-      const t=filteredSessions.reduce((sum,x)=>sum+(Number(x.data.price)||0),0);
-      totalRevenueEl.textContent=t.toFixed(2);
-      sessionCountEl.textContent=filteredSessions.length;
+      // حساب إجمالي الإيرادات
+      const totalRevenue = filteredSessions.reduce((sum,x)=>sum+(Number(x.data.price)||0),0);
+      totalRevenueEl.textContent = totalRevenue.toFixed(2);
+      sessionCountEl.textContent = filteredSessions.length;
+      
+      // حساب إجمالي المصروفات
+      const totalExpenses = filteredExpenses.reduce((sum,x)=>sum+(Number(x.data.amount)||0),0);
+      totalExpensesAdminEl.textContent = totalExpenses.toFixed(2);
+      
+      // حساب صافي الربح
+      const netProfit = totalRevenue - totalExpenses;
+      netProfitAdminEl.textContent = netProfit.toFixed(2);
+      
+      // تغيير لون صافي الربح
+      if (netProfit < 0) {
+        netProfitAdminEl.style.color = 'var(--danger)';
+      } else {
+        netProfitAdminEl.style.color = 'var(--accent)';
+      }
     }
 
     async function editSession(id){
@@ -432,35 +570,72 @@
     cancelEditBtn.onclick=()=>editModal.classList.remove('active');
 
     dateFilter.onchange=applyFilter;
-    refreshBtn.onclick=()=>{applyFilter();alert('تم التحديث');};
+    expenseDateFilter.onchange=applyExpenseFilter;
+    refreshBtn.onclick=()=>{applyFilter(); applyExpenseFilter(); alert('تم التحديث');};
 
     exportBtn.onclick=()=>{
-  if(!filteredSessions.length) return alert('لا توجد بيانات');
-  const rows=[['المعرف','الجهاز','النوع','من','إلى','المدة','الطلبات','السعر','أنشئ بواسطة','التاريخ']];
-  filteredSessions.forEach(item=>{
-    const s=item.data;
-    rows.push([
-      item.id || 'بدون معرف',
-      s.deviceLabel||'-',
-      (s.mode||s.type)==='double'?'زوجي':'فردي',
-      formatTime12(s.startISO||s.start),
-      formatTime12(s.endISO||s.end),
-      s.duration||'',
-      Array.isArray(s.drinks)?s.drinks.map(d=>d.name+'×'+d.qty).join(' | '):(s.drinks||''),
-      s.price||0,
-      s.createdBy||'-',
-      s.date||''
-    ]);
-  });
-  const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
-  const bom="\uFEFF";
-  const blob=new Blob([bom+csv],{type:'text/csv;charset=utf-8;'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download=`sessions_${dateFilter.value}.csv`;
-  a.click();
-  URL.revokeObjectURL(a.href);
-};
+      if(!filteredSessions.length && !filteredExpenses.length) return alert('لا توجد بيانات');
+      
+      const rows=[
+        ['التقرير المالي - Bianco Timer'],
+        ['تاريخ التصدير:', new Date().toLocaleDateString('ar-EG')],
+        ['فترة التقرير:', dateFilter.value === '__all__' ? 'جميع التواريخ' : dateFilter.value],
+        [],
+        ['=== الجلسات ==='],
+        ['الجهاز','النوع','من','إلى','المدة','الطلبات','السعر','أنشئ بواسطة','التاريخ']
+      ];
+      
+      // إضافة الجلسات
+      filteredSessions.forEach(item=>{
+        const s=item.data;
+        rows.push([
+          s.deviceLabel||'-',
+          (s.mode||s.type)==='double'?'زوجي':'فردي',
+          formatTime12(s.startISO||s.start),
+          formatTime12(s.endISO||s.end),
+          s.duration||'',
+          Array.isArray(s.drinks)?s.drinks.map(d=>d.name+'×'+d.qty).join(' | '):(s.drinks||''),
+          s.price||0,
+          s.createdBy||'-',
+          s.date||''
+        ]);
+      });
+      
+      // إضافة المصروفات
+      rows.push([], ['=== المصروفات ==='], ['اسم المصروف', 'المبلغ', 'التاريخ', 'تم الإضافة بواسطة']);
+      
+      filteredExpenses.forEach(item=>{
+        const s=item.data;
+        rows.push([
+          s.name||'-',
+          s.amount||0,
+          s.date||'-',
+          s.addedBy||s.userEmail||'-'
+        ]);
+      });
+      
+      // إضافة الإحصائيات
+      const totalRevenue = filteredSessions.reduce((sum,x)=>sum+(Number(x.data.price)||0),0);
+      const totalExpenses = filteredExpenses.reduce((sum,x)=>sum+(Number(x.data.amount)||0),0);
+      const netProfit = totalRevenue - totalExpenses;
+      
+      rows.push(
+        [],
+        ['=== الإحصائيات ==='],
+        ['إجمالي الإيرادات:', `${totalRevenue.toFixed(2)} ج`],
+        ['إجمالي المصروفات:', `${totalExpenses.toFixed(2)} ج`],
+        ['صافي الربح:', `${netProfit.toFixed(2)} ج`]
+      );
+      
+      const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+      const bom="\uFEFF";
+      const blob=new Blob([bom+csv],{type:'text/csv;charset=utf-8;'});
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download=`financial_report_${dateFilter.value}.csv`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    };
 
     goToMain.onclick=()=>window.location.href='index.html';
     logoutBtn.onclick=()=>signOut(auth).then(()=>window.location.href='login.html');
@@ -476,6 +651,9 @@
         window.location.href='index.html';
       }
     });
+
+    // جعل دالة deleteExpense متاحة عالمياً
+    window.deleteExpense = deleteExpense;
   </script>
 </body>
 </html>
