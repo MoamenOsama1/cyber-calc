@@ -312,7 +312,7 @@
       }
       
       .stats-preview {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
         gap: 12px;
       }
       
@@ -341,6 +341,11 @@
       
       .user-info {
         padding: 20px;
+      }
+      
+      .stats-preview {
+        grid-template-columns: 1fr;
+        gap: 10px;
       }
     }
   </style>
@@ -374,6 +379,19 @@
         <div class="stat-item">
           <span class="stat-number" id="activeDevices">0</span>
           <div class="stat-label">أجهزة نشطة</div>
+        </div>
+        <!-- إضافة إحصائيات المصروفات -->
+        <div class="stat-item">
+          <span class="stat-number" id="totalExpenses">0</span>
+          <div class="stat-label">إجمالي المصروفات</div>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number" id="netProfit">0</span>
+          <div class="stat-label">صافي الربح</div>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number" id="todaySessions">0</span>
+          <div class="stat-label">جلسات اليوم</div>
         </div>
       </div>
     </div>
@@ -426,6 +444,9 @@
     const totalSessionsEl = document.getElementById('totalSessions');
     const totalRevenueEl = document.getElementById('totalRevenue');
     const activeDevicesEl = document.getElementById('activeDevices');
+    const totalExpensesEl = document.getElementById('totalExpenses');
+    const netProfitEl = document.getElementById('netProfit');
+    const todaySessionsEl = document.getElementById('todaySessions');
 
     // قائمة المشرفين المسموح لهم
     const adminEmails = ["moosama@gmail.com", "ahmed@gmail.com", "mahmoud@gmail.com"];
@@ -467,16 +488,27 @@
     // جلب الإحصائيات
     async function loadStats() {
       try {
-        // جلب الجلسات
+        const today = new Date().toLocaleDateString('ar-EG');
+        
+        // جلب جميع الجلسات
         const sessionsQuery = query(collection(db, 'sessions'));
         const sessionsSnapshot = await getDocs(sessionsQuery);
         const sessionsCount = sessionsSnapshot.size;
         
-        // حساب الإيرادات
+        // حساب الإيرادات الإجمالية
         let totalRevenue = 0;
+        let todayRevenue = 0;
+        let todaySessionsCount = 0;
+        
         sessionsSnapshot.forEach(doc => {
           const session = doc.data();
-          totalRevenue += Number(session.price) || 0;
+          const sessionRevenue = Number(session.price) || 0;
+          totalRevenue += sessionRevenue;
+          
+          if (session.date === today) {
+            todayRevenue += sessionRevenue;
+            todaySessionsCount++;
+          }
         });
         
         // جلب الأجهزة النشطة
@@ -484,22 +516,48 @@
         const openSessionsSnapshot = await getDocs(openSessionsQuery);
         const activeDevicesCount = openSessionsSnapshot.size;
         
+        // جلب المصروفات
+        const expensesQuery = query(collection(db, 'expenses'));
+        const expensesSnapshot = await getDocs(expensesQuery);
+        let totalExpenses = 0;
+        let todayExpenses = 0;
+        
+        expensesSnapshot.forEach(doc => {
+          const expense = doc.data();
+          const expenseAmount = Number(expense.amount) || 0;
+          totalExpenses += expenseAmount;
+          
+          if (expense.date === today) {
+            todayExpenses += expenseAmount;
+          }
+        });
+        
+        // حساب صافي الربح
+        const netProfit = totalRevenue - totalExpenses;
+        const todayNetProfit = todayRevenue - todayExpenses;
+        
         // تحديث الواجهة مع تأثير عدّاد
         animateCounter(totalSessionsEl, sessionsCount);
         animateCounter(totalRevenueEl, totalRevenue);
         animateCounter(activeDevicesEl, activeDevicesCount);
+        animateCounter(totalExpensesEl, totalExpenses);
+        animateCounter(netProfitEl, netProfit);
+        animateCounter(todaySessionsEl, todaySessionsCount);
         
       } catch (error) {
         console.error('خطأ في جلب الإحصائيات:', error);
         totalSessionsEl.textContent = '0';
-        totalRevenueEl.textContent = '0 ج';
+        totalRevenueEl.textContent = '0';
         activeDevicesEl.textContent = '0';
+        totalExpensesEl.textContent = '0';
+        netProfitEl.textContent = '0';
+        todaySessionsEl.textContent = '0';
       }
     }
 
     // تأثير عداد الأرقام
     function animateCounter(element, targetValue) {
-      const isCurrency = element.id === 'totalRevenue';
+      const isCurrency = element.id === 'totalRevenue' || element.id === 'totalExpenses' || element.id === 'netProfit';
       const duration = 2000;
       const frameRate = 30;
       const totalFrames = Math.round(duration / (1000 / frameRate));
