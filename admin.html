@@ -33,32 +33,10 @@
     input[type="time"]{background:transparent}
     .right{text-align:right}
     .session-updated { background: rgba(0, 200, 83, 0.1); }
-    
-    /* أنماط المصروفات */
-    .expenses-section {
-      margin-top: 20px;
-      background: var(--panel);
-      padding: 14px;
-      border-radius: 10px;
-      border: 1px solid var(--glass);
-    }
-    
-    .expenses-summary {
-      display: flex;
-      gap: 10px;
-      margin: 12px 0;
-      flex-wrap: wrap;
-    }
-    
-    .net-profit {
-      color: var(--accent);
-      font-weight: bold;
-    }
-    
+    .financial-summary { background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; margin-top: 12px; }
     @media(max-width:700px){
       .filters{flex-direction:column;align-items:stretch}
       .stats{flex-direction:column}
-      .expenses-summary { flex-direction: column; }
     }
   </style>
 </head>
@@ -85,17 +63,16 @@
 
         <div style="display:flex;gap:8px;align-items:center;margin-left:auto">
           <button id="refreshBtn" class="btn secondary">🔄 تحديث</button>
-          <button id="exportBtn" class="btn">⬇️ تصدير CSV</button>
+          <button id="exportBtn" class="btn">⬇️ تصدير التقرير المالي</button>
         </div>
       </div>
 
       <div class="stats">
-        <div class="card">📅 التاريخ الحالي<br><b id="today"></b></div>
-        <div class="card">📊 جلسات مختارة<br><b id="sessionCount">0</b></div>
-        <div class="card">💰 إيرادات مختارة<br><b id="totalRevenue">0</b> ج</div>
-        <!-- إضافة بطاقات المصروفات -->
-        <div class="card">💸 إجمالي المصروفات<br><b id="totalExpensesAdmin">0</b> ج</div>
-        <div class="card">📈 صافي الربح<br><b id="netProfitAdmin" class="net-profit">0</b> ج</div>
+        <div class="card">📅 التاريخ المحدد<br><b id="selectedDate">اليوم</b></div>
+        <div class="card">📊 عدد الجلسات<br><b id="sessionCount">0</b></div>
+        <div class="card">💰 الإيرادات الإجمالية<br><b id="grossRevenue">0</b> ج</div>
+        <div class="card">💸 إجمالي المصروفات<br><b id="totalExpenses">0</b> ج</div>
+        <div class="card" style="background: rgba(0,200,83,0.1);">📊 صافي الإيرادات<br><b id="netRevenue">0</b> ج</div>
       </div>
 
       <div style="margin-top:12px;overflow:auto">
@@ -110,22 +87,12 @@
       </div>
 
       <!-- قسم المصروفات -->
-      <div class="expenses-section">
-        <div class="sessions-header">
-          <strong>💸 المصروفات</strong>
-          <div class="filters">
-            <select id="expenseDateFilter"><option value="__all__">جميع التواريخ</option></select>
-          </div>
-        </div>
-        
+      <div style="margin-top: 20px;">
+        <h3 style="margin-bottom: 12px;">💸 المصروفات</h3>
         <table id="expensesTable">
           <thead>
             <tr>
-              <th>اسم المصروف</th>
-              <th>المبلغ</th>
-              <th>التاريخ</th>
-              <th>تم الإضافة بواسطة</th>
-              <th>عمليات</th>
+              <th>اسم المصروف</th><th>المبلغ</th><th>التاريخ</th><th>أنشئ بواسطة</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -184,38 +151,34 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    const todayEl=document.getElementById('today');
-    const tableBody=document.querySelector('#sessionsTable tbody');
-    const sessionCountEl=document.getElementById('sessionCount');
-    const totalRevenueEl=document.getElementById('totalRevenue');
-    const totalExpensesAdminEl=document.getElementById('totalExpensesAdmin');
-    const netProfitAdminEl=document.getElementById('netProfitAdmin');
-    const dateFilter=document.getElementById('dateFilter');
-    const expenseDateFilter=document.getElementById('expenseDateFilter');
-    const refreshBtn=document.getElementById('refreshBtn');
-    const exportBtn=document.getElementById('exportBtn');
-    const logoutBtn=document.getElementById('logoutBtn');
-    const goToMain=document.getElementById('goToMain');
-    const userEmail=document.getElementById('userEmail');
+    const selectedDateEl = document.getElementById('selectedDate');
+    const tableBody = document.querySelector('#sessionsTable tbody');
+    const sessionCountEl = document.getElementById('sessionCount');
+    const grossRevenueEl = document.getElementById('grossRevenue');
+    const totalExpensesEl = document.getElementById('totalExpenses');
+    const netRevenueEl = document.getElementById('netRevenue');
+    const dateFilter = document.getElementById('dateFilter');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const exportBtn = document.getElementById('exportBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const goToMain = document.getElementById('goToMain');
+    const userEmail = document.getElementById('userEmail');
 
-    const editModal=document.getElementById('editModal');
-    const editDevice=document.getElementById('editDevice');
-    const editType=document.getElementById('editType');
-    const editStart=document.getElementById('editStart');
-    const editEnd=document.getElementById('editEnd');
-    const editDuration=document.getElementById('editDuration');
-    const editPrice=document.getElementById('editPrice');
-    const editDrinks=document.getElementById('editDrinks');
-    const saveEditBtn=document.getElementById('saveEditBtn');
-    const cancelEditBtn=document.getElementById('cancelEditBtn');
+    const editModal = document.getElementById('editModal');
+    const editDevice = document.getElementById('editDevice');
+    const editType = document.getElementById('editType');
+    const editStart = document.getElementById('editStart');
+    const editEnd = document.getElementById('editEnd');
+    const editDuration = document.getElementById('editDuration');
+    const editPrice = document.getElementById('editPrice');
+    const editDrinks = document.getElementById('editDrinks');
+    const saveEditBtn = document.getElementById('saveEditBtn');
+    const cancelEditBtn = document.getElementById('cancelEditBtn');
 
-    const expensesTableBody=document.querySelector('#expensesTable tbody');
+    const adminEmails = ["moosama@gmail.com", "ahmed@gmail.com", "mahmoud@gmail.com"];
 
-    const adminEmails=["moosama@gmail.com","ahmed@gmail.com","mahmoud@gmail.com"];
-    todayEl.textContent=new Date().toLocaleDateString('ar-EG');
-
-    let allSessions=[], filteredSessions=[], editingId=null;
-    let allExpenses=[], filteredExpenses=[];
+    let allSessions = [], filteredSessions = [], editingId = null;
+    let allExpenses = [], filteredExpenses = [];
 
     function parseToISO(val){
       if(!val) return null;
@@ -248,7 +211,6 @@
             const q = query(syncRef, where("sessionId", "==", sessionId));
             const querySnapshot = await getDocs(q);
             
-            // تحضير بيانات الطلبات
             let drinksData = updatedData.drinks;
             if (typeof drinksData === 'string') {
                 drinksData = drinksData.split(',').map(item => {
@@ -268,7 +230,6 @@
                 mode: updatedData.mode,
                 duration: updatedData.duration,
                 
-                // بيانات المطابقة مع الجلسة الأصلية
                 originalPrice: originalSession.price,
                 originalCreatedBy: originalSession.createdBy,
                 originalDeviceLabel: originalSession.deviceLabel,
@@ -276,12 +237,10 @@
                 originalEndISO: originalSession.endISO,
                 originalDate: originalSession.date,
                 
-                // معلومات التحديث
                 updatedAt: new Date().toISOString(),
                 updatedBy: auth.currentUser.email,
                 date: originalSession.date,
                 
-                // إشارة أن هذا تحديث من الأدمن
                 isAdminUpdate: true,
                 updateType: 'session_edit'
             };
@@ -315,12 +274,10 @@
                 originalEndISO: sessionData.endISO,
                 originalDate: sessionData.date,
                 
-                // معلومات الحذف
                 updatedAt: new Date().toISOString(),
                 updatedBy: auth.currentUser.email,
                 date: sessionData.date,
                 
-                // إشارة أن هذا حذف من الأدمن
                 isAdminUpdate: true,
                 updateType: 'session_delete',
                 isDeleted: true
@@ -343,10 +300,7 @@
             const session = allSessions.find(x => x.id === id);
             if (!session) return;
             
-            // 1. حفظ إشعار الحذف في collection المزامنة
             await saveDeleteToSyncCollection(id, session.data);
-            
-            // 2. حذف الجلسة من Firebase
             await deleteDoc(doc(db, 'sessions', id));
             
             alert('🗑️ تم حذف الجلسة بنجاح وسيتم مزامنة الحذف مع جميع الأجهزة');
@@ -356,183 +310,218 @@
         }
     }
 
-    // دالة حذف المصروف
-    async function deleteExpense(id) {
-        if (!confirm('هل أنت متأكد من حذف هذا المصروف؟')) return;
-        
+    // جلب المصروفات من localStorage
+    function getExpensesFromLocalStorage() {
         try {
-            await deleteDoc(doc(db, 'expenses', id));
-            alert('🗑️ تم حذف المصروف بنجاح');
+            const storage = JSON.parse(localStorage.getItem('biancoSessionsLocal') || '{}');
+            const expenses = [];
+            
+            Object.keys(storage).forEach(date => {
+                if (storage[date].expenses) {
+                    storage[date].expenses.forEach(expense => {
+                        expenses.push({
+                            ...expense,
+                            date: date,
+                            createdBy: 'محلي'
+                        });
+                    });
+                }
+            });
+            
+            return expenses;
         } catch (error) {
-            alert('❌ حدث خطأ في حذف المصروف: ' + error.message);
+            console.error('خطأ في جلب المصروفات:', error);
+            return [];
         }
     }
 
-    // تحميل الجلسات
-    const sessionsCol=collection(db,'sessions');
-    const q=query(sessionsCol,orderBy('createdAt','desc'));
-    onSnapshot(q,snap=>{
-      allSessions=[];
-      snap.forEach(docSnap=>allSessions.push({id:docSnap.id,data:docSnap.data()}));
-      populateDates();
-      applyFilter();
-    });
-
-    // تحميل المصروفات
-    const expensesCol=collection(db,'expenses');
-    const expensesQuery=query(expensesCol,orderBy('date','desc'));
-    onSnapshot(expensesQuery,snap=>{
-      allExpenses=[];
-      snap.forEach(docSnap=>allExpenses.push({id:docSnap.id,data:docSnap.data()}));
-      populateExpenseDates();
-      applyExpenseFilter();
-    });
-
-    function populateDates(){
-      const dates=new Set();
-      allSessions.forEach(s=>{
-        const d=s.data.date||(s.data.createdAt?new Date(s.data.createdAt).toLocaleDateString('ar-EG'):null);
-        if(d) dates.add(d);
-      });
-      dateFilter.innerHTML='<option value="__all__">جميع التواريخ</option>';
-      Array.from(dates).forEach(d=>{
-        const opt=document.createElement('option');
-        opt.value=d;opt.textContent=d;
-        dateFilter.appendChild(opt);
-      });
+    // تحديث البيانات من Firebase
+    function setupFirebaseListeners() {
+        const sessionsCol = collection(db, 'sessions');
+        const q = query(sessionsCol, orderBy('createdAt', 'desc'));
+        
+        onSnapshot(q, snap => {
+            allSessions = [];
+            snap.forEach(docSnap => {
+                allSessions.push({
+                    id: docSnap.id, 
+                    data: docSnap.data()
+                });
+            });
+            
+            // جلب المصروفات من localStorage
+            allExpenses = getExpensesFromLocalStorage();
+            
+            populateDates();
+            applyFilter();
+        });
     }
 
-    function populateExpenseDates(){
-      const dates=new Set();
-      allExpenses.forEach(s=>{
-        const d=s.data.date||(s.data.createdAt?new Date(s.data.createdAt).toLocaleDateString('ar-EG'):null);
-        if(d) dates.add(d);
-      });
-      expenseDateFilter.innerHTML='<option value="__all__">جميع التواريخ</option>';
-      Array.from(dates).forEach(d=>{
-        const opt=document.createElement('option');
-        opt.value=d;opt.textContent=d;
-        expenseDateFilter.appendChild(opt);
-      });
+    function populateDates(){
+        const dates = new Set();
+        
+        // إضافة تواريخ الجلسات
+        allSessions.forEach(s => {
+            const d = s.data.date || (s.data.createdAt ? new Date(s.data.createdAt).toLocaleDateString('ar-EG') : null);
+            if(d) dates.add(d);
+        });
+        
+        // إضافة تواريخ المصروفات
+        allExpenses.forEach(expense => {
+            if (expense.date) dates.add(expense.date);
+        });
+        
+        dateFilter.innerHTML = '<option value="__all__">جميع التواريخ</option>';
+        const sortedDates = Array.from(dates).sort().reverse();
+        
+        sortedDates.forEach(d => {
+            const opt = document.createElement('option');
+            opt.value = d;
+            opt.textContent = d;
+            dateFilter.appendChild(opt);
+        });
     }
 
     function applyFilter(){
-      const sel=dateFilter.value;
-      filteredSessions=allSessions.filter(x=>{
-        const d=x.data.date||(x.data.createdAt?new Date(x.data.createdAt).toLocaleDateString('ar-EG'):'');
-        return sel==='__all__'||d===sel;
-      });
-      renderTable();
-      calcStats();
+        const sel = dateFilter.value;
+        selectedDateEl.textContent = sel === '__all__' ? 'جميع التواريخ' : sel;
+        
+        // تصفية الجلسات
+        filteredSessions = allSessions.filter(x => {
+            const sessionDate = x.data.date || (x.data.createdAt ? new Date(x.data.createdAt).toLocaleDateString('ar-EG') : '');
+            return sel === '__all__' || sessionDate === sel;
+        });
+        
+        // تصفية المصروفات
+        filteredExpenses = allExpenses.filter(expense => {
+            return sel === '__all__' || expense.date === sel;
+        });
+        
+        renderTable();
+        renderExpensesTable();
+        calculateFinancialSummary();
     }
 
-    function applyExpenseFilter(){
-      const sel=expenseDateFilter.value;
-      filteredExpenses=allExpenses.filter(x=>{
-        const d=x.data.date||(x.data.createdAt?new Date(x.data.createdAt).toLocaleDateString('ar-EG'):'');
-        return sel==='__all__'||d===sel;
-      });
-      renderExpensesTable();
-      calcStats();
+    function calculateFinancialSummary() {
+        const grossRevenue = filteredSessions.reduce((sum, x) => sum + (Number(x.data.price) || 0), 0);
+        const totalExpenses = filteredExpenses.reduce((sum, expense) => sum + (Number(expense.amount) || 0), 0);
+        const netRevenue = grossRevenue - totalExpenses;
+        
+        grossRevenueEl.textContent = grossRevenue.toFixed(2);
+        totalExpensesEl.textContent = totalExpenses.toFixed(2);
+        netRevenueEl.textContent = netRevenue.toFixed(2);
+        sessionCountEl.textContent = filteredSessions.length;
     }
 
     function renderTable(){
-      tableBody.innerHTML='';
-      filteredSessions.forEach(item=>{
-        const s=item.data,id=item.id;
-        const tr=document.createElement('tr');
+        tableBody.innerHTML = '';
         
-        // إضافة تظليل للجلسات المعدلة
-        if (s.updatedByAdmin) {
-            tr.classList.add('session-updated');
+        if (filteredSessions.length === 0) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td colspan="9" style="text-align: center; padding: 20px; color: var(--muted);">لا توجد جلسات</td>`;
+            tableBody.appendChild(tr);
+            return;
         }
         
-        tr.innerHTML=`
-          <td>${s.deviceLabel||'-'}</td>
-          <td>${(s.mode||s.type)==='double'?'زوجي':'فردي'}</td>
-          <td>${formatTime12(s.startISO||s.start)} → ${formatTime12(s.endISO||s.end)}</td>
-          <td>${s.duration||'-'}</td>
-          <td>${s.price||0} ج</td>
-          <td>${Array.isArray(s.drinks)?s.drinks.map(d=>d.name+'×'+d.qty).join(', '):(s.drinks||'-')}</td>
-          <td>${s.createdBy||'-'}</td>
-          <td>${s.date||'-'}</td>
-          <td>
-            <button class="editBtn" data-id="${id}">✏️</button>
-            <button class="danger" data-id="${id}">🗑</button>
-          </td>`;
-        tableBody.appendChild(tr);
-      });
+        filteredSessions.forEach(item => {
+            const s = item.data;
+            const id = item.id;
+            const tr = document.createElement('tr');
+            
+            if (s.updatedByAdmin) {
+                tr.classList.add('session-updated');
+            }
+            
+            const drinksText = Array.isArray(s.drinks) 
+                ? s.drinks.map(d => `${d.name}×${d.qty}`).join(', ')
+                : (s.drinks || '-');
+            
+            tr.innerHTML = `
+                <td>${s.deviceLabel || '-'}</td>
+                <td>${(s.mode || s.type) === 'double' ? 'زوجي' : 'فردي'}</td>
+                <td>${formatTime12(s.startISO || s.start)} → ${formatTime12(s.endISO || s.end)}</td>
+                <td>${s.duration || '-'}</td>
+                <td>${s.price || 0} ج</td>
+                <td>${drinksText}</td>
+                <td>${s.createdBy || '-'}</td>
+                <td>${s.date || '-'}</td>
+                <td>
+                    <button class="editBtn" data-id="${id}">✏️</button>
+                    <button class="danger" data-id="${id}">🗑</button>
+                </td>`;
+            tableBody.appendChild(tr);
+        });
 
-      document.querySelectorAll('.editBtn').forEach(btn=>{
-        btn.onclick=()=>editSession(btn.dataset.id);
-      });
-      document.querySelectorAll('.danger').forEach(btn=>{
-        btn.onclick=()=>deleteSession(btn.dataset.id);
-      });
-    }
-
-    function renderExpensesTable(){
-      expensesTableBody.innerHTML='';
-      filteredExpenses.forEach(item=>{
-        const s=item.data,id=item.id;
-        const tr=document.createElement('tr');
+        // إضافة event listeners للأزرار
+        document.querySelectorAll('.editBtn').forEach(btn => {
+            btn.onclick = () => editSession(btn.dataset.id);
+        });
         
-        tr.innerHTML=`
-          <td>${s.name||'-'}</td>
-          <td>${s.amount||0} ج</td>
-          <td>${s.date||'-'}</td>
-          <td>${s.addedBy||s.userEmail||'-'}</td>
-          <td>
-            <button class="danger" data-id="${id}" onclick="deleteExpense('${id}')">🗑</button>
-          </td>`;
-        expensesTableBody.appendChild(tr);
-      });
+        document.querySelectorAll('.danger').forEach(btn => {
+            btn.onclick = () => deleteSession(btn.dataset.id);
+        });
     }
 
-    function calcStats(){
-      // حساب إجمالي الإيرادات
-      const totalRevenue = filteredSessions.reduce((sum,x)=>sum+(Number(x.data.price)||0),0);
-      totalRevenueEl.textContent = totalRevenue.toFixed(2);
-      sessionCountEl.textContent = filteredSessions.length;
-      
-      // حساب إجمالي المصروفات
-      const totalExpenses = filteredExpenses.reduce((sum,x)=>sum+(Number(x.data.amount)||0),0);
-      totalExpensesAdminEl.textContent = totalExpenses.toFixed(2);
-      
-      // حساب صافي الربح
-      const netProfit = totalRevenue - totalExpenses;
-      netProfitAdminEl.textContent = netProfit.toFixed(2);
-      
-      // تغيير لون صافي الربح
-      if (netProfit < 0) {
-        netProfitAdminEl.style.color = 'var(--danger)';
-      } else {
-        netProfitAdminEl.style.color = 'var(--accent)';
-      }
+    function renderExpensesTable() {
+        const expensesTbody = document.querySelector('#expensesTable tbody');
+        expensesTbody.innerHTML = '';
+        
+        if (filteredExpenses.length === 0) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td colspan="4" style="text-align: center; padding: 20px; color: var(--muted);">لا توجد مصروفات</td>`;
+            expensesTbody.appendChild(tr);
+            return;
+        }
+        
+        filteredExpenses.forEach((expense, index) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${expense.name}</td>
+                <td>${expense.amount} ج</td>
+                <td>${expense.date}</td>
+                <td>${expense.createdBy || 'محلي'}</td>
+            `;
+            expensesTbody.appendChild(tr);
+        });
     }
 
     async function editSession(id){
-      const session=allSessions.find(x=>x.id===id);
-      if(!session) return;
-      const s=session.data;
-      editingId=id;
-      editDevice.value=s.deviceLabel||'';
-      editType.value=s.mode||s.type||'single';
-      editStart.value=s.start?new Date(s.startISO||s.start).toTimeString().slice(0,5):'';
-      editEnd.value=s.end?new Date(s.endISO||s.end).toTimeString().slice(0,5):'';
-      editDuration.value=s.duration||'';
-      editPrice.value=s.price||0;
-      editDrinks.value=Array.isArray(s.drinks)?s.drinks.map(d=>`${d.name}×${d.qty}`).join(', '):(s.drinks||'');
-      editModal.classList.add('active');
+        const session = allSessions.find(x => x.id === id);
+        if(!session) return;
+        
+        const s = session.data;
+        editingId = id;
+        
+        // تعبئة البيانات في النموذج
+        editDevice.value = s.deviceLabel || '';
+        editType.value = s.mode || s.type || 'single';
+        
+        // تحويل الوقت إلى تنسيق 24 ساعة
+        const startTime = s.startISO ? new Date(s.startISO).toTimeString().slice(0,5) : '';
+        const endTime = s.endISO ? new Date(s.endISO).toTimeString().slice(0,5) : '';
+        
+        editStart.value = startTime;
+        editEnd.value = endTime;
+        editDuration.value = s.duration || '';
+        editPrice.value = s.price || 0;
+        
+        const drinksText = Array.isArray(s.drinks) 
+            ? s.drinks.map(d => `${d.name}×${d.qty}`).join(', ')
+            : (s.drinks || '');
+            
+        editDrinks.value = drinksText;
+        editModal.classList.add('active');
     }
 
     saveEditBtn.onclick = async () => {
         if (!editingId) return;
+        
         const session = allSessions.find(x => x.id === editingId);
         if (!session) return;
         
         const originalSession = session.data;
         
+        // إنشاء بيانات محدثة
         const updatedData = {
             deviceLabel: editDevice.value,
             mode: editType.value,
@@ -549,111 +538,143 @@
         };
 
         try {
-            // 1. تحديث الجلسة الأصلية في Firebase
             const ref = doc(db, 'sessions', editingId);
             await updateDoc(ref, updatedData);
-            
-            // 2. حفظ التعديلات في collection المزامنة
             await saveEditToSyncCollection(editingId, updatedData, originalSession);
             
             editModal.classList.remove('active');
             alert('✅ تم حفظ التعديلات بنجاح وسيتم مزامنتها مع جميع الأجهزة فوراً');
-            
-            // 3. إعادة تحميل البيانات
-            applyFilter();
             
         } catch (error) {
             alert('❌ حدث خطأ في حفظ التعديلات: ' + error.message);
         }
     };
 
-    cancelEditBtn.onclick=()=>editModal.classList.remove('active');
-
-    dateFilter.onchange=applyFilter;
-    expenseDateFilter.onchange=applyExpenseFilter;
-    refreshBtn.onclick=()=>{applyFilter(); applyExpenseFilter(); alert('تم التحديث');};
-
-    exportBtn.onclick=()=>{
-      if(!filteredSessions.length && !filteredExpenses.length) return alert('لا توجد بيانات');
-      
-      const rows=[
-        ['التقرير المالي - Bianco Timer'],
-        ['تاريخ التصدير:', new Date().toLocaleDateString('ar-EG')],
-        ['فترة التقرير:', dateFilter.value === '__all__' ? 'جميع التواريخ' : dateFilter.value],
-        [],
-        ['=== الجلسات ==='],
-        ['الجهاز','النوع','من','إلى','المدة','الطلبات','السعر','أنشئ بواسطة','التاريخ']
-      ];
-      
-      // إضافة الجلسات
-      filteredSessions.forEach(item=>{
-        const s=item.data;
-        rows.push([
-          s.deviceLabel||'-',
-          (s.mode||s.type)==='double'?'زوجي':'فردي',
-          formatTime12(s.startISO||s.start),
-          formatTime12(s.endISO||s.end),
-          s.duration||'',
-          Array.isArray(s.drinks)?s.drinks.map(d=>d.name+'×'+d.qty).join(' | '):(s.drinks||''),
-          s.price||0,
-          s.createdBy||'-',
-          s.date||''
-        ]);
-      });
-      
-      // إضافة المصروفات
-      rows.push([], ['=== المصروفات ==='], ['اسم المصروف', 'المبلغ', 'التاريخ', 'تم الإضافة بواسطة']);
-      
-      filteredExpenses.forEach(item=>{
-        const s=item.data;
-        rows.push([
-          s.name||'-',
-          s.amount||0,
-          s.date||'-',
-          s.addedBy||s.userEmail||'-'
-        ]);
-      });
-      
-      // إضافة الإحصائيات
-      const totalRevenue = filteredSessions.reduce((sum,x)=>sum+(Number(x.data.price)||0),0);
-      const totalExpenses = filteredExpenses.reduce((sum,x)=>sum+(Number(x.data.amount)||0),0);
-      const netProfit = totalRevenue - totalExpenses;
-      
-      rows.push(
-        [],
-        ['=== الإحصائيات ==='],
-        ['إجمالي الإيرادات:', `${totalRevenue.toFixed(2)} ج`],
-        ['إجمالي المصروفات:', `${totalExpenses.toFixed(2)} ج`],
-        ['صافي الربح:', `${netProfit.toFixed(2)} ج`]
-      );
-      
-      const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
-      const bom="\uFEFF";
-      const blob=new Blob([bom+csv],{type:'text/csv;charset=utf-8;'});
-      const a=document.createElement('a');
-      a.href=URL.createObjectURL(blob);
-      a.download=`financial_report_${dateFilter.value}.csv`;
-      a.click();
-      URL.revokeObjectURL(a.href);
+    cancelEditBtn.onclick = () => {
+        editModal.classList.remove('active');
+        editingId = null;
     };
 
-    goToMain.onclick=()=>window.location.href='index.html';
-    logoutBtn.onclick=()=>signOut(auth).then(()=>window.location.href='login.html');
+    // event listeners
+    dateFilter.onchange = applyFilter;
+    
+    refreshBtn.onclick = () => { 
+        allExpenses = getExpensesFromLocalStorage();
+        applyFilter(); 
+        alert('تم تحديث البيانات'); 
+    };
 
-    onAuthStateChanged(auth,user=>{
-      if(!user){
-        window.location.href='login.html';
-        return;
-      }
-      userEmail.textContent=user.email;
-      if(!adminEmails.includes(user.email)){
-        alert('⚠️ ليس لديك صلاحية مشرف');
-        window.location.href='index.html';
-      }
+    exportBtn.onclick = () => {
+        if(filteredSessions.length === 0 && filteredExpenses.length === 0) {
+            return alert('لا توجد بيانات للتصدير');
+        }
+        
+        const rows = [['التقرير المالي - Bianco Timer']];
+        rows.push(['التاريخ', dateFilter.value === '__all__' ? 'جميع التواريخ' : dateFilter.value]);
+        rows.push(['وقت التصدير', new Date().toLocaleString('ar-EG')]);
+        rows.push([]);
+        
+        // الجلسات
+        rows.push(['الجلسات']);
+        rows.push(['الجهاز', 'النوع', 'من', 'إلى', 'المدة', 'الطلبات', 'السعر', 'أنشئ بواسطة', 'التاريخ']);
+        
+        let totalRevenue = 0;
+        filteredSessions.forEach(item => {
+            const s = item.data;
+            const revenue = Number(s.price) || 0;
+            totalRevenue += revenue;
+            
+            const drinksText = Array.isArray(s.drinks) 
+                ? s.drinks.map(d => `${d.name}×${d.qty}`).join(' | ') 
+                : (s.drinks || '');
+            
+            rows.push([
+                s.deviceLabel || '-',
+                (s.mode || s.type) === 'double' ? 'زوجي' : 'فردي',
+                formatTime12(s.startISO || s.start),
+                formatTime12(s.endISO || s.end),
+                s.duration || '',
+                drinksText,
+                revenue,
+                s.createdBy || '-',
+                s.date || ''
+            ]);
+        });
+        
+        rows.push(['', '', '', '', '', '', 'الإجمالي', totalRevenue.toFixed(2), '']);
+        rows.push([]);
+        
+        // المصروفات
+        rows.push(['المصروفات']);
+        rows.push(['اسم المصروف', 'المبلغ', 'التاريخ', 'أنشئ بواسطة']);
+        
+        let totalExpenses = 0;
+        filteredExpenses.forEach(expense => {
+            const amount = Number(expense.amount) || 0;
+            totalExpenses += amount;
+            
+            rows.push([
+                expense.name,
+                amount,
+                expense.date,
+                expense.createdBy || 'محلي'
+            ]);
+        });
+        
+        rows.push(['المصروفات', totalExpenses.toFixed(2), '', '']);
+        rows.push([]);
+        
+        // الملخص المالي
+        rows.push(['الملخص المالي']);
+        rows.push(['الإيرادات الإجمالية', totalRevenue.toFixed(2)]);
+        rows.push(['المصروفات', totalExpenses.toFixed(2)]);
+        rows.push(['صافي الإيرادات', (totalRevenue - totalExpenses).toFixed(2)]);
+        
+        const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+        const bom = "\uFEFF";
+        const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        const dateStr = dateFilter.value === '__all__' ? 'all_dates' : dateFilter.value.replace(/\//g, '-');
+        a.download = `financial_report_${dateStr}.csv`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+    };
+
+    goToMain.onclick = () => window.location.href = 'index.html';
+    
+    logoutBtn.onclick = () => {
+        signOut(auth).then(() => {
+            window.location.href = 'login.html';
+        });
+    };
+
+    onAuthStateChanged(auth, user => {
+        if(!user){
+            window.location.href = 'login.html';
+            return;
+        }
+        
+        userEmail.textContent = user.email;
+        
+        if(!adminEmails.includes(user.email)){
+            alert('⚠️ ليس لديك صلاحية مشرف');
+            window.location.href = 'index.html';
+            return;
+        }
+        
+        // إذا كان المستخدم مشرف، نبدأ في تحميل البيانات
+        setupFirebaseListeners();
     });
 
-    // جعل دالة deleteExpense متاحة عالمياً
-    window.deleteExpense = deleteExpense;
+    // إغلاق المودال بالضغط على الخلفية
+    document.querySelectorAll('.modal-back').forEach(modal => {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.remove('active');
+            }
+        });
+    });
   </script>
 </body>
 </html>
