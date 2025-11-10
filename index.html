@@ -800,6 +800,20 @@
     function durationText(mins){ const h=Math.floor(mins/60), m=mins%60; return `${h} س ${m} د`; }
     function isoFromTimeStr(timeStr){ const [hh,mm]=timeStr.split(':').map(Number); const now=new Date(); const d=new Date(now.getFullYear(),now.getMonth(),now.getDate(),hh,mm,0); if(d<=now) d.setDate(d.getDate()+1); return d.toISOString(); }
 
+    // 🔧 دالة محسنة لحساب السعر بدقة مع التقريب
+    function calculatePrice(mins, rate, drinksTotal = 0) {
+        // حساب السعر بناءً على الدقائق الفعلية
+        const exactPrice = (mins / 60) * rate;
+        
+        // تقريب السعر لأقرب 5 جنيه
+        const roundedPrice = Math.ceil(exactPrice / 5) * 5;
+        
+        // إضافة قيمة الطلبات
+        const totalPrice = roundedPrice + drinksTotal;
+        
+        return Number(totalPrice.toFixed(2));
+    }
+
     // 🔄 نظام المزامنة المحسن مع منع التكرار
     function setupRealTimeSync() {
         console.log('🚀 بدء المزامنة الفورية...');
@@ -1105,12 +1119,9 @@
         Object.values(openSessions).forEach(s=>{ 
             const mins = diffMinutes(s.startISO, now); 
             const rate = RATES[s.rateType][s.mode]; 
-            const hoursPrice = (mins/60)*rate; 
-            let drinksTotal = 0;
-            if (Array.isArray(s.drinks)) {
-                drinksTotal = s.drinks.reduce((a,b)=>a+(b.price*b.qty),0);
-            }
-            total += hoursPrice + drinksTotal; 
+            const drinksTotal = Array.isArray(s.drinks) ? s.drinks.reduce((a,b)=>a+(b.price*b.qty),0) : 0;
+            const price = calculatePrice(mins, rate, drinksTotal);
+            total += price; 
         }); 
         todayRevenueEl.textContent = `${Number(total.toFixed(2))} ج`; 
     }
@@ -1182,12 +1193,9 @@
       Object.values(openSessions).forEach(s => {
         const mins = diffMinutes(s.startISO, now);
         const rate = RATES[s.rateType][s.mode];
-        const hoursPrice = (mins / 60) * rate;
-        let drinksTotal = 0;
-        if (Array.isArray(s.drinks)) {
-          drinksTotal = s.drinks.reduce((a, b) => a + (b.price * b.qty), 0);
-        }
-        totalRevenue += hoursPrice + drinksTotal;
+        const drinksTotal = Array.isArray(s.drinks) ? s.drinks.reduce((a,b)=>a+(b.price*b.qty),0) : 0;
+        const price = calculatePrice(mins, rate, drinksTotal);
+        totalRevenue += price;
       });
       
       const totalExpenses = expensesToday.reduce((sum, expense) => sum + Number(expense.amount), 0);
@@ -1373,7 +1381,7 @@
         endDrinks.value = (s.drinks && s.drinks.length) ? s.drinks.map(d=>`${d.name}×${d.qty}`).join(', ') : '-'; 
         const drinksTotal = (s.drinks||[]).reduce((a,b)=>a+(b.price*b.qty),0); 
         const rate = RATES[s.rateType][s.mode]; 
-        const price = Number((((mins/60)*rate) + drinksTotal).toFixed(2)); 
+        const price = calculatePrice(mins, rate, drinksTotal); 
         endTotal.value = price; 
         modalEnd.classList.add('active'); 
     }
@@ -1389,7 +1397,7 @@
     const mins = diffMinutes(s.startISO, endISO); 
     const drinksTotal = (s.drinks||[]).reduce((a,b)=>a+(b.price*b.qty),0); 
     const rate = RATES[s.rateType][s.mode]; 
-    const price = Number((((mins/60)*rate) + drinksTotal).toFixed(2)); 
+    const price = calculatePrice(mins, rate, drinksTotal); 
     
     const finished = { 
         deviceId: s.deviceId, 
