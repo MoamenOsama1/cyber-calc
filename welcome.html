@@ -369,29 +369,28 @@
       
       <div class="stats-preview">
         <div class="stat-item">
-          <span class="stat-number" id="totalSessions">0</span>
-          <div class="stat-label">إجمالي الجلسات</div>
+          <span class="stat-number" id="todaySessions">0</span>
+          <div class="stat-label">جلسات اليوم</div>
         </div>
         <div class="stat-item">
-          <span class="stat-number" id="totalRevenue">0</span>
-          <div class="stat-label">إجمالي الإيرادات</div>
+          <span class="stat-number" id="todayRevenue">0</span>
+          <div class="stat-label">إيرادات اليوم</div>
         </div>
         <div class="stat-item">
           <span class="stat-number" id="activeDevices">0</span>
           <div class="stat-label">أجهزة نشطة</div>
         </div>
-        <!-- إضافة إحصائيات المصروفات -->
         <div class="stat-item">
-          <span class="stat-number" id="totalExpenses">0</span>
-          <div class="stat-label">إجمالي المصروفات</div>
+          <span class="stat-number" id="todayExpenses">0</span>
+          <div class="stat-label">مصروفات اليوم</div>
         </div>
         <div class="stat-item">
-          <span class="stat-number" id="netProfit">0</span>
-          <div class="stat-label">صافي الربح</div>
+          <span class="stat-number" id="todayProfit">0</span>
+          <div class="stat-label">صافي اليوم</div>
         </div>
         <div class="stat-item">
-          <span class="stat-number" id="todaySessions">0</span>
-          <div class="stat-label">جلسات اليوم</div>
+          <span class="stat-number" id="openSessions">0</span>
+          <div class="stat-label">جلسات مفتوحة</div>
         </div>
       </div>
     </div>
@@ -441,12 +440,12 @@
     const goToAdmin = document.getElementById('goToAdmin');
     const goToMain = document.getElementById('goToMain');
     const logoutBtn = document.getElementById('logoutBtn');
-    const totalSessionsEl = document.getElementById('totalSessions');
-    const totalRevenueEl = document.getElementById('totalRevenue');
-    const activeDevicesEl = document.getElementById('activeDevices');
-    const totalExpensesEl = document.getElementById('totalExpenses');
-    const netProfitEl = document.getElementById('netProfit');
     const todaySessionsEl = document.getElementById('todaySessions');
+    const todayRevenueEl = document.getElementById('todayRevenue');
+    const activeDevicesEl = document.getElementById('activeDevices');
+    const todayExpensesEl = document.getElementById('todayExpenses');
+    const todayProfitEl = document.getElementById('todayProfit');
+    const openSessionsEl = document.getElementById('openSessions');
 
     // قائمة المشرفين المسموح لهم
     const adminEmails = ["moosama@gmail.com", "ahmed@gmail.com", "mahmoud@gmail.com"];
@@ -485,79 +484,89 @@
       minute: '2-digit'
     });
 
-    // جلب الإحصائيات
-    async function loadStats() {
+    // جلب إحصائيات اليوم فقط
+    async function loadTodayStats() {
       try {
         const today = new Date().toLocaleDateString('ar-EG');
+        console.log('📅 جلب إحصائيات تاريخ:', today);
         
-        // جلب جميع الجلسات
-        const sessionsQuery = query(collection(db, 'sessions'));
-        const sessionsSnapshot = await getDocs(sessionsQuery);
-        const sessionsCount = sessionsSnapshot.size;
+        // جلب جلسات اليوم فقط
+        const todaySessionsQuery = query(collection(db, 'sessions'), where("date", "==", today));
+        const todaySessionsSnapshot = await getDocs(todaySessionsQuery);
         
-        // حساب الإيرادات الإجمالية
-        let totalRevenue = 0;
+        // حساب إيرادات اليوم
         let todayRevenue = 0;
-        let todaySessionsCount = 0;
+        let todaySessionsCount = todaySessionsSnapshot.size;
         
-        sessionsSnapshot.forEach(doc => {
+        todaySessionsSnapshot.forEach(doc => {
           const session = doc.data();
           const sessionRevenue = Number(session.price) || 0;
-          totalRevenue += sessionRevenue;
-          
-          if (session.date === today) {
-            todayRevenue += sessionRevenue;
-            todaySessionsCount++;
-          }
+          todayRevenue += sessionRevenue;
         });
         
-        // جلب الأجهزة النشطة
+        // جلب الأجهزة النشطة اليوم
         const openSessionsQuery = query(collection(db, 'openSessions'));
         const openSessionsSnapshot = await getDocs(openSessionsQuery);
         const activeDevicesCount = openSessionsSnapshot.size;
         
-        // جلب المصروفات
-        const expensesQuery = query(collection(db, 'expenses'));
-        const expensesSnapshot = await getDocs(expensesQuery);
-        let totalExpenses = 0;
+        // جلب مصروفات اليوم فقط من localStorage
         let todayExpenses = 0;
-        
-        expensesSnapshot.forEach(doc => {
-          const expense = doc.data();
-          const expenseAmount = Number(expense.amount) || 0;
-          totalExpenses += expenseAmount;
-          
-          if (expense.date === today) {
-            todayExpenses += expenseAmount;
+        try {
+          const storage = JSON.parse(localStorage.getItem('biancoSessionsLocal') || '{}');
+          if (storage[today] && storage[today].expenses) {
+            storage[today].expenses.forEach(expense => {
+              todayExpenses += Number(expense.amount) || 0;
+            });
           }
+        } catch (error) {
+          console.error('خطأ في جلب مصروفات اليوم:', error);
+        }
+        
+        // حساب صافي ربح اليوم
+        const todayProfit = todayRevenue - todayExpenses;
+        
+        // جلب عدد الجلسات المفتوحة اليوم
+        let openSessionsCount = 0;
+        try {
+          const storage = JSON.parse(localStorage.getItem('biancoSessionsLocal') || '{}');
+          if (storage[today] && storage[today].open) {
+            openSessionsCount = Object.keys(storage[today].open).length;
+          }
+        } catch (error) {
+          console.error('خطأ في جلب الجلسات المفتوحة:', error);
+        }
+        
+        console.log('📊 إحصائيات اليوم:', {
+          todaySessions: todaySessionsCount,
+          todayRevenue,
+          activeDevices: activeDevicesCount,
+          todayExpenses,
+          todayProfit,
+          openSessions: openSessionsCount
         });
         
-        // حساب صافي الربح
-        const netProfit = totalRevenue - totalExpenses;
-        const todayNetProfit = todayRevenue - todayExpenses;
-        
-        // تحديث الواجهة مع تأثير عدّاد
-        animateCounter(totalSessionsEl, sessionsCount);
-        animateCounter(totalRevenueEl, totalRevenue);
-        animateCounter(activeDevicesEl, activeDevicesCount);
-        animateCounter(totalExpensesEl, totalExpenses);
-        animateCounter(netProfitEl, netProfit);
+        // تحديث الواجهة
         animateCounter(todaySessionsEl, todaySessionsCount);
+        animateCounter(todayRevenueEl, todayRevenue);
+        animateCounter(activeDevicesEl, activeDevicesCount);
+        animateCounter(todayExpensesEl, todayExpenses);
+        animateCounter(todayProfitEl, todayProfit);
+        animateCounter(openSessionsEl, openSessionsCount);
         
       } catch (error) {
-        console.error('خطأ في جلب الإحصائيات:', error);
-        totalSessionsEl.textContent = '0';
-        totalRevenueEl.textContent = '0';
-        activeDevicesEl.textContent = '0';
-        totalExpensesEl.textContent = '0';
-        netProfitEl.textContent = '0';
+        console.error('خطأ في جلب إحصائيات اليوم:', error);
         todaySessionsEl.textContent = '0';
+        todayRevenueEl.textContent = '0 ج';
+        activeDevicesEl.textContent = '0';
+        todayExpensesEl.textContent = '0 ج';
+        todayProfitEl.textContent = '0 ج';
+        openSessionsEl.textContent = '0';
       }
     }
 
     // تأثير عداد الأرقام
     function animateCounter(element, targetValue) {
-      const isCurrency = element.id === 'totalRevenue' || element.id === 'totalExpenses' || element.id === 'netProfit';
+      const isCurrency = element.id === 'todayRevenue' || element.id === 'todayExpenses' || element.id === 'todayProfit';
       const duration = 2000;
       const frameRate = 30;
       const totalFrames = Math.round(duration / (1000 / frameRate));
@@ -593,10 +602,10 @@
 
       userEmailDisplay.textContent = user.email;
       
-      // جلب الإحصائيات
-      loadStats();
+      // جلب إحصائيات اليوم
+      loadTodayStats();
       
-      // 🔧 الإصلاح: إذا كان مستخدم عادي، توجيه للصفحة الرئيسية مباشرة
+      // إذا كان مستخدم عادي، توجيه للصفحة الرئيسية
       if (!adminEmails.includes(user.email)) {
         window.location.href = 'index.html';
       }
