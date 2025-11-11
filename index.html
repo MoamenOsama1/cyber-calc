@@ -676,6 +676,11 @@
     function setStorage(o){ localStorage.setItem(STORAGE_KEY,JSON.stringify(o)) }
     function todayKey(){ return new Date().toLocaleDateString('ar-EG') }
 
+    // دالة التقريب للنصف جنيه
+    function roundToNearestFive(amount) {
+        return Math.round(amount / 5) * 5;
+    }
+
     let openSessions = {}, completedSessionsToday = [], allSessions = [], expensesToday = [];
     let currentTab = 'today';
 
@@ -799,20 +804,6 @@
     function format12FromISO(iso){ const d=new Date(iso); if(isNaN(d)) return '-'; let h=d.getHours(), m=d.getMinutes(), suf=h>=12?'مساءً':'صباحًا', hh=h%12||12; return `${hh}:${m.toString().padStart(2,'0')} ${suf}`; }
     function durationText(mins){ const h=Math.floor(mins/60), m=mins%60; return `${h} س ${m} د`; }
     function isoFromTimeStr(timeStr){ const [hh,mm]=timeStr.split(':').map(Number); const now=new Date(); const d=new Date(now.getFullYear(),now.getMonth(),now.getDate(),hh,mm,0); if(d<=now) d.setDate(d.getDate()+1); return d.toISOString(); }
-
-    // 🔧 دالة محسنة لحساب السعر بدقة مع التقريب
-    function calculatePrice(mins, rate, drinksTotal = 0) {
-        // حساب السعر بناءً على الدقائق الفعلية
-        const exactPrice = (mins / 60) * rate;
-        
-        // تقريب السعر لأقرب 5 جنيه
-        const roundedPrice = Math.ceil(exactPrice / 5) * 5;
-        
-        // إضافة قيمة الطلبات
-        const totalPrice = roundedPrice + drinksTotal;
-        
-        return Number(totalPrice.toFixed(2));
-    }
 
     // 🔄 نظام المزامنة المحسن مع منع التكرار
     function setupRealTimeSync() {
@@ -997,7 +988,7 @@
                                     return {
                                         ...session,
                                         deviceLabel: update.deviceLabel || session.deviceLabel,
-                                        price: update.price !== undefined ? update.price : session.price,
+                                        price: update.price !== undefined ? roundToNearestFive(update.price) : session.price,
                                         drinks: update.drinks || session.drinks,
                                         mode: update.mode || session.mode,
                                         duration: update.duration || session.duration,
@@ -1119,11 +1110,17 @@
         Object.values(openSessions).forEach(s=>{ 
             const mins = diffMinutes(s.startISO, now); 
             const rate = RATES[s.rateType][s.mode]; 
-            const drinksTotal = Array.isArray(s.drinks) ? s.drinks.reduce((a,b)=>a+(b.price*b.qty),0) : 0;
-            const price = calculatePrice(mins, rate, drinksTotal);
-            total += price; 
+            const hoursPrice = (mins/60)*rate; 
+            let drinksTotal = 0;
+            if (Array.isArray(s.drinks)) {
+                drinksTotal = s.drinks.reduce((a,b)=>a+(b.price*b.qty),0);
+            }
+            total += hoursPrice + drinksTotal; 
         }); 
-        todayRevenueEl.textContent = `${Number(total.toFixed(2))} ج`; 
+        
+        // تطبيق التقريب على الإيراد اليومي
+        const roundedTotal = roundToNearestFive(total);
+        todayRevenueEl.textContent = `${Number(roundedTotal.toFixed(0))} ج`; 
     }
 
     function renderCompleted() {
@@ -1193,17 +1190,24 @@
       Object.values(openSessions).forEach(s => {
         const mins = diffMinutes(s.startISO, now);
         const rate = RATES[s.rateType][s.mode];
-        const drinksTotal = Array.isArray(s.drinks) ? s.drinks.reduce((a,b)=>a+(b.price*b.qty),0) : 0;
-        const price = calculatePrice(mins, rate, drinksTotal);
-        totalRevenue += price;
+        const hoursPrice = (mins / 60) * rate;
+        let drinksTotal = 0;
+        if (Array.isArray(s.drinks)) {
+          drinksTotal = s.drinks.reduce((a, b) => a + (b.price * b.qty), 0);
+        }
+        totalRevenue += hoursPrice + drinksTotal;
       });
       
       const totalExpenses = expensesToday.reduce((sum, expense) => sum + Number(expense.amount), 0);
       const netRevenue = totalRevenue - totalExpenses;
       
-      grossRevenueEl.textContent = `${Number(totalRevenue.toFixed(2))} ج`;
-      totalExpensesEl.textContent = `${Number(totalExpenses.toFixed(2))} ج`;
-      netRevenueEl.textContent = `${Number(netRevenue.toFixed(2))} ج`;
+      // تطبيق التقريب على جميع الأرقام
+      const roundedGrossRevenue = roundToNearestFive(totalRevenue);
+      const roundedNetRevenue = roundToNearestFive(netRevenue);
+      
+      grossRevenueEl.textContent = `${Number(roundedGrossRevenue.toFixed(0))} ج`;
+      totalExpensesEl.textContent = `${Number(totalExpenses.toFixed(0))} ج`;
+      netRevenueEl.textContent = `${Number(roundedNetRevenue.toFixed(0))} ج`;
     }
 
     // events delegation for device buttons
@@ -1381,8 +1385,11 @@
         endDrinks.value = (s.drinks && s.drinks.length) ? s.drinks.map(d=>`${d.name}×${d.qty}`).join(', ') : '-'; 
         const drinksTotal = (s.drinks||[]).reduce((a,b)=>a+(b.price*b.qty),0); 
         const rate = RATES[s.rateType][s.mode]; 
-        const price = calculatePrice(mins, rate, drinksTotal); 
-        endTotal.value = price; 
+        const price = Number((((mins/60)*rate) + drinksTotal).toFixed(2)); 
+        
+        // تطبيق التقريب على السعر النهائي
+        const roundedPrice = roundToNearestFive(price);
+        endTotal.value = roundedPrice; 
         modalEnd.classList.add('active'); 
     }
 
@@ -1397,7 +1404,10 @@
     const mins = diffMinutes(s.startISO, endISO); 
     const drinksTotal = (s.drinks||[]).reduce((a,b)=>a+(b.price*b.qty),0); 
     const rate = RATES[s.rateType][s.mode]; 
-    const price = calculatePrice(mins, rate, drinksTotal); 
+    const price = Number((((mins/60)*rate) + drinksTotal).toFixed(2)); 
+    
+    // تطبيق التقريب على السعر النهائي قبل الحفظ
+    const roundedPrice = roundToNearestFive(price);
     
     const finished = { 
         deviceId: s.deviceId, 
@@ -1406,7 +1416,7 @@
         endISO, 
         duration: durationText(mins), 
         drinks: s.drinks || [], 
-        price,
+        price: roundedPrice,
         // إضافة معرف فريد لمنع التكرار
         sessionId: `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     }; 
@@ -1441,7 +1451,7 @@
             startISO: s.startISO,
             endISO: endISO,
             duration: durationText(mins),
-            price: price,
+            price: roundedPrice,
             drinks: s.drinks || [],
             createdBy: user ? user.email : "local",
             createdAt: now.toISOString(),
@@ -1452,7 +1462,7 @@
 
         await addDoc(collection(db, "sessions"), payload);
         console.log("✅ تم حفظ الجلسة في Firebase بنجاح");
-        alert('تم إنهاء الجلسة. المجموع: ' + price + ' ج'); 
+        alert('تم إنهاء الجلسة. المجموع: ' + roundedPrice + ' ج'); 
     } catch (error) {
         console.error("❌ خطأ أثناء حفظ الجلسة:", error);
         alert('❌ حدث خطأ أثناء حفظ الجلسة في Firebase');
