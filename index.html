@@ -800,27 +800,13 @@
     function durationText(mins){ const h=Math.floor(mins/60), m=mins%60; return `${h} س ${m} د`; }
     function isoFromTimeStr(timeStr){ const [hh,mm]=timeStr.split(':').map(Number); const now=new Date(); const d=new Date(now.getFullYear(),now.getMonth(),now.getDate(),hh,mm,0); if(d<=now) d.setDate(d.getDate()+1); return d.toISOString(); }
 
-    // 🔧 دالة محسنة لحساب السعر مع التقريب الذكي بدون if
+    // 🔧 دالة محسنة لحساب السعر بدقة مع التقريب
     function calculatePrice(mins, rate, drinksTotal = 0) {
-        // حساب السعر الأساسي بناءً على الدقائق
+        // حساب السعر بناءً على الدقائق الفعلية
         const exactPrice = (mins / 60) * rate;
         
-        // نظام التقريب الذكي - كل 2.5 جنيه نغير السعر
-        // 0-12.5 → 10, 12.5-17.5 → 15, 17.5-22.5 → 20, 22.5-27.5 → 25, 27.5-32.5 → 30
-        const basePrice = Math.floor(exactPrice / 2.5) * 2.5;
-        let roundedPrice;
-        
-        if (basePrice <= 12.5) {
-            roundedPrice = 10;
-        } else if (basePrice <= 17.5) {
-            roundedPrice = 15;
-        } else if (basePrice <= 22.5) {
-            roundedPrice = 20;
-        } else if (basePrice <= 27.5) {
-            roundedPrice = 25;
-        } else {
-            roundedPrice = 30;
-        }
+        // تقريب السعر لأقرب 5 جنيه
+        const roundedPrice = Math.ceil(exactPrice / 5) * 5;
         
         // إضافة قيمة الطلبات
         const totalPrice = roundedPrice + drinksTotal;
