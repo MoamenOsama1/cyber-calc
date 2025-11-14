@@ -687,7 +687,24 @@
     function initLocal(){ 
       const s = getStorage(); 
       const t = todayKey(); 
-      if (!s[t]) s[t] = { open: {}, completed: [], expenses: [] }; 
+      
+      // التعديل الأساسي: الحفاظ على الجلسات المفتوحة من الأيام السابقة
+      if (!s[t]) {
+          s[t] = { open: {}, completed: [], expenses: [] };
+          
+          // نقل الجلسات المفتوحة من الأيام السابقة إلى اليوم الجديد
+          Object.keys(s).forEach(date => {
+              if (date !== t && s[date].open) {
+                  Object.keys(s[date].open).forEach(deviceId => {
+                      // نقل الجلسة المفتوحة إلى اليوم الجديد
+                      s[t].open[deviceId] = s[date].open[deviceId];
+                  });
+                  // مسح الجلسات المفتوحة من اليوم السابق
+                  s[date].open = {};
+              }
+          });
+      }
+      
       setStorage(s); 
       openSessions = s[t].open || {}; 
       completedSessionsToday = s[t].completed || []; 
