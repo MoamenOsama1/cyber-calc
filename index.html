@@ -1077,60 +1077,83 @@ async function clearAllDataPermanently() {
         hideSyncIndicator();
     }
 }
-  // نظام المزامنة الذكية
-  function setupSmartSync() {
-      console.log('🚀 بدء المزامنة الذكية...');
-      
-      // الاستماع للجلسات المفتوحة مع الفلترة
-      //const openSessionsRef = collection(db, 'openSessions');
-      onSnapshot(openSessionsRef, (snapshot) => {
-          showSyncIndicator();
-          const firebaseOpenSessions = {};
-          
-          snapshot.forEach(doc => {
-              const session = doc.data();
-              
-              // 🔥 الفلترة: تجاهل الجلسات اللي اتعدلت قبل تاريخ المسح
-              const sessionDate = session.startISO || session.createdAt;
-              if (dataClearDate && new Date(sessionDate) < new Date(dataClearDate)) {
-                  console.log('⏩ تجاهل جلسة مفتوحة قديمة:', session.deviceLabel);
-                  return;
-              }
-              
-              firebaseOpenSessions[session.deviceId] = {
-                  ...session,
-                  firebaseId: doc.id
-              };
-          });
-          
-          let hasChanges = false;
-          Object.keys(firebaseOpenSessions).forEach(deviceId => {
-              const firebaseSession = firebaseOpenSessions[deviceId];
-              const localSession = openSessions[deviceId];
-              
-              if (!localSession || 
-                  localSession.startISO !== firebaseSession.startISO ||
-                  localSession.mode !== firebaseSession.mode) {
-                  
-                  openSessions[deviceId] = firebaseSession;
-                  hasChanges = true;
-              }
-          });
-          
-          Object.keys(openSessions).forEach(deviceId => {
-              if (!firebaseOpenSessions[deviceId]) {
-                  delete openSessions[deviceId];
-                  hasChanges = true;
-              }
-          });
-          
-          if (hasChanges) {
-              persistLocal();
-              renderDevices();
-              console.log('✅ تم تحديث الجلسات المفتوحة من Firebase');
-          }
-          hideSyncIndicator();
-      });
+  // الاستماع لتحديثات الجلسات في الوقت الحقيقي
+const sessionsUpdatesQuery = query(collection(db, 'sessionUpdates'), orderBy('updatedAt', 'desc'));
+onSnapshot(sessionsUpdatesQuery, (snapshot) => {
+    showSyncIndicator();
+    let hasChanges = false;
+    const storage = getStorage();
+    
+    snapshot.docChanges().forEach((change) => {
+        const update = change.doc.data();
+        
+        // تجاهل التحديثات القديمة
+        if (dataClearDate && new Date(update.updatedAt) < new Date(dataClearDate)) {
+            return;
+        }
+        
+        if (change.type === "added" || change.type === "modified") {
+            // معالجة تحديثات التعديل
+            if (update.updateType === 'session_edit' && !update.isDeleted) {
+                Object.keys(storage).forEach(date => {
+                    storage[date].completed = storage[date].completed.map(session => {
+                        const matches = 
+                            (update.sessionId && session.id === update.sessionId) ||
+                            (session.deviceLabel === update.originalDeviceLabel &&
+                             session.startISO === update.originalStartISO);
+                        
+                        if (matches) {
+                            hasChanges = true;
+                            console.log('🔄 تحديث جلسة من الأدمن:', session.deviceLabel);
+                            return {
+                                ...session,
+                                deviceLabel: update.deviceLabel || session.deviceLabel,
+                                price: update.price !== undefined ? update.price : session.price,
+                                drinks: update.drinks || session.drinks,
+                                mode: update.mode || session.mode,
+                                duration: update.duration || session.duration,
+                                updatedByAdmin: true,
+                                lastUpdate: new Date().toISOString()
+                            };
+                        }
+                        return session;
+                    });
+                });
+            }ص
+            
+            // معالجة حذف الجلسات
+            if (update.updateType === 'session_delete' && update.isDeleted) {
+                Object.keys(storage).forEach(date => {
+                    const originalLength = storage[date].completed.length;
+                    storage[date].completed = storage[date].completed.filter(session => {
+                        const matches = 
+                            (update.sessionId && session.id === update.sessionId) ||
+                            (session.deviceLabel === update.originalDeviceLabel &&
+                             session.startISO === update.originalStartISO);
+                        
+                        if (matches) {
+                            console.log('🗑️ حذف جلسة بناءً على طلب الأدمن:', session.deviceLabel);
+                            return false;
+                        }
+                        return true;
+                    });
+                    
+                    if (storage[date].completed.length !== originalLength) {
+                        hasChanges = true;
+                    }
+                });
+            }
+        }
+    });
+    
+    if (hasChanges) {
+        setStorage(storage);
+        initLocal();
+        renderDevices();
+        showNotification('تم تحديث الجلسات من الإدارة');
+    }
+    hideSyncIndicator();
+});
 
       // الاستماع للجلسات المكتملة مع الفلترة
       const sessionsQuery = query(collection(db, 'sessions'), orderBy('createdAt', 'desc'));
@@ -1294,7 +1317,7 @@ async function clearAllDataPermanently() {
           }
           hideSyncIndicator();
       });
-  }
+  
 
   // events delegation for device buttons
   devicesGrid.addEventListener('click', (e)=>{ 
