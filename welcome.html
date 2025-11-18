@@ -484,56 +484,37 @@
       minute: '2-digit'
     });
 
-    // دالة جلب إحصائيات اليوم مع تطبيق الفلترة
+    // في دالة loadTodayStats() - إزالة الفلترة:
 async function loadTodayStats() {
     try {
         const today = new Date().toLocaleDateString('ar-EG');
-        const dataClearDate = localStorage.getItem('dataClearDate') || '';
         console.log('📅 جلب إحصائيات تاريخ:', today);
-        console.log('🗑️ تاريخ المسح النشط:', dataClearDate);
         
-        // جلب جلسات اليوم فقط مع الفلترة
+        // جلب جلسات اليوم فقط بدون فلترة
         const todaySessionsQuery = query(collection(db, 'sessions'), where("date", "==", today));
         const todaySessionsSnapshot = await getDocs(todaySessionsQuery);
         
-        // حساب إيرادات اليوم مع الفلترة
+        // حساب إيرادات اليوم بدون فلترة
         let todayRevenue = 0;
         let todaySessionsCount = 0;
         
         todaySessionsSnapshot.forEach(doc => {
             const session = doc.data();
-            
-            // 🔥 تطبيق الفلترة: تجاهل الجلسات اللي قبل تاريخ المسح
-            const sessionDate = session.createdAt || session.startISO;
-            if (dataClearDate && new Date(sessionDate) < new Date(dataClearDate)) {
-                console.log('⏩ تجاهل جلسة قديمة في الإحصائيات:', session.deviceLabel);
-                return;
-            }
-            
             const sessionRevenue = Number(session.price) || 0;
             todayRevenue += sessionRevenue;
             todaySessionsCount++;
         });
         
-        // جلب الأجهزة النشطة اليوم مع الفلترة
+        // جلب الأجهزة النشطة اليوم بدون فلترة
         const openSessionsQuery = query(collection(db, 'openSessions'));
         const openSessionsSnapshot = await getDocs(openSessionsQuery);
         
         let activeDevicesCount = 0;
         openSessionsSnapshot.forEach(doc => {
-            const session = doc.data();
-            
-            // 🔥 تطبيق الفلترة: تجاهل الجلسات المفتوحة القديمة
-            const sessionDate = session.startISO || session.createdAt;
-            if (dataClearDate && new Date(sessionDate) < new Date(dataClearDate)) {
-                console.log('⏩ تجاهل جلسة مفتوحة قديمة:', session.deviceLabel);
-                return;
-            }
-            
             activeDevicesCount++;
         });
         
-        // جلب مصروفات اليوم فقط من localStorage مع الفلترة
+        // جلب مصروفات اليوم فقط من localStorage بدون فلترة
         let todayExpenses = 0;
         try {
             const storage = JSON.parse(localStorage.getItem('biancoSessionsLocal') || '{}');
@@ -549,26 +530,18 @@ async function loadTodayStats() {
         // حساب صافي ربح اليوم
         const todayProfit = todayRevenue - todayExpenses;
         
-        // جلب عدد الجلسات المفتوحة اليوم من localStorage مع الفلترة
+        // جلب عدد الجلسات المفتوحة اليوم من localStorage بدون فلترة
         let openSessionsCount = 0;
         try {
             const storage = JSON.parse(localStorage.getItem('biancoSessionsLocal') || '{}');
             if (storage[today] && storage[today].open) {
-                Object.keys(storage[today].open).forEach(deviceId => {
-                    const session = storage[today].open[deviceId];
-                    const sessionDate = session.startISO || session.createdAt;
-                    
-                    // 🔥 تطبيق الفلترة
-                    if (!dataClearDate || new Date(sessionDate) >= new Date(dataClearDate)) {
-                        openSessionsCount++;
-                    }
-                });
+                openSessionsCount = Object.keys(storage[today].open).length;
             }
         } catch (error) {
             console.error('خطأ في جلب الجلسات المفتوحة:', error);
         }
         
-        console.log('📊 إحصائيات اليوم بعد الفلترة:', {
+        console.log('📊 إحصائيات اليوم:', {
             todaySessions: todaySessionsCount,
             todayRevenue,
             activeDevices: activeDevicesCount,
@@ -577,6 +550,7 @@ async function loadTodayStats() {
             openSessions: openSessionsCount
         });
         
+     
         // تحديث الواجهة
         animateCounter(todaySessionsEl, todaySessionsCount);
         animateCounter(todayRevenueEl, todayRevenue);
