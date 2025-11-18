@@ -147,6 +147,8 @@
       appId: "1:699813217029:web:568e169371a2361358ad6c"
     };
 
+    
+
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
@@ -335,27 +337,27 @@
         }
     }
 
-    // تحديث البيانات من Firebase
-    function setupFirebaseListeners() {
-        const sessionsCol = collection(db, 'sessions');
-        const q = query(sessionsCol, orderBy('createdAt', 'desc'));
-        
-        onSnapshot(q, snap => {
-            allSessions = [];
-            snap.forEach(docSnap => {
-                allSessions.push({
-                    id: docSnap.id, 
-                    data: docSnap.data()
-                });
+// في دالة setupFirebaseListeners() - إزالة الفلترة:
+function setupFirebaseListeners() {
+    const sessionsCol = collection(db, 'sessions');
+    const q = query(sessionsCol, orderBy('createdAt', 'desc'));
+    
+    onSnapshot(q, snap => {
+        allSessions = [];
+        snap.forEach(docSnap => {
+            allSessions.push({
+                id: docSnap.id, 
+                data: docSnap.data()
             });
-            
-            // جلب المصروفات من localStorage
-            allExpenses = getExpensesFromLocalStorage();
-            
-            populateDates();
-            applyFilter();
         });
-    }
+        
+        // جلب المصروفات من localStorage
+        allExpenses = getExpensesFromLocalStorage();
+        
+        populateDates();
+        applyFilter();
+    });
+}
 
     function populateDates(){
         const dates = new Set();
