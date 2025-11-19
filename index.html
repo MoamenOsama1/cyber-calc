@@ -481,6 +481,48 @@
       margin-top: 12px;
       border: 1px solid rgba(255, 255, 255, 0.05);
     }
+
+
+    /* أنماط إضافية لتقارير الشيفتات */
+.shift-report {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  padding: 15px;
+  margin: 10px 0;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.shift-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin: 15px 0;
+}
+
+.shift-stat-item {
+  text-align: center;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+
+.shift-stat-value {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: var(--accent);
+  display: block;
+}
+
+.shift-stat-label {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+textarea {
+  resize: vertical;
+  min-height: 80px;
+  font-family: inherit;
+}
   </style>
   
 </head>
@@ -498,6 +540,8 @@
         <button class="btn warning" id="clearDataBtn">🗑️ مسح البيانات</button>
         <button class="secondary" id="syncBtn">🔄 مزامنة البيانات</button>
         <button class="secondary" id="logoutBtn">تسجيل الخروج</button>
+        <!-- بعد أزرار ال header الحالية -->
+<button class="btn warning" id="endShiftBtn">⏰ إنهاء الشيفت</button>
       </div>
     </header>
 
@@ -650,6 +694,86 @@
   </div>
 </div>
 
+<!-- مودال إنهاء الشيفت -->
+<div class="modal-back" id="modalEndShift">
+  <div class="modal" style="max-width: 90%; max-height: 90vh;">
+    <h3 class="center">⏰ إنهاء الشيفت - تقرير كامل</h3>
+    
+    <!-- الإحصائيات -->
+    <div class="financial-summary" style="margin-bottom: 16px;">
+      <h4 style="text-align: center; margin-bottom: 12px;">📊 ملخص الشيفت</h4>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+        <div class="shift-stat-item">
+          <div class="shift-stat-value" id="shiftCompletedSessions">0</div>
+          <div class="shift-stat-label">الجلسات المكتملة</div>
+        </div>
+        <div class="shift-stat-item">
+          <div class="shift-stat-value" id="shiftOpenSessions">0</div>
+          <div class="shift-stat-label">جلسات مفتوحة</div>
+        </div>
+        <div class="shift-stat-item">
+          <div class="shift-stat-value" id="shiftGrossRevenue">0 ج</div>
+          <div class="shift-stat-label">إجمالي الإيرادات</div>
+        </div>
+        <div class="shift-stat-item">
+          <div class="shift-stat-value" id="shiftTotalExpenses">0 ج</div>
+          <div class="shift-stat-label">إجمالي المصروفات</div>
+        </div>
+        <div class="shift-stat-item">
+          <div class="shift-stat-value" id="shiftNetRevenue">0 ج</div>
+          <div class="shift-stat-label">صافي الإيرادات</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- جدول الجلسات -->
+    <div style="margin: 16px 0;">
+      <h4 style="margin-bottom: 12px;">🎮 الجلسات المكتملة اليوم</h4>
+      <div style="max-height: 300px; overflow-y: auto;">
+        <table style="width: 100%; font-size: 12px;">
+          <thead>
+            <tr>
+              <th>الجهاز</th>
+              <th>النوع</th>
+              <th>من</th>
+              <th>إلى</th>
+              <th>المدة</th>
+              <th>الطلبات</th>
+              <th>السعر</th>
+            </tr>
+          </thead>
+          <tbody id="shiftSessionsList"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- المصروفات -->
+    <div style="margin: 16px 0;">
+      <h4 style="margin-bottom: 12px;">💸 المصروفات اليومية</h4>
+      <div style="max-height: 200px; overflow-y: auto;">
+        <table style="width: 100%; font-size: 12px;">
+          <thead>
+            <tr>
+              <th>اسم المصروف</th>
+              <th>المبلغ</th>
+              <th>التاريخ</th>
+            </tr>
+          </thead>
+          <tbody id="shiftExpensesList"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <label>ملاحظات إضافية (اختياري)</label>
+    <textarea id="shiftNotes" placeholder="أي ملاحظات حول الشيفت..." style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); background: #0f1b26; color: white; min-height: 80px; font-family: inherit;"></textarea>
+
+    <div style="display:flex;gap:8px;margin-top:16px;">
+      <button class="btn" id="confirmEndShift" style="background: #ff9800;">✅ تأكيد إنهاء الشيفت</button>
+      <button class="btn" id="exportShiftReport">📊 تصدير لإكسل</button>
+      <button class="secondary" id="cancelEndShift">إلغاء</button>
+    </div>
+  </div>
+</div>
 
 
 <script type="module">
@@ -687,21 +811,66 @@
   let currentTab = 'today';
   let dataClearDate = localStorage.getItem('dataClearDate') || '';
 
+  // function initLocal(){ 
+  //   const s = getStorage(); 
+  //   const t = todayKey(); 
+    
+  //   if (!s[t]) s[t] = { open: {}, completed: [], expenses: [] }; 
+    
+  //   // إزالة الفلترة التلقائية للبيانات القديمة
+  //   // البيانات القديمة ستبقى محفوظة ولا يتم حذفها تلقائياً
+    
+  //   setStorage(s); 
+  //   openSessions = s[t].open || {}; 
+  //   completedSessionsToday = s[t].completed || []; 
+  //   expensesToday = s[t].expenses || [];
+    
+  //   // تحميل جميع الجلسات بدون حذف البيانات القديمة
+  //   allSessions = [];
+  //   Object.keys(s).forEach(date => {
+  //       if (s[date].completed) {
+  //           s[date].completed.forEach(session => {
+  //               if (!session.isDeleted) {
+  //                   allSessions.push({
+  //                       ...session,
+  //                       date: date,
+  //                       isToday: date === t
+  //                   });
+  //               }
+  //           });
+  //       }
+  //   });
+  // }
   function initLocal(){ 
     const s = getStorage(); 
     const t = todayKey(); 
     
     if (!s[t]) s[t] = { open: {}, completed: [], expenses: [] }; 
     
-    // إزالة الفلترة التلقائية للبيانات القديمة
-    // البيانات القديمة ستبقى محفوظة ولا يتم حذفها تلقائياً
+    // تنظيف الجلسات المكررة عند التهيئة
+    if (s[t].completed) {
+        const uniqueSessions = [];
+        const sessionKeys = new Set();
+        
+        s[t].completed.forEach(session => {
+            const sessionKey = session.id || 
+                `${session.deviceLabel}_${session.startISO}_${session.endISO}_${session.price}_${session.mode}`;
+            
+            if (!sessionKeys.has(sessionKey)) {
+                sessionKeys.add(sessionKey);
+                uniqueSessions.push(session);
+            }
+        });
+        
+        s[t].completed = uniqueSessions;
+    }
     
     setStorage(s); 
     openSessions = s[t].open || {}; 
     completedSessionsToday = s[t].completed || []; 
     expensesToday = s[t].expenses || [];
     
-    // تحميل جميع الجلسات بدون حذف البيانات القديمة
+    // تحميل جميع الجلسات
     allSessions = [];
     Object.keys(s).forEach(date => {
         if (s[date].completed) {
@@ -716,8 +885,32 @@
             });
         }
     });
-  }
-
+}
+  // function persistLocal(){ 
+  //   const s = getStorage(); 
+  //   const t = todayKey(); 
+    
+  //   if (s[t] && s[t].completed) {
+  //       const uniqueSessions = [];
+  //       const sessionKeys = new Set();
+        
+  //       s[t].completed.forEach(session => {
+  //           const sessionKey = session.id || 
+  //               `${session.deviceLabel}_${session.startISO}_${session.endISO}`;
+            
+  //           if (!sessionKeys.has(sessionKey)) {
+  //               sessionKeys.add(sessionKey);
+  //               uniqueSessions.push(session);
+  //           }
+  //       });
+        
+  //       s[t].completed = uniqueSessions;
+  //   }
+    
+  //   s[t] = { open: openSessions, completed: completedSessionsToday, expenses: expensesToday }; 
+  //   setStorage(s); 
+  //   initLocal();
+  // }
   function persistLocal(){ 
     const s = getStorage(); 
     const t = todayKey(); 
@@ -727,12 +920,15 @@
         const sessionKeys = new Set();
         
         s[t].completed.forEach(session => {
+            // إنشاء مفتاح فريد للجلسة
             const sessionKey = session.id || 
-                `${session.deviceLabel}_${session.startISO}_${session.endISO}`;
+                `${session.deviceLabel}_${session.startISO}_${session.endISO}_${session.price}`;
             
             if (!sessionKeys.has(sessionKey)) {
                 sessionKeys.add(sessionKey);
                 uniqueSessions.push(session);
+            } else {
+                console.log('⚠️ تم تجاهل جلسة مكررة:', session.deviceLabel);
             }
         });
         
@@ -742,8 +938,7 @@
     s[t] = { open: openSessions, completed: completedSessionsToday, expenses: expensesToday }; 
     setStorage(s); 
     initLocal();
-  }
-
+}
   // DOM elements
   const devicesGrid = document.getElementById('devicesGrid');
   const todayStr = document.getElementById('todayStr');
@@ -795,6 +990,255 @@
   const endTotal = document.getElementById('endTotal');
   const confirmEnd = document.getElementById('confirmEnd');
   const cancelEnd = document.getElementById('cancelEnd');
+
+
+  // عناصر وزر إنهاء الشيفت
+const endShiftBtn = document.getElementById('endShiftBtn');
+const modalEndShift = document.getElementById('modalEndShift');
+const confirmEndShift = document.getElementById('confirmEndShift');
+const cancelEndShift = document.getElementById('cancelEndShift');
+const shiftCompletedSessions = document.getElementById('shiftCompletedSessions');
+const shiftOpenSessions = document.getElementById('shiftOpenSessions');
+const shiftGrossRevenue = document.getElementById('shiftGrossRevenue');
+const shiftTotalExpenses = document.getElementById('shiftTotalExpenses');
+const shiftNetRevenue = document.getElementById('shiftNetRevenue');
+const shiftNotes = document.getElementById('shiftNotes');
+
+
+
+
+
+
+// دالة محسنة لفتح مودال إنهاء الشيفت
+function openEndShiftModal() {
+  // حساب الإحصائيات
+  const completedCount = completedSessionsToday.length;
+  const openCount = Object.keys(openSessions).length;
+  
+  let grossRevenue = 0;
+  completedSessionsToday.forEach(s => grossRevenue += Number(s.price || 0));
+  
+  const totalExpenses = expensesToday.reduce((sum, expense) => sum + Number(expense.amount), 0);
+  const netRevenue = grossRevenue - totalExpenses;
+  
+  // تحديث الواجهة
+  shiftCompletedSessions.textContent = completedCount;
+  shiftOpenSessions.textContent = openCount;
+  shiftGrossRevenue.textContent = `${grossRevenue.toFixed(0)} ج`;
+  shiftTotalExpenses.textContent = `${totalExpenses.toFixed(0)} ج`;
+  shiftNetRevenue.textContent = `${netRevenue.toFixed(0)} ج`;
+  shiftNotes.value = '';
+  
+  // عرض الجلسات
+  renderShiftSessions();
+  
+  // عرض المصروفات
+  renderShiftExpenses();
+  
+  modalEndShift.classList.add('active');
+}
+
+// دالة عرض الجلسات في التقرير
+function renderShiftSessions() {
+  shiftSessionsList.innerHTML = '';
+  
+  if (completedSessionsToday.length === 0) {
+    shiftSessionsList.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 10px; color: var(--muted);">لا توجد جلسات مكتملة</td></tr>';
+    return;
+  }
+  
+  completedSessionsToday.forEach(session => {
+    const tr = document.createElement('tr');
+    const drinksTxt = Array.isArray(session.drinks) 
+      ? session.drinks.map(d => `${d.name}×${d.qty}`).join(', ')
+      : (session.drinks || '-');
+    
+    tr.innerHTML = `
+      <td>${session.deviceLabel || '-'}</td>
+      <td>${session.mode === 'double' ? 'زوجي' : 'فردي'}</td>
+      <td>${format12FromISO(session.startISO)}</td>
+      <td>${format12FromISO(session.endISO)}</td>
+      <td>${session.duration || '-'}</td>
+      <td>${drinksTxt}</td>
+      <td>${session.price || 0} ج</td>
+    `;
+    shiftSessionsList.appendChild(tr);
+  });
+}
+
+// دالة عرض المصروفات في التقرير
+function renderShiftExpenses() {
+  shiftExpensesList.innerHTML = '';
+  
+  if (expensesToday.length === 0) {
+    shiftExpensesList.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 10px; color: var(--muted);">لا توجد مصروفات</td></tr>';
+    return;
+  }
+  
+  expensesToday.forEach(expense => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${expense.name}</td>
+      <td>${expense.amount} ج</td>
+      <td>${new Date().toLocaleDateString('ar-EG')}</td>
+    `;
+    shiftExpensesList.appendChild(tr);
+  });
+}
+
+// دالة تصدير تقرير الشيفت لإكسل
+function exportShiftToExcel() {
+  const rows = [
+    ['تقرير الشيفت - Bianco Timer'],
+    ['التاريخ', todayKey()],
+    ['وقت التصدير', new Date().toLocaleString('ar-EG')],
+    ['المستخدم', auth.currentUser.email],
+    [''],
+    ['الملخص المالي'],
+    ['الجلسات المكتملة', completedSessionsToday.length],
+    ['الجلسات المفتوحة', Object.keys(openSessions).length],
+    ['الإيرادات الإجمالية', calculateGrossRevenue() + ' ج'],
+    ['إجمالي المصروفات', calculateTotalExpenses() + ' ج'],
+    ['صافي الإيرادات', calculateNetRevenue() + ' ج'],
+    [''],
+    ['الجلسات المكتملة'],
+    ['الجهاز', 'النوع', 'من', 'إلى', 'المدة', 'الطلبات', 'السعر']
+  ];
+  
+  // إضافة الجلسات
+  completedSessionsToday.forEach(session => {
+    const drinksTxt = Array.isArray(session.drinks) 
+      ? session.drinks.map(d => `${d.name}×${d.qty}`).join(' | ')
+      : (session.drinks || '-');
+    
+    rows.push([
+      session.deviceLabel || '-',
+      session.mode === 'double' ? 'زوجي' : 'فردي',
+      format12FromISO(session.startISO),
+      format12FromISO(session.endISO),
+      session.duration || '-',
+      drinksTxt,
+      session.price || 0
+    ]);
+  });
+  
+  rows.push(['']);
+  rows.push(['المصروفات']);
+  rows.push(['اسم المصروف', 'المبلغ', 'التاريخ']);
+  
+  // إضافة المصروفات
+  expensesToday.forEach(expense => {
+    rows.push([
+      expense.name,
+      expense.amount + ' ج',
+      new Date().toLocaleDateString('ar-EG')
+    ]);
+  });
+  
+  // إنشاء ملف CSV
+  const csv = rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+  const bom = "\uFEFF";
+  const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `shift_report_${todayKey().replace(/\//g, '-')}_${new Date().getTime()}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// دوال مساعدة للحسابات
+function calculateGrossRevenue() {
+  let total = 0;
+  completedSessionsToday.forEach(s => total += Number(s.price || 0));
+  return total;
+}
+
+function calculateTotalExpenses() {
+  return expensesToday.reduce((sum, expense) => sum + Number(expense.amount), 0);
+}
+
+function calculateNetRevenue() {
+  return calculateGrossRevenue() - calculateTotalExpenses();
+}
+
+// Event Listener لزر التصدير
+exportShiftReport.addEventListener('click', exportShiftToExcel);
+// دالة حفظ تقرير الشيفت في Firebase
+async function saveShiftReportToFirebase() {
+  try {
+    const user = auth.currentUser;
+    const now = new Date();
+    
+    // حساب الإحصائيات النهائية
+    let grossRevenue = 0;
+    completedSessionsToday.forEach(s => grossRevenue += Number(s.price || 0));
+    
+    const totalExpenses = expensesToday.reduce((sum, expense) => sum + Number(expense.amount), 0);
+    const netRevenue = grossRevenue - totalExpenses;
+    
+    const shiftReport = {
+      userEmail: user.email,
+      userName: user.displayName || user.email.split('@')[0],
+      date: todayKey(),
+      timestamp: now.toISOString(),
+      completedSessions: completedSessionsToday.length,
+      openSessions: Object.keys(openSessions).length,
+      grossRevenue: grossRevenue,
+      totalExpenses: totalExpenses,
+      netRevenue: netRevenue,
+      sessions: completedSessionsToday,
+      expenses: expensesToday,
+      notes: shiftNotes.value.trim(),
+      shiftDuration: '8 ساعات', // يمكنك تعديل هذا حسب نظام الشيفتات لديك
+      status: 'completed'
+    };
+    
+    // حفظ في Firebase
+    await addDoc(collection(db, 'shiftReports'), shiftReport);
+    
+    console.log('✅ تم حفظ تقرير الشيفت بنجاح');
+    return true;
+    
+  } catch (error) {
+    console.error('❌ خطأ في حفظ تقرير الشيفت:', error);
+    throw error;
+  }
+}
+
+// Event Listeners لزر إنهاء الشيفت
+endShiftBtn.addEventListener('click', openEndShiftModal);
+
+confirmEndShift.addEventListener('click', async () => {
+  try {
+    showSyncIndicator();
+    
+    // حفظ تقرير الشيفت
+    await saveShiftReportToFirebase();
+    
+    // إظهار رسالة نجاح
+    alert('✅ تم إنهاء الشيفت بنجاح وإرسال التقرير للإدارة');
+    
+    // إغلاق المودال
+    modalEndShift.classList.remove('active');
+    
+    hideSyncIndicator();
+    
+  } catch (error) {
+    alert('❌ حدث خطأ أثناء إنهاء الشيفت: ' + error.message);
+    hideSyncIndicator();
+  }
+});
+
+cancelEndShift.addEventListener('click', () => {
+  modalEndShift.classList.remove('active');
+});
+
+// إغلاق المودال بالضغط على الخلفية
+modalEndShift.addEventListener('click', (e) => {
+  if (e.target === modalEndShift) {
+    modalEndShift.classList.remove('active');
+  }
+});
 
   // helpers
   function nowISO(){ return new Date().toISOString(); }
@@ -915,43 +1359,90 @@
       todayRevenueEl.textContent = `${Number(roundedTotal.toFixed(0))} ج`; 
   }
 
+  // function renderCompleted() {
+  //     completedTbody.innerHTML = '';
+  //     const sessionsToShow = currentTab === 'today' ? completedSessionsToday : allSessions;
+      
+  //     // تصفية الجلسات المحذوفة
+  //     const filteredSessions = sessionsToShow.filter(session => !session.isDeleted);
+      
+  //     filteredSessions.slice().reverse().forEach((s, index) => {
+  //         const tr = document.createElement('tr');
+  //         if (s.updatedByAdmin) {
+  //             tr.classList.add('session-updated');
+  //         }
+
+  //         const drinksTxt = Array.isArray(s.drinks)
+  //             ? s.drinks.map(d => `${d.name}×${d.qty}`).join(', ')
+  //             : (typeof s.drinks === 'string' && s.drinks.trim() !== ''
+  //                 ? s.drinks
+  //                 : '-');
+
+  //         const status = s.updatedByAdmin ? 
+  //             '<span style="color: var(--accent);">🔄 محدث</span>' : 
+  //             '<span style="color: var(--muted);">✅ محفوظ</span>';
+
+  //         tr.innerHTML = `
+  //             <td>${s.deviceLabel || '-'}</td>
+  //             <td>${s.mode === 'double' ? 'زوجي' : 'فردي'}</td>
+  //             <td>${format12FromISO(s.startISO)}</td>
+  //             <td>${format12FromISO(s.endISO)}</td>
+  //             <td>${s.duration || '-'}</td>
+  //             <td>${drinksTxt}</td>
+  //             <td>${s.price || 0} ج</td>
+  //             <td>${status}</td>
+  //         `;
+  //         completedTbody.appendChild(tr);
+  //     });
+  // }
   function renderCompleted() {
-      completedTbody.innerHTML = '';
-      const sessionsToShow = currentTab === 'today' ? completedSessionsToday : allSessions;
-      
-      // تصفية الجلسات المحذوفة
-      const filteredSessions = sessionsToShow.filter(session => !session.isDeleted);
-      
-      filteredSessions.slice().reverse().forEach((s, index) => {
-          const tr = document.createElement('tr');
-          if (s.updatedByAdmin) {
-              tr.classList.add('session-updated');
-          }
+    completedTbody.innerHTML = '';
+    const sessionsToShow = currentTab === 'today' ? completedSessionsToday : allSessions;
+    
+    // تصفية الجلسات المحذوفة والاحتفاظ بأحدث نسخة فقط
+    const latestSessions = new Map();
+    
+    sessionsToShow.filter(session => !session.isDeleted).forEach(session => {
+        const key = `${session.deviceLabel}_${session.startISO}_${session.endISO}`;
+        
+        if (!latestSessions.has(key) || 
+            (session.updatedByAdmin && !latestSessions.get(key).updatedByAdmin) ||
+            (session.lastUpdate > (latestSessions.get(key).lastUpdate || ''))) {
+            latestSessions.set(key, session);
+        }
+    });
+    
+    const filteredSessions = Array.from(latestSessions.values());
+    
+    filteredSessions.slice().reverse().forEach((s, index) => {
+        const tr = document.createElement('tr');
+        if (s.updatedByAdmin) {
+            tr.classList.add('session-updated');
+        }
 
-          const drinksTxt = Array.isArray(s.drinks)
-              ? s.drinks.map(d => `${d.name}×${d.qty}`).join(', ')
-              : (typeof s.drinks === 'string' && s.drinks.trim() !== ''
-                  ? s.drinks
-                  : '-');
+        const drinksTxt = Array.isArray(s.drinks)
+            ? s.drinks.map(d => `${d.name}×${d.qty}`).join(', ')
+            : (typeof s.drinks === 'string' && s.drinks.trim() !== ''
+                ? s.drinks
+                : '-');
 
-          const status = s.updatedByAdmin ? 
-              '<span style="color: var(--accent);">🔄 محدث</span>' : 
-              '<span style="color: var(--muted);">✅ محفوظ</span>';
+        const status = s.updatedByAdmin ? 
+            '<span style="color: var(--accent);">🔄 محدث</span>' : 
+            '<span style="color: var(--muted);">✅ محفوظ</span>';
 
-          tr.innerHTML = `
-              <td>${s.deviceLabel || '-'}</td>
-              <td>${s.mode === 'double' ? 'زوجي' : 'فردي'}</td>
-              <td>${format12FromISO(s.startISO)}</td>
-              <td>${format12FromISO(s.endISO)}</td>
-              <td>${s.duration || '-'}</td>
-              <td>${drinksTxt}</td>
-              <td>${s.price || 0} ج</td>
-              <td>${status}</td>
-          `;
-          completedTbody.appendChild(tr);
-      });
-  }
-
+        tr.innerHTML = `
+            <td>${s.deviceLabel || '-'}</td>
+            <td>${s.mode === 'double' ? 'زوجي' : 'فردي'}</td>
+            <td>${format12FromISO(s.startISO)}</td>
+            <td>${format12FromISO(s.endISO)}</td>
+            <td>${s.duration || '-'}</td>
+            <td>${drinksTxt}</td>
+            <td>${s.price || 0} ج</td>
+            <td>${status}</td>
+        `;
+        completedTbody.appendChild(tr);
+    });
+}
   function renderExpenses() {
     const expensesTbody = document.querySelector('#expensesTable tbody');
     expensesTbody.innerHTML = '';
@@ -1067,12 +1558,150 @@ async function clearAllDataPermanently() {
 
 // ========== المزامنة مع Firebase ==========
 
-// الاستماع لتحديثات الجلسات في الوقت الحقيقي
+// // الاستماع لتحديثات الجلسات في الوقت الحقيقي
+// const sessionsUpdatesQuery = query(collection(db, 'sessionUpdates'), orderBy('updatedAt', 'desc'));
+// onSnapshot(sessionsUpdatesQuery, (snapshot) => {
+//     showSyncIndicator();
+//     let hasChanges = false;
+//     const storage = getStorage();
+    
+//     snapshot.docChanges().forEach((change) => {
+//         const update = change.doc.data();
+        
+//         // تجاهل التحديثات القديمة
+//         if (dataClearDate && new Date(update.updatedAt) < new Date(dataClearDate)) {
+//             return;
+//         }
+        
+//         if (change.type === "added" || change.type === "modified") {
+//             // معالجة تحديثات التعديل
+//             if (update.updateType === 'session_edit' && !update.isDeleted) {
+//                 Object.keys(storage).forEach(date => {
+//                     storage[date].completed = storage[date].completed.map(session => {
+//                         const matches = 
+//                             (update.sessionId && session.id === update.sessionId) ||
+//                             (session.deviceLabel === update.originalDeviceLabel &&
+//                              session.startISO === update.originalStartISO);
+                        
+//                         if (matches) {
+//                             hasChanges = true;
+//                             console.log('🔄 تحديث جلسة من الأدمن:', session.deviceLabel);
+//                             return {
+//                                 ...session,
+//                                 deviceLabel: update.deviceLabel || session.deviceLabel,
+//                                 price: update.price !== undefined ? update.price : session.price,
+//                                 drinks: update.drinks || session.drinks,
+//                                 mode: update.mode || session.mode,
+//                                 duration: update.duration || session.duration,
+//                                 updatedByAdmin: true,
+//                                 lastUpdate: new Date().toISOString()
+//                             };
+//                         }
+//                         return session;
+//                     });
+//                 });
+//             }
+            
+//             // معالجة حذف الجلسات
+//             if (update.updateType === 'session_delete' && update.isDeleted) {
+//                 Object.keys(storage).forEach(date => {
+//                     const originalLength = storage[date].completed.length;
+//                     storage[date].completed = storage[date].completed.filter(session => {
+//                         const matches = 
+//                             (update.sessionId && session.id === update.sessionId) ||
+//                             (session.deviceLabel === update.originalDeviceLabel &&
+//                              session.startISO === update.originalStartISO);
+                        
+//                         if (matches) {
+//                             console.log('🗑️ حذف جلسة بناءً على طلب الأدمن:', session.deviceLabel);
+//                             return false;
+//                         }
+//                         return true;
+//                     });
+                    
+//                     if (storage[date].completed.length !== originalLength) {
+//                         hasChanges = true;
+//                     }
+//                 });
+//             }
+//         }
+//     });
+    
+//     if (hasChanges) {
+//         setStorage(storage);
+//         initLocal();
+//         renderDevices();
+//         showNotification('تم تحديث الجلسات من الإدارة');
+//     }
+//     hideSyncIndicator();
+// });
+
+// // الاستماع للجلسات المكتملة مع فلترة البيانات الممسوحة
+// const sessionsQuery = query(collection(db, 'sessions'), orderBy('createdAt', 'desc'));
+// onSnapshot(sessionsQuery, (snapshot) => {
+//     showSyncIndicator();
+//     const storage = getStorage();
+//     let hasUpdates = false;
+    
+//     snapshot.forEach(doc => {
+//         const firebaseSession = { id: doc.id, ...doc.data() };
+        
+//         // 🔥 فلترة: تجاهل الجلسات التي تم مسحها
+//         const sessionDate = firebaseSession.createdAt || firebaseSession.startISO;
+//         if (dataClearDate && new Date(sessionDate) < new Date(dataClearDate)) {
+//             console.log('⏩ تجاهل جلسة قديمة تم مسحها:', firebaseSession.deviceLabel);
+//             return;
+//         }
+        
+//         const sessionDateStr = firebaseSession.date || todayKey();
+        
+//         if (!storage[sessionDateStr]) {
+//             storage[sessionDateStr] = { open: {}, completed: [] };
+//         }
+        
+//         const existingIndex = storage[sessionDateStr].completed.findIndex(
+//             s => s.id === firebaseSession.id
+//         );
+        
+//         if (existingIndex === -1) {
+//             const isDuplicate = storage[sessionDateStr].completed.some(s => 
+//                 s.deviceLabel === firebaseSession.deviceLabel &&
+//                 s.startISO === firebaseSession.startISO &&
+//                 s.endISO === firebaseSession.endISO
+//             );
+            
+//             if (!isDuplicate) {
+//                 storage[sessionDateStr].completed.push(firebaseSession);
+//                 hasUpdates = true;
+//             }
+//         } else {
+//             const existing = storage[sessionDateStr].completed[existingIndex];
+//             if (JSON.stringify(existing) !== JSON.stringify(firebaseSession)) {
+//                 storage[sessionDateStr].completed[existingIndex] = {
+//                     ...firebaseSession,
+//                     updatedByAdmin: true,
+//                     lastUpdate: new Date().toISOString()
+//                 };
+//                 hasUpdates = true;
+//             }
+//         }
+//     });
+    
+//     if (hasUpdates) {
+//         setStorage(storage);
+//         initLocal();
+//         renderDevices();
+//         showNotification('تم تحديث الجلسات من الإدارة');
+//     }
+//     hideSyncIndicator();
+// });
+/// الاستماع لتحديثات الجلسات في الوقت الحقيقي - نسخة محسنة
 const sessionsUpdatesQuery = query(collection(db, 'sessionUpdates'), orderBy('updatedAt', 'desc'));
 onSnapshot(sessionsUpdatesQuery, (snapshot) => {
     showSyncIndicator();
     let hasChanges = false;
     const storage = getStorage();
+    const today = todayKey();
     
     snapshot.docChanges().forEach((change) => {
         const update = change.doc.data();
@@ -1085,44 +1714,53 @@ onSnapshot(sessionsUpdatesQuery, (snapshot) => {
         if (change.type === "added" || change.type === "modified") {
             // معالجة تحديثات التعديل
             if (update.updateType === 'session_edit' && !update.isDeleted) {
+                console.log('🔄 استلام تحديث جلسة من الأدمن:', update.deviceLabel);
+                
+                // البحث في جميع التواريخ عن الجلسة الأصلية
                 Object.keys(storage).forEach(date => {
-                    storage[date].completed = storage[date].completed.map(session => {
-                        const matches = 
-                            (update.sessionId && session.id === update.sessionId) ||
-                            (session.deviceLabel === update.originalDeviceLabel &&
-                             session.startISO === update.originalStartISO);
+                    const sessionIndex = storage[date].completed.findIndex(session => 
+                        session.deviceLabel === update.originalDeviceLabel &&
+                        session.startISO === update.originalStartISO &&
+                        session.endISO === update.originalEndISO
+                    );
+                    
+                    if (sessionIndex !== -1) {
+                        console.log('✅ وجدت الجلسة للتحديث:', update.originalDeviceLabel);
                         
-                        if (matches) {
-                            hasChanges = true;
-                            console.log('🔄 تحديث جلسة من الأدمن:', session.deviceLabel);
-                            return {
-                                ...session,
-                                deviceLabel: update.deviceLabel || session.deviceLabel,
-                                price: update.price !== undefined ? update.price : session.price,
-                                drinks: update.drinks || session.drinks,
-                                mode: update.mode || session.mode,
-                                duration: update.duration || session.duration,
-                                updatedByAdmin: true,
-                                lastUpdate: new Date().toISOString()
-                            };
-                        }
-                        return session;
-                    });
+                        // تحديث الجلسة الموجودة
+                        storage[date].completed[sessionIndex] = {
+                            ...storage[date].completed[sessionIndex],
+                            deviceLabel: update.deviceLabel || update.originalDeviceLabel,
+                            price: update.price !== undefined ? update.price : update.originalPrice,
+                            drinks: update.drinks || storage[date].completed[sessionIndex].drinks,
+                            mode: update.mode || storage[date].completed[sessionIndex].mode,
+                            duration: update.duration || storage[date].completed[sessionIndex].duration,
+                            updatedByAdmin: true,
+                            lastUpdate: new Date().toISOString(),
+                            id: update.sessionId || storage[date].completed[sessionIndex].id
+                        };
+                        
+                        hasChanges = true;
+                        console.log('✅ تم تحديث الجلسة:', update.deviceLabel);
+                    }
                 });
             }
             
             // معالجة حذف الجلسات
             if (update.updateType === 'session_delete' && update.isDeleted) {
+                console.log('🗑️ استلام طلب حذف جلسة من الأدمن:', update.originalDeviceLabel);
+                
                 Object.keys(storage).forEach(date => {
                     const originalLength = storage[date].completed.length;
                     storage[date].completed = storage[date].completed.filter(session => {
                         const matches = 
                             (update.sessionId && session.id === update.sessionId) ||
                             (session.deviceLabel === update.originalDeviceLabel &&
-                             session.startISO === update.originalStartISO);
+                             session.startISO === update.originalStartISO &&
+                             session.endISO === update.originalEndISO);
                         
                         if (matches) {
-                            console.log('🗑️ حذف جلسة بناءً على طلب الأدمن:', session.deviceLabel);
+                            console.log('🗑️ تم حذف الجلسة بناءً على طلب الأدمن:', session.deviceLabel);
                             return false;
                         }
                         return true;
@@ -1140,71 +1778,91 @@ onSnapshot(sessionsUpdatesQuery, (snapshot) => {
         setStorage(storage);
         initLocal();
         renderDevices();
-        showNotification('تم تحديث الجلسات من الإدارة');
+        showNotification('🔄 تم تحديث الجلسات من الإدارة');
     }
     hideSyncIndicator();
 });
 
-// الاستماع للجلسات المكتملة مع فلترة البيانات الممسوحة
-const sessionsQuery = query(collection(db, 'sessions'), orderBy('createdAt', 'desc'));
-onSnapshot(sessionsQuery, (snapshot) => {
-    showSyncIndicator();
-    const storage = getStorage();
-    let hasUpdates = false;
+// دالة تنظيف الجلسات المكررة يدوياً
+function cleanDuplicateSessions() {
+    const s = getStorage();
+    let totalRemoved = 0;
     
-    snapshot.forEach(doc => {
-        const firebaseSession = { id: doc.id, ...doc.data() };
-        
-        // 🔥 فلترة: تجاهل الجلسات التي تم مسحها
-        const sessionDate = firebaseSession.createdAt || firebaseSession.startISO;
-        if (dataClearDate && new Date(sessionDate) < new Date(dataClearDate)) {
-            console.log('⏩ تجاهل جلسة قديمة تم مسحها:', firebaseSession.deviceLabel);
-            return;
-        }
-        
-        const sessionDateStr = firebaseSession.date || todayKey();
-        
-        if (!storage[sessionDateStr]) {
-            storage[sessionDateStr] = { open: {}, completed: [] };
-        }
-        
-        const existingIndex = storage[sessionDateStr].completed.findIndex(
-            s => s.id === firebaseSession.id
-        );
-        
-        if (existingIndex === -1) {
-            const isDuplicate = storage[sessionDateStr].completed.some(s => 
-                s.deviceLabel === firebaseSession.deviceLabel &&
-                s.startISO === firebaseSession.startISO &&
-                s.endISO === firebaseSession.endISO
-            );
+    Object.keys(s).forEach(date => {
+        if (s[date].completed) {
+            const uniqueSessions = [];
+            const sessionKeys = new Set();
             
-            if (!isDuplicate) {
-                storage[sessionDateStr].completed.push(firebaseSession);
-                hasUpdates = true;
-            }
-        } else {
-            const existing = storage[sessionDateStr].completed[existingIndex];
-            if (JSON.stringify(existing) !== JSON.stringify(firebaseSession)) {
-                storage[sessionDateStr].completed[existingIndex] = {
-                    ...firebaseSession,
-                    updatedByAdmin: true,
-                    lastUpdate: new Date().toISOString()
-                };
-                hasUpdates = true;
-            }
+            s[date].completed.forEach(session => {
+                const sessionKey = session.id || 
+                    `${session.deviceLabel}_${session.startISO}_${session.endISO}_${session.price}_${session.mode}`;
+                
+                if (!sessionKeys.has(sessionKey)) {
+                    sessionKeys.add(sessionKey);
+                    uniqueSessions.push(session);
+                } else {
+                    totalRemoved++;
+                    console.log('🧹 حذف جلسة مكررة:', session.deviceLabel);
+                }
+            });
+            
+            s[date].completed = uniqueSessions;
         }
     });
     
-    if (hasUpdates) {
-        setStorage(storage);
+    setStorage(s);
+    
+    if (totalRemoved > 0) {
+        alert(`✅ تم تنظيف ${totalRemoved} جلسة مكررة`);
         initLocal();
         renderDevices();
-        showNotification('تم تحديث الجلسات من الإدارة');
+    } else {
+        alert('✅ لا توجد جلسات مكررة');
     }
-    hideSyncIndicator();
-});
+}
 
+// // جعل الدالة متاحة globally للاستخدام من console
+// window.cleanDuplicateSessions = cleanDuplicateSessions;
+// // دالة تنظيف الجلسات المكررة يدوياً
+// function cleanDuplicateSessions() {
+//     const s = getStorage();
+//     let totalRemoved = 0;
+    
+//     Object.keys(s).forEach(date => {
+//         if (s[date].completed) {
+//             const uniqueSessions = [];
+//             const sessionKeys = new Set();
+            
+//             s[date].completed.forEach(session => {
+//                 const sessionKey = session.id || 
+//                     `${session.deviceLabel}_${session.startISO}_${session.endISO}_${session.price}_${session.mode}`;
+                
+//                 if (!sessionKeys.has(sessionKey)) {
+//                     sessionKeys.add(sessionKey);
+//                     uniqueSessions.push(session);
+//                 } else {
+//                     totalRemoved++;
+//                     console.log('🧹 حذف جلسة مكررة:', session.deviceLabel);
+//                 }
+//             });
+            
+//             s[date].completed = uniqueSessions;
+//         }
+//     });
+    
+//     setStorage(s);
+    
+//     if (totalRemoved > 0) {
+//         alert(`✅ تم تنظيف ${totalRemoved} جلسة مكررة`);
+//         initLocal();
+//         renderDevices();
+//     } else {
+//         alert('✅ لا توجد جلسات مكررة');
+//     }
+// }
+
+// إضافة زر التنظيف في الـ admin أو يمكنك تشغيله من console
+// cleanDuplicateSessions();
 // الاستماع لتحديثات الأدمن مع فلترة البيانات الممسوحة
 const updatesQuery = query(collection(db, 'sessionUpdates'), orderBy('updatedAt', 'desc'));
 onSnapshot(updatesQuery, (snapshot) => {
@@ -1463,7 +2121,6 @@ onSnapshot(updatesQuery, (snapshot) => {
       endTotal.value = roundedPrice; 
       modalEnd.classList.add('active'); 
   }
-
   confirmEnd.addEventListener('click', async ()=>{ 
   const idx = selectedIdx; 
   const dev = DEVICES[idx]; 
@@ -1480,6 +2137,9 @@ onSnapshot(updatesQuery, (snapshot) => {
   // تطبيق التقريب على السعر النهائي قبل الحفظ
   const roundedPrice = roundToNearestFive(price);
   
+  // إنشاء معرف فريد للجلسة
+  const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  
   const finished = { 
       deviceId: s.deviceId, 
       deviceLabel: s.deviceLabel, 
@@ -1488,15 +2148,20 @@ onSnapshot(updatesQuery, (snapshot) => {
       duration: durationText(mins), 
       drinks: s.drinks || [], 
       price: roundedPrice,
-      // إضافة معرف فريد لمنع التكرار
-      sessionId: `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      sessionId: sessionId,
+      mode: s.mode,
+      rateType: s.rateType,
+      createdAt: new Date().toISOString(),
+      createdBy: auth.currentUser ? auth.currentUser.email : 'unknown',
+      date: todayKey() // إضافة التاريخ الحالي
   }; 
   
   // التحقق من عدم وجود جلسة مكررة قبل الإضافة
   const isDuplicate = completedSessionsToday.some(existingSession => 
       existingSession.deviceLabel === finished.deviceLabel &&
       existingSession.startISO === finished.startISO &&
-      existingSession.endISO === finished.endISO
+      existingSession.endISO === finished.endISO &&
+      existingSession.price === finished.price
   );
   
   if (isDuplicate) {
@@ -1512,33 +2177,90 @@ onSnapshot(updatesQuery, (snapshot) => {
   modalEnd.classList.remove('active'); 
   
   try {
-      const user = auth.currentUser;
-      const now = new Date();
-
-      const payload = {
-          deviceId: s.deviceId,
-          deviceLabel: s.deviceLabel,
-          mode: s.mode,
-          startISO: s.startISO,
-          endISO: endISO,
-          duration: durationText(mins),
-          price: roundedPrice,
-          drinks: s.drinks || [],
-          createdBy: user ? user.email : "local",
-          createdAt: now.toISOString(),
-          date: now.toLocaleDateString("ar-EG"),
-          // نفس المعرف لمنع التكرار في المزامنة
-          sessionId: finished.sessionId
-      };
-
-      await addDoc(collection(db, "sessions"), payload);
+      // حفظ الجلسة في Firebase
+      await addDoc(collection(db, "sessions"), finished);
       console.log("✅ تم حفظ الجلسة في Firebase بنجاح");
       alert('تم إنهاء الجلسة. المجموع: ' + roundedPrice + ' ج'); 
   } catch (error) {
       console.error("❌ خطأ أثناء حفظ الجلسة:", error);
-      alert('❌ حدث خطأ أثناء حفظ الجلسة في Firebase');
+      alert('❌ حدث خطأ أثناء حفظ الجلسة في Firebase: ' + error.message);
   }
 });
+//   confirmEnd.addEventListener('click', async ()=>{ 
+//   const idx = selectedIdx; 
+//   const dev = DEVICES[idx]; 
+//   const id = dev.id; 
+//   const s = openSessions[id]; 
+//   if(!s) return alert('الجلسة غير موجودة'); 
+  
+//   const endISO = s.scheduledEndISO || nowISO(); 
+//   const mins = diffMinutes(s.startISO, endISO); 
+//   const drinksTotal = (s.drinks||[]).reduce((a,b)=>a+(b.price*b.qty),0); 
+//   const rate = RATES[s.rateType][s.mode]; 
+//   const price = Number((((mins/60)*rate) + drinksTotal).toFixed(2)); 
+  
+//   // تطبيق التقريب على السعر النهائي قبل الحفظ
+//   const roundedPrice = roundToNearestFive(price);
+  
+//   const finished = { 
+//       deviceId: s.deviceId, 
+//       deviceLabel: s.deviceLabel, 
+//       startISO: s.startISO, 
+//       endISO, 
+//       duration: durationText(mins), 
+//       drinks: s.drinks || [], 
+//       price: roundedPrice,
+//       // إضافة معرف فريد لمنع التكرار
+//       sessionId: `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+//   }; 
+  
+//   // التحقق من عدم وجود جلسة مكررة قبل الإضافة
+//   const isDuplicate = completedSessionsToday.some(existingSession => 
+//       existingSession.deviceLabel === finished.deviceLabel &&
+//       existingSession.startISO === finished.startISO &&
+//       existingSession.endISO === finished.endISO
+//   );
+  
+//   if (isDuplicate) {
+//       alert('⚠️ هذه الجلسة موجودة مسبقاً');
+//       return;
+//   }
+  
+//   completedSessionsToday.push(finished); 
+//   delete openSessions[id]; 
+//   persistLocal(); 
+//   await removeOpenSessionFromFirebase(id);
+//   renderDevices(); 
+//   modalEnd.classList.remove('active'); 
+  
+//   try {
+//       const user = auth.currentUser;
+//       const now = new Date();
+
+//       const payload = {
+//           deviceId: s.deviceId,
+//           deviceLabel: s.deviceLabel,
+//           mode: s.mode,
+//           startISO: s.startISO,
+//           endISO: endISO,
+//           duration: durationText(mins),
+//           price: roundedPrice,
+//           drinks: s.drinks || [],
+//           createdBy: user ? user.email : "local",
+//           createdAt: now.toISOString(),
+//           date: now.toLocaleDateString("ar-EG"),
+//           // نفس المعرف لمنع التكرار في المزامنة
+//           sessionId: finished.sessionId
+//       };
+
+//       await addDoc(collection(db, "sessions"), payload);
+//       console.log("✅ تم حفظ الجلسة في Firebase بنجاح");
+//       alert('تم إنهاء الجلسة. المجموع: ' + roundedPrice + ' ج'); 
+//   } catch (error) {
+//       console.error("❌ خطأ أثناء حفظ الجلسة:", error);
+//       alert('❌ حدث خطأ أثناء حفظ الجلسة في Firebase');
+//   }
+// });
   cancelEnd.addEventListener('click', ()=> modalEnd.classList.remove('active'));
 
   // event listeners النهائية
