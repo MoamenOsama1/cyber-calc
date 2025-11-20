@@ -811,66 +811,21 @@ textarea {
   let currentTab = 'today';
   let dataClearDate = localStorage.getItem('dataClearDate') || '';
 
-  // function initLocal(){ 
-  //   const s = getStorage(); 
-  //   const t = todayKey(); 
-    
-  //   if (!s[t]) s[t] = { open: {}, completed: [], expenses: [] }; 
-    
-  //   // إزالة الفلترة التلقائية للبيانات القديمة
-  //   // البيانات القديمة ستبقى محفوظة ولا يتم حذفها تلقائياً
-    
-  //   setStorage(s); 
-  //   openSessions = s[t].open || {}; 
-  //   completedSessionsToday = s[t].completed || []; 
-  //   expensesToday = s[t].expenses || [];
-    
-  //   // تحميل جميع الجلسات بدون حذف البيانات القديمة
-  //   allSessions = [];
-  //   Object.keys(s).forEach(date => {
-  //       if (s[date].completed) {
-  //           s[date].completed.forEach(session => {
-  //               if (!session.isDeleted) {
-  //                   allSessions.push({
-  //                       ...session,
-  //                       date: date,
-  //                       isToday: date === t
-  //                   });
-  //               }
-  //           });
-  //       }
-  //   });
-  // }
   function initLocal(){ 
     const s = getStorage(); 
     const t = todayKey(); 
     
     if (!s[t]) s[t] = { open: {}, completed: [], expenses: [] }; 
     
-    // تنظيف الجلسات المكررة عند التهيئة
-    if (s[t].completed) {
-        const uniqueSessions = [];
-        const sessionKeys = new Set();
-        
-        s[t].completed.forEach(session => {
-            const sessionKey = session.id || 
-                `${session.deviceLabel}_${session.startISO}_${session.endISO}_${session.price}_${session.mode}`;
-            
-            if (!sessionKeys.has(sessionKey)) {
-                sessionKeys.add(sessionKey);
-                uniqueSessions.push(session);
-            }
-        });
-        
-        s[t].completed = uniqueSessions;
-    }
+    // إزالة الفلترة التلقائية للبيانات القديمة
+    // البيانات القديمة ستبقى محفوظة ولا يتم حذفها تلقائياً
     
     setStorage(s); 
     openSessions = s[t].open || {}; 
     completedSessionsToday = s[t].completed || []; 
     expensesToday = s[t].expenses || [];
     
-    // تحميل جميع الجلسات
+    // تحميل جميع الجلسات بدون حذف البيانات القديمة
     allSessions = [];
     Object.keys(s).forEach(date => {
         if (s[date].completed) {
@@ -885,7 +840,53 @@ textarea {
             });
         }
     });
-}
+  }
+  
+  // function initLocal(){ 
+  //   const s = getStorage(); 
+  //   const t = todayKey(); 
+    
+  //   if (!s[t]) s[t] = { open: {}, completed: [], expenses: [] }; 
+    
+  //   // تنظيف الجلسات المكررة عند التهيئة
+  //   if (s[t].completed) {
+  //       const uniqueSessions = [];
+  //       const sessionKeys = new Set();
+        
+  //       s[t].completed.forEach(session => {
+  //           const sessionKey = session.id || 
+  //               `${session.deviceLabel}_${session.startISO}_${session.endISO}_${session.price}_${session.mode}`;
+            
+  //           if (!sessionKeys.has(sessionKey)) {
+  //               sessionKeys.add(sessionKey);
+  //               uniqueSessions.push(session);
+  //           }
+  //       });
+        
+  //       s[t].completed = uniqueSessions;
+  //   }
+    
+  //   setStorage(s); 
+  //   openSessions = s[t].open || {}; 
+  //   completedSessionsToday = s[t].completed || []; 
+  //   expensesToday = s[t].expenses || [];
+    
+  //   // تحميل جميع الجلسات
+  //   allSessions = [];
+  //   Object.keys(s).forEach(date => {
+  //       if (s[date].completed) {
+  //           s[date].completed.forEach(session => {
+  //               if (!session.isDeleted) {
+  //                   allSessions.push({
+  //                       ...session,
+  //                       date: date,
+  //                       isToday: date === t
+  //                   });
+  //               }
+  //           });
+  //       }
+  //   });
+// }
   // function persistLocal(){ 
   //   const s = getStorage(); 
   //   const t = todayKey(); 
@@ -906,7 +907,7 @@ textarea {
         
   //       s[t].completed = uniqueSessions;
   //   }
-    
+  //    // تحديث اليوم الحالي فقط، مع الاحتفاظ بالبيانات القديمة
   //   s[t] = { open: openSessions, completed: completedSessionsToday, expenses: expensesToday }; 
   //   setStorage(s); 
   //   initLocal();
@@ -1405,6 +1406,7 @@ modalEndShift.addEventListener('click', (e) => {
     sessionsToShow.filter(session => !session.isDeleted).forEach(session => {
         const key = `${session.deviceLabel}_${session.startISO}_${session.endISO}`;
         
+        // الاحتفاظ بأحدث نسخة من الجلسة
         if (!latestSessions.has(key) || 
             (session.updatedByAdmin && !latestSessions.get(key).updatedByAdmin) ||
             (session.lastUpdate > (latestSessions.get(key).lastUpdate || ''))) {
@@ -1443,6 +1445,8 @@ modalEndShift.addEventListener('click', (e) => {
         completedTbody.appendChild(tr);
     });
 }
+    
+
   function renderExpenses() {
     const expensesTbody = document.querySelector('#expensesTable tbody');
     expensesTbody.innerHTML = '';
@@ -1696,6 +1700,8 @@ async function clearAllDataPermanently() {
 //     hideSyncIndicator();
 // });
 /// الاستماع لتحديثات الجلسات في الوقت الحقيقي - نسخة محسنة
+// 🔄 نظام مزامنة محسن - الاستماع لتحديثات الأدمن
+// نظام مزامنة محسن واحد فقط - إزالة التكرار
 const sessionsUpdatesQuery = query(collection(db, 'sessionUpdates'), orderBy('updatedAt', 'desc'));
 onSnapshot(sessionsUpdatesQuery, (snapshot) => {
     showSyncIndicator();
@@ -1727,7 +1733,7 @@ onSnapshot(sessionsUpdatesQuery, (snapshot) => {
                     if (sessionIndex !== -1) {
                         console.log('✅ وجدت الجلسة للتحديث:', update.originalDeviceLabel);
                         
-                        // تحديث الجلسة الموجودة
+                        // تحديث الجلسة الموجودة بدلاً من إنشاء نسخة جديدة
                         storage[date].completed[sessionIndex] = {
                             ...storage[date].completed[sessionIndex],
                             deviceLabel: update.deviceLabel || update.originalDeviceLabel,
