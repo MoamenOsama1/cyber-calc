@@ -34,51 +34,51 @@
     .right{text-align:right}
     .session-updated { background: rgba(0, 200, 83, 0.1); }
     .financial-summary { background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; margin-top: 12px; }
+    
+    /* أنماط إضافية لتقارير الشيفتات */
+    .shift-report {
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 10px;
+      padding: 15px;
+      margin: 10px 0;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .shift-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+      margin: 15px 0;
+    }
+
+    .shift-stat-item {
+      text-align: center;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+    }
+
+    .shift-stat-value {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: var(--accent);
+      display: block;
+    }
+
+    .shift-stat-label {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+      font-family: inherit;
+    }
+
     @media(max-width:700px){
       .filters{flex-direction:column;align-items:stretch}
       .stats{flex-direction:column}
-
-
-      /* أنماط إضافية لتقارير الشيفتات */
-.shift-report {
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 10px;
-  padding: 15px;
-  margin: 10px 0;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.shift-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 10px;
-  margin: 15px 0;
-}
-
-.shift-stat-item {
-  text-align: center;
-  padding: 10px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-}
-
-.shift-stat-value {
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: var(--accent);
-  display: block;
-}
-
-.shift-stat-label {
-  font-size: 0.8rem;
-  color: var(--muted);
-}
-
-textarea {
-  resize: vertical;
-  min-height: 80px;
-  font-family: inherit;
-}
     }
   </style>
 </head>
@@ -141,31 +141,30 @@ textarea {
         </table>
       </div>
     </div>
-  </div>
 
-
-  <!-- قسم تقارير الشيفتات -->
-<div style="margin-top: 20px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-      <h3 style="margin: 0;">📋 تقارير الشيفتات</h3>
-      <button id="refreshShiftsBtn" class="btn secondary">🔄 تحديث</button>
+    <!-- قسم تقارير الشيفتات -->
+    <div style="margin-top: 20px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <h3 style="margin: 0;">📋 تقارير الشيفتات</h3>
+        <button id="refreshShiftsBtn" class="btn secondary">🔄 تحديث</button>
+      </div>
+      
+      <table id="shiftsTable">
+        <thead>
+          <tr>
+            <th>المستخدم</th>
+            <th>التاريخ</th>
+            <th>الجلسات</th>
+            <th>الإيرادات</th>
+            <th>المصروفات</th>
+            <th>الصافي</th>
+            <th>الوقت</th>
+            <th>عمليات</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
     </div>
-    
-    <table id="shiftsTable">
-      <thead>
-        <tr>
-          <th>المستخدم</th>
-          <th>التاريخ</th>
-          <th>الجلسات</th>
-          <th>الإيرادات</th>
-          <th>المصروفات</th>
-          <th>الصافي</th>
-          <th>الوقت</th>
-          <th>عمليات</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
   </div>
   
   <!-- مودال تفاصيل الشيفت -->
@@ -229,12 +228,11 @@ textarea {
       appId: "1:699813217029:web:568e169371a2361358ad6c"
     };
 
-    
-
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
+    // عناصر DOM
     const selectedDateEl = document.getElementById('selectedDate');
     const tableBody = document.querySelector('#sessionsTable tbody');
     const sessionCountEl = document.getElementById('sessionCount');
@@ -259,156 +257,20 @@ textarea {
     const saveEditBtn = document.getElementById('saveEditBtn');
     const cancelEditBtn = document.getElementById('cancelEditBtn');
 
-    const adminEmails = ["moosama@gmail.com", "ahmed@gmail.com", "mahmoud@gmail.com"];
-
-
-
     // عناصر تقارير الشيفتات
-const shiftsTable = document.querySelector('#shiftsTable tbody');
-const refreshShiftsBtn = document.getElementById('refreshShiftsBtn');
-const shiftDetailsModal = document.getElementById('shiftDetailsModal');
-const shiftDetailsContent = document.getElementById('shiftDetailsContent');
-const closeShiftDetails = document.getElementById('closeShiftDetails');
+    const shiftsTable = document.querySelector('#shiftsTable tbody');
+    const refreshShiftsBtn = document.getElementById('refreshShiftsBtn');
+    const shiftDetailsModal = document.getElementById('shiftDetailsModal');
+    const shiftDetailsContent = document.getElementById('shiftDetailsContent');
+    const closeShiftDetails = document.getElementById('closeShiftDetails');
 
-let allShiftReports = [];
-
-// دالة جلب تقارير الشيفتات
-function setupShiftReportsListener() {
-  const shiftsCol = collection(db, 'shiftReports');
-  const q = query(shiftsCol, orderBy('timestamp', 'desc'));
-  
-  onSnapshot(q, (snapshot) => {
-    allShiftReports = [];
-    snapshot.forEach(doc => {
-      allShiftReports.push({
-        id: doc.id,
-        ...doc.data()
-      });
-    });
-    renderShiftReports();
-  });
-}
-
-// دالة عرض تقارير الشيفتات
-function renderShiftReports() {
-  shiftsTable.innerHTML = '';
-  
-  if (allShiftReports.length === 0) {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td colspan="8" style="text-align: center; padding: 20px; color: var(--muted);">لا توجد تقارير شيفتات</td>`;
-    shiftsTable.appendChild(tr);
-    return;
-  }
-  
-  allShiftReports.forEach(shift => {
-    const tr = document.createElement('tr');
-    
-    tr.innerHTML = `
-      <td>${shift.userName || shift.userEmail}</td>
-      <td>${shift.date}</td>
-      <td>${shift.completedSessions}</td>
-      <td>${shift.grossRevenue?.toFixed(0) || 0} ج</td>
-      <td>${shift.totalExpenses?.toFixed(0) || 0} ج</td>
-      <td><strong>${shift.netRevenue?.toFixed(0) || 0} ج</strong></td>
-      <td>${new Date(shift.timestamp).toLocaleTimeString('ar-EG')}</td>
-      <td>
-        <button class="editBtn" data-shift-id="${shift.id}">👁️ عرض</button>
-      </td>
-    `;
-    
-    shiftsTable.appendChild(tr);
-  });
-
-  // إضافة event listeners لأزرار العرض
-  document.querySelectorAll('[data-shift-id]').forEach(btn => {
-    btn.onclick = () => showShiftDetails(btn.dataset.shiftId);
-  });
-}
-
-// دالة عرض تفاصيل الشيفت
-function showShiftDetails(shiftId) {
-  const shift = allShiftReports.find(s => s.id === shiftId);
-  if (!shift) return;
-  
-  let detailsHTML = `
-    <div class="financial-summary">
-      <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-        <span><strong>المستخدم:</strong></span>
-        <span>${shift.userName || shift.userEmail}</span>
-      </div>
-      <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-        <span><strong>التاريخ:</strong></span>
-        <span>${shift.date}</span>
-      </div>
-      <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-        <span><strong>وقت التسليم:</strong></span>
-        <span>${new Date(shift.timestamp).toLocaleString('ar-EG')}</span>
-      </div>
-    </div>
-    
-    <div class="financial-summary" style="margin-top: 16px;">
-      <h4 style="margin-bottom: 12px; text-align: center;">الإحصائيات المالية</h4>
-      <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-        <span>الجلسات المكتملة:</span>
-        <span>${shift.completedSessions}</span>
-      </div>
-      <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-        <span>الجلسات المفتوحة:</span>
-        <span>${shift.openSessions || 0}</span>
-      </div>
-      <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-        <span>الإيرادات الإجمالية:</span>
-        <span>${shift.grossRevenue?.toFixed(0) || 0} ج</span>
-      </div>
-      <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-        <span>إجمالي المصروفات:</span>
-        <span>${shift.totalExpenses?.toFixed(0) || 0} ج</span>
-      </div>
-      <div style="display: flex; justify-content: space-between; font-weight: bold; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 8px;">
-        <span>صافي الإيرادات:</span>
-        <span style="color: ${shift.netRevenue >= 0 ? '#00c853' : '#ff5252'}">${shift.netRevenue?.toFixed(0) || 0} ج</span>
-      </div>
-    </div>
-  `;
-  
-  // إضافة الملاحظات إذا وجدت
-  if (shift.notes) {
-    detailsHTML += `
-      <div class="financial-summary" style="margin-top: 16px;">
-        <h4 style="margin-bottom: 8px;">ملاحظات الشيفت</h4>
-        <p style="color: var(--muted); line-height: 1.5;">${shift.notes}</p>
-      </div>
-    `;
-  }
-  
-  shiftDetailsContent.innerHTML = detailsHTML;
-  shiftDetailsModal.classList.add('active');
-}
-
-// Event Listeners
-refreshShiftsBtn.onclick = () => {
-  renderShiftReports();
-  alert('تم تحديث تقارير الشيفتات');
-};
-
-closeShiftDetails.onclick = () => {
-  shiftDetailsModal.classList.remove('active');
-};
-
-// إغلاق المودال بالضغط على الخلفية
-shiftDetailsModal.addEventListener('click', (e) => {
-  if (e.target === shiftDetailsModal) {
-    shiftDetailsModal.classList.remove('active');
-  }
-});
-
-// في دالة onAuthStateChanged، أضف استدعاء لدالة الشيفتات
-// بعد سطر setupFirebaseListeners();
-setupShiftReportsListener();
+    const adminEmails = ["moosama@gmail.com", "ahmed@gmail.com", "mahmoud@gmail.com"];
 
     let allSessions = [], filteredSessions = [], editingId = null;
     let allExpenses = [], filteredExpenses = [];
+    let allShiftReports = [];
 
+    // ========== دوال المساعدة ==========
     function parseToISO(val){
       if(!val) return null;
       if(val.includes('T')||val.endsWith('Z')) return val;
@@ -433,186 +295,262 @@ setupShiftReportsListener();
       return `${hh}:${m.toString().padStart(2,'0')} ${suffix}`;
     }
 
-    // 🔄 دالة محسنة لحفظ التعديلات مع المزامنة الفورية
-async function saveEditToSyncCollection(sessionId, updatedData, originalSession) {
-    try {
-        const syncRef = collection(db, 'sessionUpdates');
-        
-        // تنظيف أي تحديثات قديمة لنفس الجلسة
-        const q = query(syncRef, where("sessionId", "==", sessionId));
-        const querySnapshot = await getDocs(q);
-        
-        const deletePromises = querySnapshot.docs.map(doc => deleteDoc(doc.ref));
-        await Promise.all(deletePromises);
-        
-        let drinksData = updatedData.drinks;
-        if (typeof drinksData === 'string' && drinksData.trim() !== '') {
-            drinksData = drinksData.split(',').map(item => {
-                const parts = item.split('×');
-                if (parts.length === 2) {
-                    return { 
-                        name: parts[0].trim(), 
-                        qty: parseInt(parts[1]) || 1 
-                    };
-                } else {
-                    return { name: item.trim(), qty: 1 };
-                }
-            }).filter(item => item.name && item.name !== '-');
-        } else {
-            drinksData = originalSession.drinks || [];
-        }
-        
-        const updatePayload = {
-            sessionId: sessionId,
-            deviceLabel: updatedData.deviceLabel,
-            price: Number(updatedData.price),
-            drinks: drinksData,
-            mode: updatedData.mode,
-            duration: updatedData.duration,
-            startISO: updatedData.startISO,
-            endISO: updatedData.endISO,
-            
-            // حفظ البيانات الأصلية للمطابقة
-            originalPrice: originalSession.price,
-            originalCreatedBy: originalSession.createdBy,
-            originalDeviceLabel: originalSession.deviceLabel,
-            originalStartISO: originalSession.startISO,
-            originalEndISO: originalSession.endISO,
-            originalDate: originalSession.date,
-            
-            updatedAt: new Date().toISOString(),
-            updatedBy: auth.currentUser.email,
-            date: originalSession.date,
-            
-            isAdminUpdate: true,
-            updateType: 'session_edit',
-            isDeleted: false
-        };
-        
-        await addDoc(syncRef, updatePayload);
-        console.log('✅ تم حفظ التعديلات في collection المزامنة:', updatePayload);
-        return true;
-    } catch (error) {
-        console.error('❌ خطأ في حفظ التعديلات للمزامنة:', error);
-        throw error;
-    }
-}
-
-    // // 🔧 دالة جديدة لحفظ إشعارات الحذف للمزامنة
-    // async function saveDeleteToSyncCollection(sessionId, sessionData) {
-    //     try {
-    //         const syncRef = collection(db, 'sessionUpdates');
-    //         const deletePayload = {
-    //             sessionId: sessionId,
-    //             deviceLabel: sessionData.deviceLabel,
-    //             originalPrice: sessionData.price,
-    //             originalCreatedBy: sessionData.createdBy,
-    //             originalDeviceLabel: sessionData.deviceLabel,
-    //             originalStartISO: sessionData.startISO,
-    //             originalEndISO: sessionData.endISO,
-    //             originalDate: sessionData.date,
-                
-    //             updatedAt: new Date().toISOString(),
-    //             updatedBy: auth.currentUser.email,
-    //             date: sessionData.date,
-                
-    //             isAdminUpdate: true,
-    //             updateType: 'session_delete',
-    //             isDeleted: true
-    //         };
-            
-    //         await addDoc(syncRef, deletePayload);
-    //         console.log('✅ تم حفظ إشعار الحذف في collection المزامنة:', deletePayload);
-    //         return true;
-    //     } catch (error) {
-    //         console.error('❌ خطأ في حفظ إشعار الحذف:', error);
-    //         throw error;
-    //     }
-    // }
-    // 🔄 دالة محسنة لحفظ التعديلات مع المزامنة الفورية
-async function saveEditToSyncCollection(sessionId, updatedData, originalSession) {
-    try {
-        const syncRef = collection(db, 'sessionUpdates');
-        
-        // تنظيف أي تحديثات قديمة لنفس الجلسة
-        const q = query(syncRef, where("sessionId", "==", sessionId));
-        const querySnapshot = await getDocs(q);
-        
-        const deletePromises = querySnapshot.docs.map(doc => deleteDoc(doc.ref));
-        await Promise.all(deletePromises);
-        
-        let drinksData = updatedData.drinks;
-        if (typeof drinksData === 'string' && drinksData.trim() !== '') {
-            drinksData = drinksData.split(',').map(item => {
-                const parts = item.split('×');
-                if (parts.length === 2) {
-                    return { 
-                        name: parts[0].trim(), 
-                        qty: parseInt(parts[1]) || 1 
-                    };
-                } else {
-                    return { name: item.trim(), qty: 1 };
-                }
-            }).filter(item => item.name && item.name !== '-');
-        } else {
-            drinksData = originalSession.drinks || [];
-        }
-        
-        const updatePayload = {
-            sessionId: sessionId,
-            deviceLabel: updatedData.deviceLabel,
-            price: Number(updatedData.price),
-            drinks: drinksData,
-            mode: updatedData.mode,
-            duration: updatedData.duration,
-            startISO: updatedData.startISO,
-            endISO: updatedData.endISO,
-            
-            // حفظ البيانات الأصلية للمطابقة
-            originalPrice: originalSession.price,
-            originalCreatedBy: originalSession.createdBy,
-            originalDeviceLabel: originalSession.deviceLabel,
-            originalStartISO: originalSession.startISO,
-            originalEndISO: originalSession.endISO,
-            originalDate: originalSession.date,
-            
-            updatedAt: new Date().toISOString(),
-            updatedBy: auth.currentUser.email,
-            date: originalSession.date,
-            
-            isAdminUpdate: true,
-            updateType: 'session_edit',
-            isDeleted: false
-        };
-        
-        await addDoc(syncRef, updatePayload);
-        console.log('✅ تم حفظ التعديلات في collection المزامنة:', updatePayload);
-        return true;
-    } catch (error) {
-        console.error('❌ خطأ في حفظ التعديلات للمزامنة:', error);
-        throw error;
-    }
-}
-
-    // 🔄 دالة محسنة لحذف الجلسات مع المزامنة
-    async function deleteSession(id) {
-        if (!confirm('هل أنت متأكد من حذف هذه الجلسة؟')) return;
-        
+    // ========== دوال المزامنة ==========
+    async function saveDeleteToSyncCollection(sessionId, sessionData) {
         try {
-            const session = allSessions.find(x => x.id === id);
-            if (!session) return;
+            const syncRef = collection(db, 'sessionUpdates');
+            const deletePayload = {
+                sessionId: sessionId,
+                deviceLabel: sessionData.deviceLabel,
+                originalPrice: sessionData.price,
+                originalCreatedBy: sessionData.createdBy,
+                originalDeviceLabel: sessionData.deviceLabel,
+                originalStartISO: sessionData.startISO,
+                originalEndISO: sessionData.endISO,
+                originalDate: sessionData.date,
+                
+                updatedAt: new Date().toISOString(),
+                updatedBy: auth.currentUser.email,
+                date: sessionData.date,
+                
+                isAdminUpdate: true,
+                updateType: 'session_delete',
+                isDeleted: true
+            };
             
-            await saveDeleteToSyncCollection(id, session.data);
-            await deleteDoc(doc(db, 'sessions', id));
-            
-            alert('🗑️ تم حذف الجلسة بنجاح وسيتم مزامنة الحذف مع جميع الأجهزة');
-            
+            await addDoc(syncRef, deletePayload);
+            console.log('✅ تم حفظ إشعار الحذف في collection المزامنة:', deletePayload);
+            return true;
         } catch (error) {
-            alert('❌ حدث خطأ في حذف الجلسة: ' + error.message);
+            console.error('❌ خطأ في حفظ إشعار الحذف:', error);
+            throw error;
         }
     }
 
-    // جلب المصروفات من localStorage
+    async function saveEditToSyncCollection(sessionId, updatedData, originalSession) {
+    try {
+        const syncRef = collection(db, 'sessionUpdates');
+        
+        // تنظيف أي تحديثات قديمة لنفس الجلسة
+        const q = query(syncRef, where("sessionId", "==", sessionId));
+        const querySnapshot = await getDocs(q);
+        
+        const deletePromises = querySnapshot.docs.map(doc => deleteDoc(doc.ref));
+        await Promise.all(deletePromises);
+        
+        let drinksData = updatedData.drinks;
+        if (typeof drinksData === 'string' && drinksData.trim() !== '') {
+            drinksData = drinksData.split(',').map(item => {
+                const parts = item.split('×');
+                if (parts.length === 2) {
+                    return { 
+                        name: parts[0].trim(), 
+                        qty: parseInt(parts[1]) || 1 
+                    };
+                } else {
+                    return { name: item.trim(), qty: 1 };
+                }
+            }).filter(item => item.name && item.name !== '-');
+        } else {
+            drinksData = originalSession.drinks || [];
+        }
+        
+        // 🔥 إضافة timestamp فريد للتأكد من معالجة التحديثات الجديدة فقط
+        const updateTimestamp = new Date().toISOString();
+        
+        const updatePayload = {
+            sessionId: sessionId,
+            deviceLabel: updatedData.deviceLabel,
+            price: Number(updatedData.price),
+            drinks: drinksData,
+            mode: updatedData.mode,
+            duration: updatedData.duration,
+            startISO: updatedData.startISO,
+            endISO: updatedData.endISO,
+            
+            // حفظ البيانات الأصلية للمطابقة
+            originalPrice: originalSession.price,
+            originalCreatedBy: originalSession.createdBy,
+            originalDeviceLabel: originalSession.deviceLabel,
+            originalStartISO: originalSession.startISO,
+            originalEndISO: originalSession.endISO,
+            originalDate: originalSession.date,
+            
+            updatedAt: updateTimestamp,
+            updatedBy: auth.currentUser.email,
+            date: originalSession.date,
+            
+            isAdminUpdate: true,
+            updateType: 'session_edit',
+            isDeleted: false,
+            
+            // 🔥 إضافة معرف فريد للتحديث لمنع التكرار
+            syncId: `sync_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            // 🔥 إضافة علامة زمنية للتأكد من معالجة التحديثات الجديدة فقط
+            processed: false
+        };
+        
+        await addDoc(syncRef, updatePayload);
+        console.log('✅ تم حفظ التعديلات في collection المزامنة:', updatePayload);
+        return true;
+    } catch (error) {
+        console.error('❌ خطأ في حفظ التعديلات للمزامنة:', error);
+        throw error;
+    }
+}
+
+
+
+    // ========== دوال localStorage ==========
+    function getStorage() {
+        return JSON.parse(localStorage.getItem('biancoSessionsLocal') || '{}');
+    }
+
+    function setStorage(data) {
+        localStorage.setItem('biancoSessionsLocal', JSON.stringify(data));
+    }
+
+    function initLocal() {
+        console.log('تهيئة البيانات المحلية');
+    }
+
+    function renderDevices() {
+        console.log('عرض الأجهزة');
+    }
+
+    // ========== دوال تقارير الشيفتات ==========
+    function setupShiftReportsListener() {
+      const shiftsCol = collection(db, 'shiftReports');
+      const q = query(shiftsCol, orderBy('timestamp', 'desc'));
+      
+      onSnapshot(q, (snapshot) => {
+        allShiftReports = [];
+        snapshot.forEach(doc => {
+          allShiftReports.push({
+            id: doc.id,
+            ...doc.data()
+          });
+        });
+        renderShiftReports();
+      });
+    }
+
+    function renderShiftReports() {
+      shiftsTable.innerHTML = '';
+      
+      if (allShiftReports.length === 0) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td colspan="8" style="text-align: center; padding: 20px; color: var(--muted);">لا توجد تقارير شيفتات</td>`;
+        shiftsTable.appendChild(tr);
+        return;
+      }
+      
+      allShiftReports.forEach(shift => {
+        const tr = document.createElement('tr');
+        
+        tr.innerHTML = `
+          <td>${shift.userName || shift.userEmail}</td>
+          <td>${shift.date}</td>
+          <td>${shift.completedSessions}</td>
+          <td>${shift.grossRevenue?.toFixed(0) || 0} ج</td>
+          <td>${shift.totalExpenses?.toFixed(0) || 0} ج</td>
+          <td><strong>${shift.netRevenue?.toFixed(0) || 0} ج</strong></td>
+          <td>${new Date(shift.timestamp).toLocaleTimeString('ar-EG')}</td>
+          <td>
+            <button class="editBtn" data-shift-id="${shift.id}">👁️ عرض</button>
+          </td>
+        `;
+        
+        shiftsTable.appendChild(tr);
+      });
+
+      // إضافة event listeners لأزرار العرض
+      document.querySelectorAll('[data-shift-id]').forEach(btn => {
+        btn.onclick = () => showShiftDetails(btn.dataset.shiftId);
+      });
+    }
+
+    function showShiftDetails(shiftId) {
+      const shift = allShiftReports.find(s => s.id === shiftId);
+      if (!shift) return;
+      
+      let detailsHTML = `
+        <div class="financial-summary">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span><strong>المستخدم:</strong></span>
+            <span>${shift.userName || shift.userEmail}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span><strong>التاريخ:</strong></span>
+            <span>${shift.date}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span><strong>وقت التسليم:</strong></span>
+            <span>${new Date(shift.timestamp).toLocaleString('ar-EG')}</span>
+          </div>
+        </div>
+        
+        <div class="financial-summary" style="margin-top: 16px;">
+          <h4 style="margin-bottom: 12px; text-align: center;">الإحصائيات المالية</h4>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span>الجلسات المكتملة:</span>
+            <span>${shift.completedSessions}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span>الجلسات المفتوحة:</span>
+            <span>${shift.openSessions || 0}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span>الإيرادات الإجمالية:</span>
+            <span>${shift.grossRevenue?.toFixed(0) || 0} ج</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span>إجمالي المصروفات:</span>
+            <span>${shift.totalExpenses?.toFixed(0) || 0} ج</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-weight: bold; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 8px;">
+            <span>صافي الإيرادات:</span>
+            <span style="color: ${shift.netRevenue >= 0 ? '#00c853' : '#ff5252'}">${shift.netRevenue?.toFixed(0) || 0} ج</span>
+          </div>
+        </div>
+      `;
+      
+      // إضافة الملاحظات إذا وجدت
+      if (shift.notes) {
+        detailsHTML += `
+          <div class="financial-summary" style="margin-top: 16px;">
+            <h4 style="margin-bottom: 8px;">ملاحظات الشيفت</h4>
+            <p style="color: var(--muted); line-height: 1.5;">${shift.notes}</p>
+          </div>
+        `;
+      }
+      
+      shiftDetailsContent.innerHTML = detailsHTML;
+      shiftDetailsModal.classList.add('active');
+    }
+
+    // ========== دوال الجلسات والمصروفات ==========
+    function setupFirebaseListeners() {
+        const sessionsCol = collection(db, 'sessions');
+        const q = query(sessionsCol, orderBy('createdAt', 'desc'));
+        
+        onSnapshot(q, snap => {
+            allSessions = [];
+            snap.forEach(docSnap => {
+                allSessions.push({
+                    id: docSnap.id, 
+                    data: docSnap.data()
+                });
+            });
+            
+            // جلب المصروفات من localStorage
+            allExpenses = getExpensesFromLocalStorage();
+            
+            populateDates();
+            applyFilter();
+        });
+    }
+
     function getExpensesFromLocalStorage() {
         try {
             const storage = JSON.parse(localStorage.getItem('biancoSessionsLocal') || '{}');
@@ -636,28 +574,6 @@ async function saveEditToSyncCollection(sessionId, updatedData, originalSession)
             return [];
         }
     }
-
-// في دالة setupFirebaseListeners() - إزالة الفلترة:
-function setupFirebaseListeners() {
-    const sessionsCol = collection(db, 'sessions');
-    const q = query(sessionsCol, orderBy('createdAt', 'desc'));
-    
-    onSnapshot(q, snap => {
-        allSessions = [];
-        snap.forEach(docSnap => {
-            allSessions.push({
-                id: docSnap.id, 
-                data: docSnap.data()
-            });
-        });
-        
-        // جلب المصروفات من localStorage
-        allExpenses = getExpensesFromLocalStorage();
-        
-        populateDates();
-        applyFilter();
-    });
-}
 
     function populateDates(){
         const dates = new Set();
@@ -787,6 +703,7 @@ function setupFirebaseListeners() {
         });
     }
 
+    // ========== دوال التعديل والحذف ==========
     async function editSession(id){
         const session = allSessions.find(x => x.id === id);
         if(!session) return;
@@ -814,162 +731,82 @@ function setupFirebaseListeners() {
         editDrinks.value = drinksText;
         editModal.classList.add('active');
     }
-// 🔄 دالة محسنة لحفظ التعديلات مع المزامنة الفورية
-async function saveEditToSyncCollection(sessionId, updatedData, originalSession) {
-    try {
-        const syncRef = collection(db, 'sessionUpdates');
+
+    async function deleteSession(id) {
+        if (!confirm('هل أنت متأكد من حذف هذه الجلسة؟')) return;
         
-        // تنظيف أي تحديثات قديمة لنفس الجلسة
-        const q = query(syncRef, where("sessionId", "==", sessionId));
-        const querySnapshot = await getDocs(q);
-        
-        const deletePromises = querySnapshot.docs.map(doc => deleteDoc(doc.ref));
-        await Promise.all(deletePromises);
-        
-        let drinksData = updatedData.drinks;
-        if (typeof drinksData === 'string' && drinksData.trim() !== '') {
-            drinksData = drinksData.split(',').map(item => {
-                const parts = item.split('×');
-                if (parts.length === 2) {
-                    return { 
-                        name: parts[0].trim(), 
-                        qty: parseInt(parts[1]) || 1 
-                    };
-                } else {
-                    return { name: item.trim(), qty: 1 };
-                }
-            }).filter(item => item.name && item.name !== '-');
-        } else {
-            drinksData = originalSession.drinks || [];
+        try {
+            const session = allSessions.find(x => x.id === id);
+            if (!session) return;
+            
+            await saveDeleteToSyncCollection(id, session.data);
+            await deleteDoc(doc(db, 'sessions', id));
+            
+            alert('🗑️ تم حذف الجلسة بنجاح وسيتم مزامنة الحذف مع جميع الأجهزة');
+            
+        } catch (error) {
+            alert('❌ حدث خطأ في حذف الجلسة: ' + error.message);
         }
-        
-        const updatePayload = {
-            sessionId: sessionId,
-            deviceLabel: updatedData.deviceLabel,
-            price: Number(updatedData.price),
-            drinks: drinksData,
-            mode: updatedData.mode,
-            duration: updatedData.duration,
-            startISO: updatedData.startISO,
-            endISO: updatedData.endISO,
-            
-            // حفظ البيانات الأصلية للمطابقة
-            originalPrice: originalSession.price,
-            originalCreatedBy: originalSession.createdBy,
-            originalDeviceLabel: originalSession.deviceLabel,
-            originalStartISO: originalSession.startISO,
-            originalEndISO: originalSession.endISO,
-            originalDate: originalSession.date,
-            
-            updatedAt: new Date().toISOString(),
-            updatedBy: auth.currentUser.email,
-            date: originalSession.date,
-            
-            isAdminUpdate: true,
-            updateType: 'session_edit',
-            isDeleted: false
-        };
-        
-        await addDoc(syncRef, updatePayload);
-        console.log('✅ تم حفظ التعديلات في collection المزامنة:', updatePayload);
-        return true;
-    } catch (error) {
-        console.error('❌ خطأ في حفظ التعديلات للمزامنة:', error);
-        throw error;
     }
-}
 
+    // ========== Event Listeners ==========
+    saveEditBtn.onclick = async () => {
+        if (!editingId) return;
+        
+        const session = allSessions.find(x => x.id === editingId);
+        if (!session) return;
+        
+        const originalSession = session.data;
+        
+        // إنشاء بيانات محدثة
+        const updatedData = {
+            deviceLabel: editDevice.value,
+            mode: editType.value,
+            startISO: parseToISO(editStart.value) || originalSession.startISO,
+            endISO: parseToISO(editEnd.value) || originalSession.endISO,
+            duration: editDuration.value,
+            price: Number(editPrice.value),
+            drinks: editDrinks.value,
+            deviceId: originalSession.deviceId,
+            createdBy: originalSession.createdBy,
+            date: originalSession.date,
+            updatedByAdmin: true,
+            lastUpdate: new Date().toISOString()
+        };
 
-    // saveEditBtn.onclick = async () => {
-    //     if (!editingId) return;
-        
-    //     const session = allSessions.find(x => x.id === editingId);
-    //     if (!session) return;
-        
-    //     const originalSession = session.data;
-        
-    //     // إنشاء بيانات محدثة
-    //     const updatedData = {
-    //         deviceLabel: editDevice.value,
-    //         mode: editType.value,
-    //         startISO: parseToISO(editStart.value) || originalSession.startISO,
-    //         endISO: parseToISO(editEnd.value) || originalSession.endISO,
-    //         duration: editDuration.value,
-    //         price: Number(editPrice.value),
-    //         drinks: editDrinks.value,
-    //         deviceId: originalSession.deviceId,
-    //         createdBy: originalSession.createdBy,
-    //         date: originalSession.date,
-    //         updatedByAdmin: true,
-    //         lastUpdate: new Date().toISOString()
-    //     };
-
-    //     try {
-    //         const ref = doc(db, 'sessions', editingId);
-    //         await updateDoc(ref, updatedData);
-    //         await saveEditToSyncCollection(editingId, updatedData, originalSession);
+        try {
+            const ref = doc(db, 'sessions', editingId);
+            await updateDoc(ref, updatedData);
+            await saveEditToSyncCollection(editingId, updatedData, originalSession);
             
-    //         editModal.classList.remove('active');
-    //         alert('✅ تم حفظ التعديلات بنجاح وسيتم مزامنتها مع جميع الأجهزة فوراً');
+            editModal.classList.remove('active');
+            alert('✅ تم حفظ التعديلات بنجاح وسيتم مزامنتها مع جميع الأجهزة فوراً');
             
-    //     } catch (error) {
-    //         alert('❌ حدث خطأ في حفظ التعديلات: ' + error.message);
-    //     }
-    // };
+        } catch (error) {
+            alert('❌ حدث خطأ في حفظ التعديلات: ' + error.message);
+        }
+    };
 
     cancelEditBtn.onclick = () => {
         editModal.classList.remove('active');
         editingId = null;
     };
 
-
-    // دالة تنظيف الجلسات المكررة يدوياً
-function cleanDuplicateSessions() {
-    const s = getStorage();
-    let totalRemoved = 0;
-    
-    Object.keys(s).forEach(date => {
-        if (s[date].completed) {
-            const uniqueSessions = [];
-            const sessionKeys = new Set();
-            
-            s[date].completed.forEach(session => {
-                const sessionKey = session.id || 
-                    `${session.deviceLabel}_${session.startISO}_${session.endISO}_${session.price}_${session.mode}`;
-                
-                if (!sessionKeys.has(sessionKey)) {
-                    sessionKeys.add(sessionKey);
-                    uniqueSessions.push(session);
-                } else {
-                    totalRemoved++;
-                    console.log('🧹 حذف جلسة مكررة:', session.deviceLabel);
-                }
-            });
-            
-            s[date].completed = uniqueSessions;
-        }
-    });
-    
-    setStorage(s);
-    
-    if (totalRemoved > 0) {
-        alert(`✅ تم تنظيف ${totalRemoved} جلسة مكررة`);
-        initLocal();
-        renderDevices();
-    } else {
-        alert('✅ لا توجد جلسات مكررة');
-    }
-}
-
-// جعل الدالة متاحة globally للاستخدام من console
-window.cleanDuplicateSessions = cleanDuplicateSessions;
-    // event listeners
     dateFilter.onchange = applyFilter;
     
     refreshBtn.onclick = () => { 
         allExpenses = getExpensesFromLocalStorage();
         applyFilter(); 
         alert('تم تحديث البيانات'); 
+    };
+
+    refreshShiftsBtn.onclick = () => {
+        renderShiftReports();
+        alert('تم تحديث تقارير الشيفتات');
+    };
+
+    closeShiftDetails.onclick = () => {
+        shiftDetailsModal.classList.remove('active');
     };
 
     exportBtn.onclick = () => {
@@ -1057,6 +894,22 @@ window.cleanDuplicateSessions = cleanDuplicateSessions;
         });
     };
 
+    // ========== إغلاق المودالات ==========
+    document.querySelectorAll('.modal-back').forEach(modal => {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.remove('active');
+            }
+        });
+    });
+
+    shiftDetailsModal.addEventListener('click', (e) => {
+        if (e.target === shiftDetailsModal) {
+            shiftDetailsModal.classList.remove('active');
+        }
+    });
+
+    // ========== المصادقة والتهيئة ==========
     onAuthStateChanged(auth, user => {
         if(!user){
             window.location.href = 'login.html';
@@ -1073,16 +926,49 @@ window.cleanDuplicateSessions = cleanDuplicateSessions;
         
         // إذا كان المستخدم مشرف، نبدأ في تحميل البيانات
         setupFirebaseListeners();
+        setupShiftReportsListener();
     });
 
-    // إغلاق المودال بالضغط على الخلفية
-    document.querySelectorAll('.modal-back').forEach(modal => {
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.classList.remove('active');
+    // ========== دالة تنظيف الجلسات المكررة ==========
+    function cleanDuplicateSessions() {
+        const s = getStorage();
+        let totalRemoved = 0;
+        
+        Object.keys(s).forEach(date => {
+            if (s[date].completed) {
+                const uniqueSessions = [];
+                const sessionKeys = new Set();
+                
+                s[date].completed.forEach(session => {
+                    const sessionKey = session.id || 
+                        `${session.deviceLabel}_${session.startISO}_${session.endISO}_${session.price}_${session.mode}`;
+                    
+                    if (!sessionKeys.has(sessionKey)) {
+                        sessionKeys.add(sessionKey);
+                        uniqueSessions.push(session);
+                    } else {
+                        totalRemoved++;
+                        console.log('🧹 حذف جلسة مكررة:', session.deviceLabel);
+                    }
+                });
+                
+                s[date].completed = uniqueSessions;
             }
         });
-    });
+        
+        setStorage(s);
+        
+        if (totalRemoved > 0) {
+            alert(`✅ تم تنظيف ${totalRemoved} جلسة مكررة`);
+            initLocal();
+            renderDevices();
+        } else {
+            alert('✅ لا توجد جلسات مكررة');
+        }
+    }
+
+    // جعل الدالة متاحة globally للاستخدام من console
+    window.cleanDuplicateSessions = cleanDuplicateSessions;
   </script>
 </body>
 </html>
