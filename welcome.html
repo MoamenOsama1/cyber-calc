@@ -484,8 +484,7 @@
       minute: '2-digit'
     });
 
-    // في دالة loadTodayStats() - إزالة الفلترة:
-async function loadTodayStats() {
+    async function loadTodayStats() {
     try {
         const today = new Date().toLocaleDateString('ar-EG');
         console.log('📅 جلب إحصائيات تاريخ:', today);
@@ -550,7 +549,6 @@ async function loadTodayStats() {
             openSessions: openSessionsCount
         });
         
-     
         // تحديث الواجهة
         animateCounter(todaySessionsEl, todaySessionsCount);
         animateCounter(todayRevenueEl, todayRevenue);
@@ -570,6 +568,8 @@ async function loadTodayStats() {
         openSessionsEl.textContent = '0';
     }
 }
+        
+  
         
  
 
