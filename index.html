@@ -815,9 +815,10 @@ textarea {
     const s = getStorage(); 
     const t = todayKey(); 
     
+    // التأكد من وجود بنية تخزين لليوم الحالي
     if (!s[t]) s[t] = { open: {}, completed: [], expenses: [] }; 
     
-    // إزالة الفلترة التلقائية للبيانات القديمة
+    // إزالة أي كود لحذف البيانات القديمة
     // البيانات القديمة ستبقى محفوظة ولا يتم حذفها تلقائياً
     
     setStorage(s); 
@@ -840,7 +841,7 @@ textarea {
             });
         }
     });
-  }
+}
   
   // function initLocal(){ 
   //   const s = getStorage(); 
@@ -916,26 +917,7 @@ textarea {
     const s = getStorage(); 
     const t = todayKey(); 
     
-    if (s[t] && s[t].completed) {
-        const uniqueSessions = [];
-        const sessionKeys = new Set();
-        
-        s[t].completed.forEach(session => {
-            // إنشاء مفتاح فريد للجلسة
-            const sessionKey = session.id || 
-                `${session.deviceLabel}_${session.startISO}_${session.endISO}_${session.price}`;
-            
-            if (!sessionKeys.has(sessionKey)) {
-                sessionKeys.add(sessionKey);
-                uniqueSessions.push(session);
-            } else {
-                console.log('⚠️ تم تجاهل جلسة مكررة:', session.deviceLabel);
-            }
-        });
-        
-        s[t].completed = uniqueSessions;
-    }
-    
+    // تحديث اليوم الحالي فقط، مع الاحتفاظ بالبيانات القديمة
     s[t] = { open: openSessions, completed: completedSessionsToday, expenses: expensesToday }; 
     setStorage(s); 
     initLocal();
@@ -1498,6 +1480,81 @@ modalEndShift.addEventListener('click', (e) => {
     netRevenueEl.textContent = `${Number(roundedNetRevenue.toFixed(0))} ج`;
   }
 
+// 🔄 نظام مزامنة محسن - يستمع لتحديثات الأدمن
+function setupAdminUpdatesListener() {
+    const updatesQuery = query(collection(db, 'sessionUpdates'), orderBy('updatedAt', 'desc'));
+    
+    onSnapshot(updatesQuery, (snapshot) => {
+        console.log('🔄 استلام تحديثات من الأدمن...');
+        let hasChanges = false;
+        const storage = getStorage();
+        
+        snapshot.docChanges().forEach((change) => {
+            if (change.type === "added" || change.type === "modified") {
+                const update = change.doc.data();
+                
+                // نتأكد إن التحديث جديد
+                const updateTime = new Date(update.updatedAt);
+                const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+                
+                if (updateTime > fiveMinutesAgo) {
+                    console.log('📩 تحديث جديد من الأدمن:', update.deviceLabel);
+                    
+                    // نبحث في كل الأيام عن الجلسة الأصلية
+                    Object.keys(storage).forEach(date => {
+                        if (storage[date].completed) {
+                            storage[date].completed = storage[date].completed.map(session => {
+                                // نطابق الجلسة بالإسم والوقت
+                                const matches = 
+                                    session.deviceLabel === update.originalDeviceLabel &&
+                                    session.startISO === update.originalStartISO;
+                                
+                                if (matches) {
+                                    console.log('✅ وجدت الجلسة للتحديث:', session.deviceLabel);
+                                    hasChanges = true;
+                                    
+                                    // نطبق التعديلات
+                                    return {
+                                        ...session,
+                                        deviceLabel: update.deviceLabel || session.deviceLabel,
+                                        price: update.price !== undefined ? update.price : session.price,
+                                        drinks: update.drinks || session.drinks,
+                                        mode: update.mode || session.mode,
+                                        duration: update.duration || session.duration,
+                                        updatedByAdmin: true,
+                                        lastUpdate: new Date().toISOString()
+                                    };
+                                }
+                                return session;
+                            });
+                        }
+                    });
+                }
+            }
+        });
+        
+        if (hasChanges) {
+            setStorage(storage);
+            initLocal();
+            renderDevices();
+            showNotification('تم تحديث الجلسات من الإدارة');
+            console.log('✅ تم تطبيق تحديثات الأدمن');
+        }
+    });
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 // دالة مسح كل البيانات بشكل نهائي
 async function clearAllDataPermanently() {
     if (!confirm('🚨⚠️ هل أنت متأكد من مسح جميع البيانات؟\n\nهذا سيحذف:\n• كل الجلسات المكتملة\n• كل المصروفات\n• كل التاريخ السابق\n\nولكن سيحتفظ بالجلسات المفتوحة الحالية!')) {
@@ -1507,18 +1564,13 @@ async function clearAllDataPermanently() {
     try {
         showSyncIndicator();
         
-        // 1. حفظ تاريخ المسح الحالي (هذا هو المفتاح لمنع عودة البيانات)
-        const clearTimestamp = new Date().toISOString();
-        localStorage.setItem('dataClearDate', clearTimestamp);
-        dataClearDate = clearTimestamp;
-        
-        // 2. حفظ الجلسات المفتوحة الحالية قبل المسح
+        // 1. حفظ الجلسات المفتوحة الحالية قبل المسح
         const currentOpenSessions = { ...openSessions };
         
-        // 3. مسح التخزين المحلي بالكامل
+        // 2. مسح التخزين المحلي بالكامل
         localStorage.removeItem(STORAGE_KEY);
         
-        // 4. إنشاء تخزين جديد يحتوي فقط على الجلسات المفتوحة
+        // 3. إنشاء تخزين جديد يحتوي فقط على الجلسات المفتوحة
         const newStorage = {};
         const today = todayKey();
         newStorage[today] = { 
@@ -1527,31 +1579,23 @@ async function clearAllDataPermanently() {
             expenses: [] 
         };
         
-        // 5. حفظ التخزين الجديد
+        // 4. حفظ التخزين الجديد
         localStorage.setItem(STORAGE_KEY, JSON.stringify(newStorage));
         
-        // 6. إعادة تعيين المتغيرات (مع الحفاظ على الجلسات المفتوحة)
+        // 5. إعادة تعيين المتغيرات (مع الحفاظ على الجلسات المفتوحة)
         openSessions = currentOpenSessions;
         completedSessionsToday = [];
         allSessions = [];
         expensesToday = [];
         
-        // 7. 🔥 إيقاف المزامنة مؤقتاً لمنع عودة البيانات القديمة
-        setTimeout(() => {
-            // 8. إعادة التهيئة
-            initLocal();
-            renderDevices();
-            
-            hideSyncIndicator();
-            
-            modalClearData.classList.remove('active');
-            alert('✅ تم مسح جميع البيانات بنجاح\nتم الاحتفاظ بالجلسات المفتوحة الحالية');
-            
-            // 9. إعادة تحميل الصفحة للتأكد من النظافة الكاملة
-            setTimeout(() => {
-                location.reload();
-            }, 1000);
-        }, 2000); // انتظار 2 ثانية لضمان اكتمال المسح
+        // 6. إعادة التهيئة
+        initLocal();
+        renderDevices();
+        
+        hideSyncIndicator();
+        
+        modalClearData.classList.remove('active');
+        alert('✅ تم مسح جميع البيانات بنجاح\nتم الاحتفاظ بالجلسات المفتوحة الحالية');
         
     } catch (error) {
         console.error('❌ خطأ في مسح البيانات:', error);
@@ -1559,7 +1603,67 @@ async function clearAllDataPermanently() {
         hideSyncIndicator();
     }
 }
-
+// 🔄 نظام مزامنة جديد - بيشتغل 100%
+function setupRealTimeSync() {
+    console.log('🔄 بدء المزامنة مع الأدمن...');
+    
+    const db = firebase.firestore();
+    const updatesRef = db.collection("sessionUpdates");
+    
+    // نستمع للتحديثات الجديدة
+    updatesRef.orderBy("updatedAt", "desc").limit(10)
+        .onSnapshot((snapshot) => {
+            console.log('📡 استلام تحديثات من الأدمن...');
+            let hasChanges = false;
+            const storage = getStorage();
+            
+            snapshot.docChanges().forEach((change) => {
+                if (change.type === "added") {
+                    const update = change.doc.data();
+                    console.log('🔄 تحديث جديد:', update.deviceLabel);
+                    
+                    // نطبق التغييرات على البيانات المحلية
+                    Object.keys(storage).forEach(date => {
+                        if (storage[date].completed) {
+                            storage[date].completed = storage[date].completed.map(session => {
+                                // نطابق الجلسة
+                                const matches = 
+                                    session.deviceLabel === update.originalDeviceLabel &&
+                                    session.startISO === update.originalStartISO;
+                                
+                                if (matches && !session.updatedByAdmin) {
+                                    console.log('✅ وجدت الجلسة للتحديث:', session.deviceLabel);
+                                    hasChanges = true;
+                                    
+                                    return {
+                                        ...session,
+                                        deviceLabel: update.deviceLabel || session.deviceLabel,
+                                        price: update.price !== undefined ? update.price : session.price,
+                                        drinks: update.drinks || session.drinks,
+                                        mode: update.mode || session.mode,
+                                        duration: update.duration || session.duration,
+                                        updatedByAdmin: true,
+                                        lastUpdate: new Date().toISOString()
+                                    };
+                                }
+                                return session;
+                            });
+                        }
+                    });
+                }
+            });
+            
+            if (hasChanges) {
+                setStorage(storage);
+                initLocal();
+                renderDevices();
+                alert('🔄 تم تحديث الجلسات من الإدارة');
+                console.log('✅ تم تطبيق تحديثات الأدمن');
+            }
+        }, (error) => {
+            console.error('❌ خطأ في المزامنة:', error);
+        });
+}
 // ========== المزامنة مع Firebase ==========
 
 // // الاستماع لتحديثات الجلسات في الوقت الحقيقي
@@ -2329,6 +2433,8 @@ onSnapshot(updatesQuery, (snapshot) => {
           
           // 🔧 منع المستخدمين العاديين من الوصول لصفحات الأدمن
           const adminEmails = ["moosama@gmail.com", "ahmed@gmail.com", "mahmoud@gmail.com"];
+
+          setupAdminUpdatesListener();
           if (window.location.pathname.includes('welcome.html') || window.location.pathname.includes('admin.html')) {
               if (!adminEmails.includes(user.email)) {
                   window.location.href = 'index.html';
