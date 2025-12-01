@@ -1674,7 +1674,80 @@
     }
 
 
-
+// 🔄 مزامنة الجلسات المكتملة من Firebase
+function setupCompletedSessionsSync() {
+    const sessionsQuery = query(collection(db, 'sessions'), orderBy('createdAt', 'desc'));
+    
+    onSnapshot(sessionsQuery, (snapshot) => {
+        console.log('🔄 تحديث الجلسات المكتملة من Firebase...');
+        const storage = getStorage();
+        let hasChanges = false;
+        
+        snapshot.forEach((doc) => {
+            const firebaseSession = { id: doc.id, ...doc.data() };
+            const sessionDate = firebaseSession.date || todayKey();
+            
+            // 🔥 التأكد من وجود تاريخ الجلسة
+            if (!firebaseSession.date) {
+                firebaseSession.date = sessionDate;
+            }
+            
+            if (!storage[sessionDate]) {
+                storage[sessionDate] = { open: {}, completed: [], expenses: [] };
+            }
+            
+            // التحقق من عدم وجود الجلسة مسبقاً
+            const existingIndex = storage[sessionDate].completed.findIndex(
+                s => s.id === firebaseSession.id || 
+                (s.deviceLabel === firebaseSession.deviceLabel && 
+                 s.startISO === firebaseSession.startISO && 
+                 s.endISO === firebaseSession.endISO)
+            );
+            
+            if (existingIndex === -1) {
+                // إضافة الجلسة الجديدة
+                storage[sessionDate].completed.push(firebaseSession);
+                hasChanges = true;
+                console.log('➕ جلسة جديدة من Firebase:', firebaseSession.deviceLabel);
+            } else {
+                // تحديث الجلسة الحالية إذا كانت هناك تغييرات
+                const existing = storage[sessionDate].completed[existingIndex];
+                if (JSON.stringify(existing) !== JSON.stringify(firebaseSession)) {
+                    storage[sessionDate].completed[existingIndex] = firebaseSession;
+                    hasChanges = true;
+                    console.log('🔄 تحديث جلسة من Firebase:', firebaseSession.deviceLabel);
+                }
+            }
+        });
+        
+        if (hasChanges) {
+            setStorage(storage);
+            
+            // تحديث المتغيرات المحلية
+            const t = todayKey();
+            openSessions = storage[t]?.open || {};
+            completedSessionsToday = storage[t]?.completed || [];
+            expensesToday = storage[t]?.expenses || [];
+            
+            // تحديث جميع الجلسات
+            allSessions = [];
+            Object.keys(storage).forEach(date => {
+                if (storage[date] && storage[date].completed) {
+                    storage[date].completed.forEach(session => {
+                        allSessions.push({
+                            ...session,
+                            date: date,
+                            isToday: date === t
+                        });
+                    });
+                }
+            });
+            
+            renderDevices();
+            showNotification('🔄 تم تحديث الجلسات من السحابة');
+        }
+    });
+}
 
 
 
@@ -2803,19 +2876,19 @@
 
     // init
     (function init() {
-      todayStr.textContent = new Date().toLocaleDateString('ar-EG');
-
-      // تحميل تاريخ المسح من localStorage
-      dataClearDate = localStorage.getItem('dataClearDate') || '';
-      console.log('📅 تاريخ المسح النشط:', dataClearDate);
-
-      initLocal();
-      renderDevices();
-
-      console.log('✅ تم تهيئة النظام بنجاح');
-
-      window.__bianco = { openSessions, completedSessionsToday, allSessions, expensesToday, persistLocal, renderDevices };
-
+    todayStr.textContent = new Date().toLocaleDateString('ar-EG');
+    
+    initLocal();
+    
+    // 🔥 إضافة مزامنة الجلسات المكتملة
+    setupCompletedSessionsSync();
+    setupAdminUpdatesListener();
+    setupOpenSessionsSync();
+    
+    renderDevices();
+    
+    console.log('✅ تم تهيئة النظام بنجاح');
+})();
 
       // نظام حماية البيانات - يمنع الحذف التلقائي
       function setupDataProtection() {
