@@ -10,7 +10,7 @@
       --bg1: #050f18;
       --bg2: #0b1b2b;
       --card: #093f76;
-      --accent: #1400c8;
+      --accent: #f19832;
       --accent-2: #03a9f4;
       --muted: #a7b5c4;
       --danger: #ff5252;
@@ -1984,377 +1984,109 @@
     //     if (hasUpdates) {
     //         setStorage(storage);
     //         initLocal();
-    //         renderDevices();
-    //         showNotification('تم تحديث الجلسات من الإدارة');
-    //     }
-    //     hideSyncIndicator();
-    // });
-    /// الاستماع لتحديثات الجلسات في الوقت الحقيقي - نسخة محسنة
-    // 🔄 نظام مزامنة محسن - الاستماع لتحديثات الأدمن
-    // نظام مزامنة محسن واحد فقط - إزالة التكرار
-    // 🔄 نظام مزامنة محسن - لا يحذف البيانات القديمة
-    const sessionsUpdatesQuery = query(collection(db, 'sessionUpdates'), orderBy('updatedAt', 'desc'));
-    onSnapshot(sessionsUpdatesQuery, (snapshot) => {
-      showSyncIndicator();
+    // 1. الاستماع للجلسات المكتملة (Completed Sessions)
+    const sessionsQuery = query(collection(db, 'sessions'), where('date', '==', todayKey()));
+    onSnapshot(sessionsQuery, (snapshot) => {
+      console.log('🔄 تحديث الجلسات المكتملة من Firebase...');
       let hasChanges = false;
       const storage = getStorage();
-      const today = todayKey();
+      const t = todayKey();
+
+      // التأكد من وجود مصفوفة الجلسات
+      if (!storage[t]) storage[t] = { open: {}, completed: [], expenses: [] };
+      if (!storage[t].completed) storage[t].completed = [];
 
       snapshot.docChanges().forEach((change) => {
-        const update = change.doc.data();
+        const session = { ...change.doc.data(), id: change.doc.id };
 
-        // ❌ إزالة فلترة البيانات القديمة - نحتفظ بكل شيء
-        // if (dataClearDate && new Date(update.updatedAt) < new Date(dataClearDate)) {
-        //     return;
-        // }
-
-        if (change.type === "added" || change.type === "modified") {
-          // معالجة تحديثات التعديل فقط
-          if (update.updateType === 'session_edit' && !update.isDeleted) {
-            console.log('🔄 استلام تحديث جلسة من الأدمن:', update.deviceLabel);
-
-            // البحث في جميع التواريخ عن الجلسة الأصلية
-            Object.keys(storage).forEach(date => {
-              const sessionIndex = storage[date].completed.findIndex(session =>
-                session.deviceLabel === update.originalDeviceLabel &&
-                session.startISO === update.originalStartISO &&
-                session.endISO === update.originalEndISO
-              );
-
-              if (sessionIndex !== -1) {
-                console.log('✅ وجدت الجلسة للتحديث:', update.originalDeviceLabel);
-
-                // تحديث الجلسة الموجودة
-                storage[date].completed[sessionIndex] = {
-                  ...storage[date].completed[sessionIndex],
-                  deviceLabel: update.deviceLabel || update.originalDeviceLabel,
-                  price: update.price !== undefined ? update.price : update.originalPrice,
-                  drinks: update.drinks || storage[date].completed[sessionIndex].drinks,
-                  mode: update.mode || storage[date].completed[sessionIndex].mode,
-                  duration: update.duration || storage[date].completed[sessionIndex].duration,
-                  updatedByAdmin: true,
-                  lastUpdate: new Date().toISOString(),
-                  id: update.sessionId || storage[date].completed[sessionIndex].id
-                };
-
-                hasChanges = true;
-              }
-            });
+        if (change.type === "added") {
+          // التحقق من التكرار
+          const exists = storage[t].completed.some(s => s.id === session.id || (s.deviceLabel === session.deviceLabel && s.startISO === session.startISO && s.endISO === session.endISO));
+          if (!exists) {
+            storage[t].completed.push(session);
+            hasChanges = true;
+          }
+        }
+        if (change.type === "modified") {
+          const index = storage[t].completed.findIndex(s => s.id === session.id);
+          if (index !== -1) {
+            storage[t].completed[index] = session;
+            hasChanges = true;
+          }
+        }
+        if (change.type === "removed") {
+          const index = storage[t].completed.findIndex(s => s.id === session.id);
+          if (index !== -1) {
+            storage[t].completed.splice(index, 1);
+            hasChanges = true;
           }
         }
       });
 
       if (hasChanges) {
         setStorage(storage);
-        initLocal();
-        renderDevices();
-        showNotification('🔄 تم تحديث الجلسات من الإدارة');
-      }
-      hideSyncIndicator();
-    });
-
-    // 🔄 مزامنة الجلسات المفتوحة
-    // function setupOpenSessionsSync() {
-    //   const q = query(collection(db, 'openSessions'));
-    //   onSnapshot(q, (snapshot) => {
-    //     console.log('🔄 تحديث الجلسات المفتوحة...');
-    //     const storage = getStorage();
-    //     let hasChanges = false;
-
-    //     snapshot.docChanges().forEach((change) => {
-    //       const session = change.doc.data();
-    //       const deviceId = session.deviceId;
-
-    //       // تحديد تاريخ الجلسة (أو اليوم الحالي إذا لم يوجد)
-    //       // نستخدم تاريخ البدء إذا وجد، وإلا تاريخ اليوم
-    //       let sessionDate = todayKey();
-    //       if (session.startISO) {
-    //         sessionDate = new Date(session.startISO).toLocaleDateString('ar-EG');
-    //       }
-
-    //       if (change.type === "added" || change.type === "modified") {
-    //         // تأكد من وجود الهيكل
-    //         if (!storage[sessionDate]) storage[sessionDate] = { open: {}, completed: [], expenses: [] };
-    //         if (!storage[sessionDate].open) storage[sessionDate].open = {};
-
-    //         storage[sessionDate].open[deviceId] = { ...session, firebaseId: change.doc.id };
-    //         hasChanges = true;
-    //       }
-
-    //       if (change.type === "removed") {
-    //         // البحث في كل التواريخ وحذف الجلسة
-    //         Object.keys(storage).forEach(date => {
-    //           if (storage[date] && storage[date].open && storage[date].open[deviceId]) {
-    //             delete storage[date].open[deviceId];
-    //             hasChanges = true;
-    //           }
-    //         });
-    //       }
-    //     });
-
-    //     if (hasChanges) {
-    //       setStorage(storage);
-
-    //       // تحديث المتغير openSessions من جميع التواريخ
-    //       openSessions = {};
-    //       Object.keys(storage).forEach(date => {
-    //         if (storage[date] && storage[date].open) {
-    //           Object.assign(openSessions, storage[date].open);
-    //         }
-    //       });
-
-    //       renderDevices();
-    //     }
-    //   });
-    // }
-
-
-    function setupOpenSessionsSync() {
-      const q = query(collection(db, 'openSessions'));
-      onSnapshot(q, (snapshot) => {
-        console.log('🔄 تحديث الجلسات المفتوحة...');
-        const storage = getStorage();
-        let hasChanges = false;
-
-        snapshot.docChanges().forEach((change) => {
-          const session = change.doc.data();
-          const deviceId = session.deviceId;
-
-          // Skip sessions that are being ended locally
-          const localSession = openSessions[deviceId];
-          if (localSession && localSession.markedForDeletion) {
-            console.log(`⏭️ تجاهل جلسة قيد الإنهاء: ${deviceId}`);
-            return;
-          }
-
-          // تحديد تاريخ الجلسة (أو اليوم الحالي إذا لم يوجد)
-          let sessionDate = todayKey();
-          if (session.startISO) {
-            sessionDate = new Date(session.startISO).toLocaleDateString('ar-EG');
-          }
-
-          if (change.type === "added" || change.type === "modified") {
-            // تأكد من وجود الهيكل
-            if (!storage[sessionDate]) storage[sessionDate] = { open: {}, completed: [], expenses: [] };
-            if (!storage[sessionDate].open) storage[sessionDate].open = {};
-
-            storage[sessionDate].open[deviceId] = { ...session, firebaseId: change.doc.id };
-            hasChanges = true;
-          }
-
-          if (change.type === "removed") {
-            // البحث في كل التواريخ وحذف الجلسة
-            Object.keys(storage).forEach(date => {
-              if (storage[date] && storage[date].open && storage[date].open[deviceId]) {
-                delete storage[date].open[deviceId];
-                hasChanges = true;
-              }
+        // تحديث المتغيرات المحلية
+        completedSessionsToday = storage[t].completed;
+        // تحديث allSessions
+        allSessions = [];
+        Object.keys(storage).forEach(date => {
+          if (storage[date] && storage[date].completed) {
+            storage[date].completed.forEach(s => {
+              if (!s.isDeleted) allSessions.push({ ...s, date, isToday: date === t });
             });
           }
         });
 
-        if (hasChanges) {
-          setStorage(storage);
-
-          // تحديث المتغير openSessions من جميع التواريخ
-          openSessions = {};
-          Object.keys(storage).forEach(date => {
-            if (storage[date] && storage[date].open) {
-              Object.assign(openSessions, storage[date].open);
-            }
-          });
-
-          renderDevices();
-        }
-      });
-    }
-
-
-    function cleanupMarkedSessions() {
-      const storage = getStorage();
-      Object.keys(storage).forEach(date => {
-        if (storage[date] && storage[date].open) {
-          Object.keys(storage[date].open).forEach(deviceId => {
-            if (storage[date].open[deviceId].markedForDeletion) {
-              delete storage[date].open[deviceId];
-            }
-          });
-        }
-      });
-      setStorage(storage);
-    }
-
-    // في نهاية دالة init()، أضف:
-    setInterval(() => {
-      // تنظيف الجلسات المفتوحة المحلية التي لا توجد في Firebase
-      Object.keys(openSessions).forEach(deviceId => {
-        const session = openSessions[deviceId];
-        if (session.markedForDeletion) {
-          console.log(`🧹 تنظيف جلسة معلمة للحذف: ${deviceId}`);
-          delete openSessions[deviceId];
-          persistLocal();
-          renderDevices();
-        }
-      });
-    }, 30000); // كل 30 ثانية
-
-    // Run cleanup on page load
-    cleanupMarkedSessions();
-
-    // دالة تنظيف الجلسات المكررة يدوياً
-    function cleanDuplicateSessions() {
-      const s = getStorage();
-      let totalRemoved = 0;
-
-      Object.keys(s).forEach(date => {
-        if (s[date].completed) {
-          const uniqueSessions = [];
-          const sessionKeys = new Set();
-
-          s[date].completed.forEach(session => {
-            const sessionKey = session.id ||
-              `${session.deviceLabel}_${session.startISO}_${session.endISO}_${session.price}_${session.mode}`;
-
-            if (!sessionKeys.has(sessionKey)) {
-              sessionKeys.add(sessionKey);
-              uniqueSessions.push(session);
-            } else {
-              totalRemoved++;
-              console.log('🧹 حذف جلسة مكررة:', session.deviceLabel);
-            }
-          });
-
-          s[date].completed = uniqueSessions;
-        }
-      });
-
-      setStorage(s);
-
-      if (totalRemoved > 0) {
-        alert(`✅ تم تنظيف ${totalRemoved} جلسة مكررة`);
-        initLocal();
-        renderDevices();
-      } else {
-        alert('✅ لا توجد جلسات مكررة');
+        renderCompleted();
+        updateSummary(); // تحديث الإجمالي
+        showNotification('تم تحديث الجلسات');
       }
-    }
+    });
 
-    // // جعل الدالة متاحة globally للاستخدام من console
-    // window.cleanDuplicateSessions = cleanDuplicateSessions;
-    // // دالة تنظيف الجلسات المكررة يدوياً
-    // function cleanDuplicateSessions() {
-    //     const s = getStorage();
-    //     let totalRemoved = 0;
-
-    //     Object.keys(s).forEach(date => {
-    //         if (s[date].completed) {
-    //             const uniqueSessions = [];
-    //             const sessionKeys = new Set();
-
-    //             s[date].completed.forEach(session => {
-    //                 const sessionKey = session.id || 
-    //                     `${session.deviceLabel}_${session.startISO}_${session.endISO}_${session.price}_${session.mode}`;
-
-    //                 if (!sessionKeys.has(sessionKey)) {
-    //                     sessionKeys.add(sessionKey);
-    //                     uniqueSessions.push(session);
-    //                 } else {
-    //                     totalRemoved++;
-    //                     console.log('🧹 حذف جلسة مكررة:', session.deviceLabel);
-    //                 }
-    //             });
-
-    //             s[date].completed = uniqueSessions;
-    //         }
-    //     });
-
-    //     setStorage(s);
-
-    //     if (totalRemoved > 0) {
-    //         alert(`✅ تم تنظيف ${totalRemoved} جلسة مكررة`);
-    //         initLocal();
-    //         renderDevices();
-    //     } else {
-    //         alert('✅ لا توجد جلسات مكررة');
-    //     }
-    // }
-
-    // إضافة زر التنظيف في الـ admin أو يمكنك تشغيله من console
-    // cleanDuplicateSessions();
-    // الاستماع لتحديثات الأدمن مع فلترة البيانات الممسوحة
-    const updatesQuery = query(collection(db, 'sessionUpdates'), orderBy('updatedAt', 'desc'));
-    onSnapshot(updatesQuery, (snapshot) => {
-      showSyncIndicator();
-      const storage = getStorage();
+    // 2. الاستماع للمصروفات (Expenses)
+    const expensesQuery = query(collection(db, 'expenses'), where('dateKey', '==', todayKey()));
+    onSnapshot(expensesQuery, (snapshot) => {
+      console.log('🔄 تحديث المصروفات من Firebase...');
       let hasChanges = false;
+      const storage = getStorage();
+      const t = todayKey();
+
+      if (!storage[t]) storage[t] = { open: {}, completed: [], expenses: [] };
+      if (!storage[t].expenses) storage[t].expenses = [];
 
       snapshot.docChanges().forEach((change) => {
-        const update = change.doc.data();
+        const expense = { ...change.doc.data(), id: change.doc.id };
 
-        // 🔥 فلترة: تجاهل التحديثات القديمة التي تم مسحها
-        // if (dataClearDate && new Date(update.updatedAt) < new Date(dataClearDate)) {
-        //     console.log('⏩ تجاهل تحديث قديم تم مسحه:', update.updateType);
-        //     return;
-        // }
-
-        if (change.type === "added" || change.type === "modified") {
-          if (update.updateType === 'session_delete' && update.isDeleted) {
-            Object.keys(storage).forEach(date => {
-              const originalLength = storage[date].completed.length;
-              storage[date].completed = storage[date].completed.filter(session => {
-                const matches =
-                  (update.sessionId && session.id === update.sessionId) ||
-                  (session.deviceLabel === update.originalDeviceLabel &&
-                    session.startISO === update.originalStartISO);
-
-                if (matches) {
-                  return false;
-                }
-                return true;
-              });
-
-              if (storage[date].completed.length !== originalLength) {
-                hasChanges = true;
-              }
-            });
+        if (change.type === "added") {
+          const exists = storage[t].expenses.some(e => e.id === expense.id);
+          if (!exists) {
+            storage[t].expenses.push(expense);
+            hasChanges = true;
           }
-
-          if (update.updateType === 'session_edit' && !update.isDeleted) {
-            Object.keys(storage).forEach(date => {
-              storage[date].completed = storage[date].completed.map(session => {
-                const matches =
-                  (update.sessionId && session.id === update.sessionId) ||
-                  (session.deviceLabel === update.originalDeviceLabel &&
-                    session.startISO === update.originalStartISO);
-
-                if (matches) {
-                  hasChanges = true;
-                  return {
-                    ...session,
-                    deviceLabel: update.deviceLabel || session.deviceLabel,
-                    price: update.price !== undefined ? roundToNearestFive(update.price) : session.price,
-                    drinks: update.drinks || session.drinks,
-                    mode: update.mode || session.mode,
-                    duration: update.duration || session.duration,
-                    updatedByAdmin: true,
-                    lastUpdate: new Date().toISOString()
-                  };
-                }
-                return session;
-              });
-            });
+        }
+        if (change.type === "removed") {
+          const index = storage[t].expenses.findIndex(e => e.id === expense.id);
+          if (index !== -1) {
+            storage[t].expenses.splice(index, 1);
+            hasChanges = true;
           }
         }
       });
 
       if (hasChanges) {
         setStorage(storage);
-        initLocal();
-        renderDevices();
-        showNotification('تم تحديث الجلسات من الإدارة');
+        expensesToday = storage[t].expenses;
+        renderExpenses();
+        updateSummary();
+        showNotification('تم تحديث المصروفات');
       }
-      hideSyncIndicator();
     });
+
+    // تعديل إضافة المصروف ليحفظ في Firebase
+    // confirmAddExpense.removeEventListener('click', confirmAddExpense._listener); // Remove old listener if possible (hacky, better to replace logic)
+    // سنقوم باستبدال المنطق داخل الـ Event Listener القديم أو تعديله. 
+    // بما أننا نستبدل الكود، سنقوم بتحديث الـ Event Listener في الأسفل.
+
     // ========== نهاية المزامنة مع Firebase ==========
 
     // events delegation for device buttons
@@ -2385,7 +2117,7 @@
       modalExpense.classList.add('active');
     });
 
-    confirmAddExpense.addEventListener('click', () => {
+    confirmAddExpense.addEventListener('click', async () => {
       const name = expenseName.value.trim();
       const amount = Number(expenseAmount.value);
 
@@ -2399,15 +2131,28 @@
         return;
       }
 
-      expensesToday.push({
-        name,
-        amount,
-        date: new Date().toISOString()
-      });
+      try {
+        const expense = {
+          name,
+          amount,
+          date: new Date().toISOString(),
+          dateKey: todayKey()
+        };
 
-      persistLocal();
-      renderExpenses();
-      modalExpense.classList.remove('active');
+        // حفظ في Firebase
+        await addDoc(collection(db, 'expenses'), expense);
+
+        // حفظ محلي (اختياري، لأن المستمع سيقوم بذلك، لكن للسرعة)
+        // expensesToday.push(expense);
+        // persistLocal();
+        // renderExpenses();
+
+        modalExpense.classList.remove('active');
+        showNotification('تم إضافة المصروف');
+      } catch (error) {
+        console.error('Error adding expense:', error);
+        alert('حدث خطأ أثناء إضافة المصروف');
+      }
     });
 
     cancelAddExpense.addEventListener('click', () => {
@@ -2415,13 +2160,27 @@
     });
 
     // حذف المصروفات
-    document.addEventListener('click', (e) => {
+    document.addEventListener('click', async (e) => {
       if (e.target.classList.contains('danger') && e.target.dataset.expenseIndex) {
         const index = Number(e.target.dataset.expenseIndex);
+        const expense = expensesToday[index];
+
         if (confirm('هل أنت متأكد من حذف هذا المصروف؟')) {
-          expensesToday.splice(index, 1);
-          persistLocal();
-          renderExpenses();
+          try {
+            if (expense.id) {
+              // حذف من Firebase
+              await deleteDoc(doc(db, 'expenses', expense.id));
+              showNotification('تم حذف المصروف');
+            } else {
+              // حذف محلي فقط (للمصروفات القديمة التي لم ترفع)
+              expensesToday.splice(index, 1);
+              persistLocal();
+              renderExpenses();
+            }
+          } catch (error) {
+            console.error('Error deleting expense:', error);
+            alert('حدث خطأ أثناء حذف المصروف');
+          }
         }
       }
     });
