@@ -1674,145 +1674,13 @@
     }
 
 
-// 🔄 مزامنة الجلسات المكتملة من Firebase
-function setupCompletedSessionsSync() {
-    const sessionsQuery = query(collection(db, 'sessions'), orderBy('createdAt', 'desc'));
-    
-    onSnapshot(sessionsQuery, (snapshot) => {
-        console.log('🔄 تحديث الجلسات المكتملة من Firebase...');
-        const storage = getStorage();
-        let hasChanges = false;
-        
-        snapshot.forEach((doc) => {
-            const firebaseSession = { id: doc.id, ...doc.data() };
-            const sessionDate = firebaseSession.date || todayKey();
-            
-            // 🔥 التأكد من وجود تاريخ الجلسة
-            if (!firebaseSession.date) {
-                firebaseSession.date = sessionDate;
-            }
-            
-            if (!storage[sessionDate]) {
-                storage[sessionDate] = { open: {}, completed: [], expenses: [] };
-            }
-            
-            // التحقق من عدم وجود الجلسة مسبقاً
-            const existingIndex = storage[sessionDate].completed.findIndex(
-                s => s.id === firebaseSession.id || 
-                (s.deviceLabel === firebaseSession.deviceLabel && 
-                 s.startISO === firebaseSession.startISO && 
-                 s.endISO === firebaseSession.endISO)
-            );
-            
-            if (existingIndex === -1) {
-                // إضافة الجلسة الجديدة
-                storage[sessionDate].completed.push(firebaseSession);
-                hasChanges = true;
-                console.log('➕ جلسة جديدة من Firebase:', firebaseSession.deviceLabel);
-            } else {
-                // تحديث الجلسة الحالية إذا كانت هناك تغييرات
-                const existing = storage[sessionDate].completed[existingIndex];
-                if (JSON.stringify(existing) !== JSON.stringify(firebaseSession)) {
-                    storage[sessionDate].completed[existingIndex] = firebaseSession;
-                    hasChanges = true;
-                    console.log('🔄 تحديث جلسة من Firebase:', firebaseSession.deviceLabel);
-                }
-            }
-        });
-        
-        if (hasChanges) {
-            setStorage(storage);
-            
-            // تحديث المتغيرات المحلية
-            const t = todayKey();
-            openSessions = storage[t]?.open || {};
-            completedSessionsToday = storage[t]?.completed || [];
-            expensesToday = storage[t]?.expenses || [];
-            
-            // تحديث جميع الجلسات
-            allSessions = [];
-            Object.keys(storage).forEach(date => {
-                if (storage[date] && storage[date].completed) {
-                    storage[date].completed.forEach(session => {
-                        allSessions.push({
-                            ...session,
-                            date: date,
-                            isToday: date === t
-                        });
-                    });
-                }
-            });
-            
-            renderDevices();
-            showNotification('🔄 تم تحديث الجلسات من السحابة');
-        }
-    });
-}
-
-// 🔄 مزامنة المصروفات من Firebase
-function setupExpensesSync() {
-    const expensesQuery = query(collection(db, 'expenses'), orderBy('createdAt', 'desc'));
-    
-    onSnapshot(expensesQuery, (snapshot) => {
-        console.log('🔄 تحديث المصروفات من Firebase...');
-        const storage = getStorage();
-        let hasChanges = false;
-        
-        snapshot.forEach((doc) => {
-            const firebaseExpense = { id: doc.id, ...doc.data() };
-            const expenseDate = firebaseExpense.date || todayKey();
-            
-            if (!storage[expenseDate]) {
-                storage[expenseDate] = { open: {}, completed: [], expenses: [] };
-            }
-            
-            // التحقق من عدم وجود المصروف مسبقاً
-            const existingIndex = storage[expenseDate].expenses.findIndex(
-                e => e.id === firebaseExpense.id || 
-                (e.name === firebaseExpense.name && 
-                 e.amount === firebaseExpense.amount &&
-                 e.date === firebaseExpense.date)
-            );
-            
-            if (existingIndex === -1) {
-                storage[expenseDate].expenses.push(firebaseExpense);
-                hasChanges = true;
-                console.log('➕ مصروف جديد من Firebase:', firebaseExpense.name);
-            }
-        });
-        
-        if (hasChanges) {
-            setStorage(storage);
-            
-            // تحديث المتغيرات المحلية
-            const t = todayKey();
-            expensesToday = storage[t]?.expenses || [];
-            
-            renderExpenses();
-            updateRevenueSummary();
-            showNotification('🔄 تم تحديث المصروفات من السحابة');
-        }
-    });
-}
 
 
 
-// دالة حفظ المصروف في Firebase
-async function saveExpenseToFirebase(expense) {
-    try {
-        const expenseWithMetadata = {
-            ...expense,
-            createdAt: new Date().toISOString(),
-            createdBy: auth.currentUser?.email || 'unknown',
-            date: todayKey()
-        };
-        
-        await addDoc(collection(db, 'expenses'), expenseWithMetadata);
-        console.log('✅ تم حفظ المصروف في Firebase:', expense.name);
-    } catch (error) {
-        console.error('❌ خطأ في حفظ المصروف:', error);
-    }
-}
+
+
+
+
 
 
     // AI
@@ -2517,35 +2385,34 @@ async function saveExpenseToFirebase(expense) {
       modalExpense.classList.add('active');
     });
 
-   confirmAddExpense.addEventListener('click', async () => {
-    const name = expenseName.value.trim();
-    const amount = Number(expenseAmount.value);
-    
-    if (!name) {
+    confirmAddExpense.addEventListener('click', () => {
+      const name = expenseName.value.trim();
+      const amount = Number(expenseAmount.value);
+
+      if (!name) {
         alert('يرجى إدخال اسم المصروف');
         return;
-    }
-    
-    if (!amount || amount <= 0) {
+      }
+
+      if (!amount || amount <= 0) {
         alert('يرجى إدخال مبلغ صحيح');
         return;
-    }
-    
-    const expense = {
+      }
+
+      expensesToday.push({
         name,
         amount,
         date: new Date().toISOString()
-    };
-    
-    expensesToday.push(expense);
-    
-    // 🔥 حفظ المصروف في Firebase
-    await saveExpenseToFirebase(expense);
-    
-    persistLocal();
-    renderExpenses();
-    modalExpense.classList.remove('active');
-});
+      });
+
+      persistLocal();
+      renderExpenses();
+      modalExpense.classList.remove('active');
+    });
+
+    cancelAddExpense.addEventListener('click', () => {
+      modalExpense.classList.remove('active');
+    });
 
     // حذف المصروفات
     document.addEventListener('click', (e) => {
@@ -2935,21 +2802,20 @@ async function saveExpenseToFirebase(expense) {
     });
 
     // init
-   (function init() {
-    todayStr.textContent = new Date().toLocaleDateString('ar-EG');
-    
-    initLocal();
-    
-    // 🔥 تفعيل جميع أنظمة المزامنة
-    setupCompletedSessionsSync();     // مزامنة الجلسات المكتملة
-    setupExpensesSync();              // مزامنة المصروفات
-    setupAdminUpdatesListener();      // مزامنة تحديثات الأدمن
-    setupOpenSessionsSync();          // مزامنة الجلسات المفتوحة
-    
-    renderDevices();
-    
-    console.log('✅ تم تهيئة جميع أنظمة المزامنة');
-})();
+    (function init() {
+      todayStr.textContent = new Date().toLocaleDateString('ar-EG');
+
+      // تحميل تاريخ المسح من localStorage
+      dataClearDate = localStorage.getItem('dataClearDate') || '';
+      console.log('📅 تاريخ المسح النشط:', dataClearDate);
+
+      initLocal();
+      renderDevices();
+
+      console.log('✅ تم تهيئة النظام بنجاح');
+
+      window.__bianco = { openSessions, completedSessionsToday, allSessions, expensesToday, persistLocal, renderDevices };
+
 
       // نظام حماية البيانات - يمنع الحذف التلقائي
       function setupDataProtection() {
