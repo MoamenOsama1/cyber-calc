@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="ar">
+
 <head>
   <meta charset="utf-8" />
   <title>مرحباً - Bianco Timer</title>
@@ -11,15 +12,15 @@
       --accent: #00c853;
       --accent-2: #03a9f4;
       --muted: #9aa4b2;
-      --glass: rgba(255,255,255,0.04);
+      --glass: rgba(255, 255, 255, 0.04);
     }
-    
+
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
-    
+
     body {
       font-family: "Cairo", "Segoe UI", Arial, sans-serif;
       background: linear-gradient(135deg, #0d0d0d 0%, #1a1a2e 50%, #16213e 100%);
@@ -31,7 +32,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background-image: 
+      background-image:
         radial-gradient(circle at 20% 80%, rgba(0, 200, 83, 0.15) 0%, transparent 50%),
         radial-gradient(circle at 80% 20%, rgba(3, 169, 244, 0.15) 0%, transparent 50%);
       position: relative;
@@ -45,13 +46,13 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background: 
+      background:
         linear-gradient(45deg, transparent 65%, rgba(0, 200, 83, 0.03) 65%, rgba(0, 200, 83, 0.03) 70%, transparent 70%),
         linear-gradient(-45deg, transparent 65%, rgba(3, 169, 244, 0.03) 65%, rgba(3, 169, 244, 0.03) 70%, transparent 70%);
       background-size: 50px 50px;
       pointer-events: none;
     }
-    
+
     .welcome-card {
       background: rgba(18, 18, 22, 0.85);
       padding: 40px 35px;
@@ -60,7 +61,7 @@
       text-align: center;
       max-width: 520px;
       width: 95%;
-      box-shadow: 
+      box-shadow:
         0 25px 50px rgba(0, 0, 0, 0.5),
         inset 0 1px 0 rgba(255, 255, 255, 0.1);
       backdrop-filter: blur(20px);
@@ -72,11 +73,11 @@
 
     .welcome-card:hover {
       transform: translateY(-10px);
-      box-shadow: 
+      box-shadow:
         0 35px 60px rgba(0, 0, 0, 0.6),
         inset 0 1px 0 rgba(255, 255, 255, 0.1);
     }
-    
+
     .welcome-card::before {
       content: '';
       position: absolute;
@@ -87,7 +88,7 @@
       background: linear-gradient(90deg, var(--accent), var(--accent-2));
       box-shadow: 0 0 20px rgba(0, 200, 83, 0.5);
     }
-    
+
     .welcome-icon {
       font-size: 5rem;
       margin-bottom: 25px;
@@ -98,12 +99,19 @@
       display: inline-block;
       animation: float 3s ease-in-out infinite;
     }
-    
+
     @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-10px);
+      }
     }
-    
+
     h1 {
       margin: 0 0 15px 0;
       font-size: 2.2rem;
@@ -113,14 +121,14 @@
       font-weight: 800;
       letter-spacing: -0.5px;
     }
-    
+
     .subtitle {
       color: var(--muted);
       font-size: 1.1rem;
       margin-bottom: 30px;
       line-height: 1.6;
     }
-    
+
     .user-info {
       background: rgba(255, 255, 255, 0.05);
       padding: 25px;
@@ -140,19 +148,19 @@
       height: 1px;
       background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
     }
-    
+
     .user-email {
       font-size: 1.1rem;
       margin-bottom: 15px;
       color: #fff;
     }
-    
+
     .login-time {
       color: var(--muted);
       font-size: 0.95rem;
       margin-bottom: 15px;
     }
-    
+
     .admin-badge {
       display: inline-flex;
       align-items: center;
@@ -167,19 +175,26 @@
       box-shadow: 0 4px 12px rgba(0, 200, 83, 0.3);
       animation: pulse 2s infinite;
     }
-    
+
     @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
+
+      0%,
+      100% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(1.05);
+      }
     }
-    
+
     .stats-preview {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 15px;
       margin: 25px 0;
     }
-    
+
     .stat-item {
       text-align: center;
       padding: 15px 10px;
@@ -193,7 +208,7 @@
       background: rgba(255, 255, 255, 0.06);
       transform: translateY(-5px);
     }
-    
+
     .stat-number {
       font-size: 1.8rem;
       font-weight: 800;
@@ -203,19 +218,19 @@
       margin-bottom: 5px;
       display: block;
     }
-    
+
     .stat-label {
       font-size: 0.85rem;
       color: var(--muted);
     }
-    
+
     .btn-container {
       display: flex;
       flex-direction: column;
       gap: 12px;
       margin: 30px 0 25px;
     }
-    
+
     .btn {
       background: linear-gradient(135deg, var(--accent), var(--accent-2));
       border: none;
@@ -234,7 +249,7 @@
       justify-content: center;
       gap: 10px;
     }
-    
+
     .btn::before {
       content: '';
       position: absolute;
@@ -245,29 +260,29 @@
       background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
       transition: left 0.6s;
     }
-    
+
     .btn:hover::before {
       left: 100%;
     }
-    
+
     .btn:hover {
       transform: translateY(-5px);
       box-shadow: 0 15px 35px rgba(0, 200, 83, 0.4);
     }
-    
+
     .btn.secondary {
       background: transparent;
       border: 2px solid var(--accent-2);
       color: var(--accent-2);
       box-shadow: none;
     }
-    
+
     .btn.secondary:hover {
       background: rgba(3, 169, 244, 0.1);
       transform: translateY(-5px);
       box-shadow: 0 8px 25px rgba(3, 169, 244, 0.2);
     }
-    
+
     .footer-text {
       color: var(--muted);
       font-size: 0.9rem;
@@ -296,8 +311,13 @@
     }
 
     @keyframes float-particle {
-      0% { transform: translateY(100vh) rotate(0deg); }
-      100% { transform: translateY(-100px) rotate(360deg); }
+      0% {
+        transform: translateY(100vh) rotate(0deg);
+      }
+
+      100% {
+        transform: translateY(-100px) rotate(360deg);
+      }
     }
 
     /* تصميم متجاوب */
@@ -306,20 +326,20 @@
         padding: 30px 25px;
         margin: 20px;
       }
-      
+
       h1 {
         font-size: 1.8rem;
       }
-      
+
       .stats-preview {
         grid-template-columns: repeat(2, 1fr);
         gap: 12px;
       }
-      
+
       .btn-container {
         gap: 10px;
       }
-      
+
       .btn {
         padding: 14px 20px;
         font-size: 1rem;
@@ -330,35 +350,54 @@
       .welcome-card {
         padding: 25px 20px;
       }
-      
+
       h1 {
         font-size: 1.6rem;
       }
-      
+
       .welcome-icon {
         font-size: 4rem;
       }
-      
+
       .user-info {
         padding: 20px;
       }
-      
+
       .stats-preview {
         grid-template-columns: 1fr;
         gap: 10px;
       }
     }
+
+    /* مؤشر التحديث */
+    .refresh-indicator {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: var(--accent);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      z-index: 1001;
+      display: none;
+    }
   </style>
 </head>
+
 <body>
+  <!-- مؤشر التحديث -->
+  <div class="refresh-indicator" id="refreshIndicator">🔄 جاري التحديث...</div>
+
   <!-- جسيمات الخلفية -->
   <div class="particles" id="particles"></div>
 
   <div class="welcome-card">
     <div class="welcome-icon">👑</div>
     <h1>مرحباً بك في لوحة التحكم</h1>
-    <p class="subtitle">أنت الآن مسجّل الدخول كـ <strong style="color: var(--accent);">مشرف</strong> في نظام Bianco Timer</p>
-    
+    <p class="subtitle">أنت الآن مسجّل الدخول كـ <strong style="color: var(--accent);">مشرف</strong> في نظام Bianco
+      Timer</p>
+
     <div class="user-info">
       <div class="user-email" id="userEmailDisplay"></div>
       <div class="login-time">وقت الدخول: <span id="loginTime"></span></div>
@@ -366,7 +405,7 @@
         <span>🔐</span>
         <span>صلاحية: مشرف كامل</span>
       </div>
-      
+
       <div class="stats-preview">
         <div class="stat-item">
           <span class="stat-number" id="todaySessions">0</span>
@@ -394,9 +433,10 @@
         </div>
       </div>
     </div>
-    
-    <p style="color: var(--muted); margin-bottom: 10px;">من هنا يمكنك إدارة الجلسات، متابعة الإيرادات، وتعديل البيانات</p>
-    
+
+    <p style="color: var(--muted); margin-bottom: 10px;">من هنا يمكنك إدارة الجلسات، متابعة الإيرادات، وتعديل البيانات
+    </p>
+
     <div class="btn-container">
       <button id="goToAdmin" class="btn">
         <span>🚀</span>
@@ -406,21 +446,25 @@
         <span>📊</span>
         <span>الصفحة الرئيسية</span>
       </button>
+      <button id="refreshBtn" class="btn secondary">
+        <span>🔄</span>
+        <span>تحديث البيانات</span>
+      </button>
       <button id="logoutBtn" class="btn secondary">
         <span>🚪</span>
         <span>تسجيل خروج</span>
       </button>
     </div>
-    
+
     <div class="footer-text">
-      يمكنك العودة إلى هذه الصفحة من خلال تسجيل الخروج والدخول مرة أخرى
+      🔄 البيانات محدثة تلقائياً كل 10 ثواني - آخر تحديث: <span id="lastUpdateTime">الآن</span>
     </div>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { getFirestore, collection, onSnapshot, query, where, orderBy } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBFI6W1mCbFsG8MfcGxWL0JonZtJ_7P6W0",
@@ -439,6 +483,7 @@
     const loginTime = document.getElementById('loginTime');
     const goToAdmin = document.getElementById('goToAdmin');
     const goToMain = document.getElementById('goToMain');
+    const refreshBtn = document.getElementById('refreshBtn');
     const logoutBtn = document.getElementById('logoutBtn');
     const todaySessionsEl = document.getElementById('todaySessions');
     const todayRevenueEl = document.getElementById('todayRevenue');
@@ -446,6 +491,8 @@
     const todayExpensesEl = document.getElementById('todayExpenses');
     const todayProfitEl = document.getElementById('todayProfit');
     const openSessionsEl = document.getElementById('openSessions');
+    const refreshIndicator = document.getElementById('refreshIndicator');
+    const lastUpdateTime = document.getElementById('lastUpdateTime');
 
     // قائمة المشرفين المسموح لهم
     const adminEmails = ["moosama@gmail.com", "ahmed@gmail.com", "mahmoud@gmail.com"];
@@ -454,22 +501,22 @@
     function createParticles() {
       const particlesContainer = document.getElementById('particles');
       const particleCount = 15;
-      
+
       for (let i = 0; i < particleCount; i++) {
         const particle = document.createElement('div');
         particle.className = 'particle';
-        
+
         const size = Math.random() * 6 + 2;
         const left = Math.random() * 100;
         const animationDuration = Math.random() * 20 + 10;
         const animationDelay = Math.random() * 5;
-        
+
         particle.style.width = `${size}px`;
         particle.style.height = `${size}px`;
         particle.style.left = `${left}%`;
         particle.style.animationDuration = `${animationDuration}s`;
         particle.style.animationDelay = `${animationDelay}s`;
-        
+
         particlesContainer.appendChild(particle);
       }
     }
@@ -484,122 +531,136 @@
       minute: '2-digit'
     });
 
-    async function loadTodayStats() {
-    try {
-        const today = new Date().toLocaleDateString('ar-EG');
-        console.log('📅 جلب إحصائيات تاريخ:', today);
-        
-        // جلب جلسات اليوم فقط بدون فلترة
-        const todaySessionsQuery = query(collection(db, 'sessions'), where("date", "==", today));
-        const todaySessionsSnapshot = await getDocs(todaySessionsQuery);
-        
-        // حساب إيرادات اليوم بدون فلترة
-        let todayRevenue = 0;
-        let todaySessionsCount = 0;
-        
-        todaySessionsSnapshot.forEach(doc => {
-            const session = doc.data();
-            const sessionRevenue = Number(session.price) || 0;
-            todayRevenue += sessionRevenue;
-            todaySessionsCount++;
-        });
-        
-        // جلب الأجهزة النشطة اليوم بدون فلترة
-        const openSessionsQuery = query(collection(db, 'openSessions'));
-        const openSessionsSnapshot = await getDocs(openSessionsQuery);
-        
-        let activeDevicesCount = 0;
-        openSessionsSnapshot.forEach(doc => {
-            activeDevicesCount++;
-        });
-        
-        // جلب مصروفات اليوم فقط من localStorage بدون فلترة
-        let todayExpenses = 0;
-        try {
-            const storage = JSON.parse(localStorage.getItem('biancoSessionsLocal') || '{}');
-            if (storage[today] && storage[today].expenses) {
-                storage[today].expenses.forEach(expense => {
-                    todayExpenses += Number(expense.amount) || 0;
-                });
-            }
-        } catch (error) {
-            console.error('خطأ في جلب مصروفات اليوم:', error);
-        }
-        
-        // حساب صافي ربح اليوم
-        const todayProfit = todayRevenue - todayExpenses;
-        
-        // جلب عدد الجلسات المفتوحة اليوم من localStorage بدون فلترة
-        let openSessionsCount = 0;
-        try {
-            const storage = JSON.parse(localStorage.getItem('biancoSessionsLocal') || '{}');
-            if (storage[today] && storage[today].open) {
-                openSessionsCount = Object.keys(storage[today].open).length;
-            }
-        } catch (error) {
-            console.error('خطأ في جلب الجلسات المفتوحة:', error);
-        }
-        
-        console.log('📊 إحصائيات اليوم:', {
-            todaySessions: todaySessionsCount,
-            todayRevenue,
-            activeDevices: activeDevicesCount,
-            todayExpenses,
-            todayProfit,
-            openSessions: openSessionsCount
-        });
-        
-        // تحديث الواجهة
-        animateCounter(todaySessionsEl, todaySessionsCount);
-        animateCounter(todayRevenueEl, todayRevenue);
-        animateCounter(activeDevicesEl, activeDevicesCount);
-        animateCounter(todayExpensesEl, todayExpenses);
-        animateCounter(todayProfitEl, todayProfit);
-        animateCounter(openSessionsEl, openSessionsCount);
-        
-    } catch (error) {
-        console.error('خطأ في جلب إحصائيات اليوم:', error);
-        // في حالة الخطأ، عرض أصفار
-        todaySessionsEl.textContent = '0';
-        todayRevenueEl.textContent = '0 ج';
-        activeDevicesEl.textContent = '0';
-        todayExpensesEl.textContent = '0 ج';
-        todayProfitEl.textContent = '0 ج';
-        openSessionsEl.textContent = '0';
+    // دوال المساعدة
+    function showRefreshIndicator() {
+      refreshIndicator.style.display = 'block';
+      setTimeout(() => {
+        refreshIndicator.style.display = 'none';
+      }, 2000);
     }
-}
-        
-  
-        
- 
+
+    function updateLastUpdateTime() {
+      lastUpdateTime.textContent = new Date().toLocaleTimeString('ar-EG');
+    }
 
     // تأثير عداد الأرقام
-    function animateCounter(element, targetValue) {
-      const isCurrency = element.id === 'todayRevenue' || element.id === 'todayExpenses' || element.id === 'todayProfit';
-      const duration = 2000;
+    function animateCounter(element, targetValue, isCurrency = false) {
+      const currentValue = parseInt(element.textContent) || 0;
+      if (currentValue === targetValue) return;
+
+      const duration = 1000;
       const frameRate = 30;
       const totalFrames = Math.round(duration / (1000 / frameRate));
       let currentFrame = 0;
-      
-      const startValue = 0;
-      const increment = (targetValue - startValue) / totalFrames;
-      let currentValue = startValue;
-      
+
+      const increment = (targetValue - currentValue) / totalFrames;
+      let displayValue = currentValue;
+
       const timer = setInterval(() => {
         currentFrame++;
-        currentValue += increment;
-        
+        displayValue += increment;
+
         if (currentFrame >= totalFrames) {
-          currentValue = targetValue;
+          displayValue = targetValue;
           clearInterval(timer);
         }
-        
+
         if (isCurrency) {
-          element.textContent = Math.round(currentValue).toLocaleString() + ' ج';
+          element.textContent = Math.round(displayValue).toLocaleString() + ' ج';
         } else {
-          element.textContent = Math.round(currentValue).toLocaleString();
+          element.textContent = Math.round(displayValue).toLocaleString();
         }
       }, 1000 / frameRate);
+    }
+
+    // دالة تحديث الإحصائيات
+    function updateStatistics(stats) {
+      animateCounter(todaySessionsEl, stats.todaySessions);
+      animateCounter(todayRevenueEl, stats.todayRevenue, true);
+      animateCounter(activeDevicesEl, stats.activeDevices);
+      animateCounter(todayExpensesEl, stats.todayExpenses, true);
+      animateCounter(todayProfitEl, stats.todayProfit, true);
+      animateCounter(openSessionsEl, stats.openSessions);
+      
+      updateLastUpdateTime();
+    }
+
+    // 🔄 نظام المزامنة في الوقت الحقيقي
+    function setupRealTimeSync() {
+      const today = new Date().toLocaleDateString('ar-EG');
+      console.log('🔄 بدء المزامنة في الوقت الحقيقي...');
+
+      // الاستماع للجلسات المكتملة اليوم
+      const sessionsQuery = query(
+        collection(db, 'sessions'), 
+        where("date", "==", today)
+      );
+
+      onSnapshot(sessionsQuery, (snapshot) => {
+        showRefreshIndicator();
+        
+        let todaySessions = 0;
+        let todayRevenue = 0;
+
+        snapshot.forEach(doc => {
+          const session = doc.data();
+          todaySessions++;
+          todayRevenue += Number(session.price) || 0;
+        });
+
+        // الاستماع للجلسات المفتوحة
+        const openSessionsQuery = query(collection(db, 'openSessions'));
+        onSnapshot(openSessionsQuery, (openSnapshot) => {
+          const activeDevices = openSnapshot.size;
+          let openSessions = 0;
+
+          openSnapshot.forEach(doc => {
+            const openSession = doc.data();
+            if (openSession.date === today) {
+              openSessions++;
+            }
+          });
+
+          // جلب المصروفات من localStorage (يمكن تعديل هذا ليكون من Firebase إذا أردت)
+          let todayExpenses = 0;
+          try {
+            const storage = JSON.parse(localStorage.getItem('biancoSessionsLocal') || '{}');
+            if (storage[today] && storage[today].expenses) {
+              storage[today].expenses.forEach(expense => {
+                todayExpenses += Number(expense.amount) || 0;
+              });
+            }
+          } catch (error) {
+            console.error('خطأ في جلب المصروفات:', error);
+          }
+
+          const todayProfit = todayRevenue - todayExpenses;
+
+          const stats = {
+            todaySessions,
+            todayRevenue,
+            activeDevices,
+            todayExpenses,
+            todayProfit,
+            openSessions
+          };
+
+          console.log('📊 إحصائيات محدثة:', stats);
+          updateStatistics(stats);
+        });
+      });
+
+      // تحديث تلقائي كل 10 ثواني
+      setInterval(() => {
+        showRefreshIndicator();
+        console.log('🔄 تحديث تلقائي للبيانات...');
+      }, 10000);
+    }
+
+    // دالة التهيئة
+    function init() {
+      setupRealTimeSync();
+      updateLastUpdateTime();
     }
 
     // التحقق من صلاحية المستخدم
@@ -610,14 +671,15 @@
       }
 
       userEmailDisplay.textContent = user.email;
-      
-      // جلب إحصائيات اليوم
-      loadTodayStats();
-      
+
       // إذا كان مستخدم عادي، توجيه للصفحة الرئيسية
       if (!adminEmails.includes(user.email)) {
         window.location.href = 'index.html';
+        return;
       }
+
+      // تهيئة النظام للمشرفين
+      init();
     });
 
     // الانتقال إلى لوحة التحكم
@@ -630,6 +692,12 @@
       window.location.href = 'index.html';
     };
 
+    // زر التحديث اليدوي
+    refreshBtn.onclick = () => {
+      showRefreshIndicator();
+      console.log('🔄 تحديث يدوي للبيانات...');
+    };
+
     // تسجيل الخروج
     logoutBtn.onclick = () => {
       signOut(auth).then(() => {
@@ -639,6 +707,19 @@
 
     // تهيئة الجسيمات عند تحميل الصفحة
     document.addEventListener('DOMContentLoaded', createParticles);
+
+    // تحديث الوقت كل دقيقة
+    setInterval(() => {
+      loginTime.textContent = new Date().toLocaleString('ar-EG', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }, 60000);
   </script>
 </body>
+
 </html>
