@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ar">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -16,12 +17,12 @@
       --glass: rgba(255, 255, 255, 0.04);
       --shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
     }
-  
-    * { 
-      box-sizing: border-box; 
+
+    * {
+      box-sizing: border-box;
       -webkit-tap-highlight-color: transparent;
     }
-  
+
     body {
       margin: 0;
       padding: 12px;
@@ -31,13 +32,13 @@
       direction: rtl;
       min-height: 100vh;
     }
-  
-    .container { 
-      max-width: 1200px; 
-      margin: auto; 
+
+    .container {
+      max-width: 1200px;
+      margin: auto;
       width: 100%;
     }
-  
+
     header {
       display: flex;
       justify-content: space-between;
@@ -45,22 +46,22 @@
       gap: 8px;
       flex-wrap: wrap;
       padding-bottom: 12px;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
       margin-bottom: 20px;
     }
-  
-    h1 { 
-      margin: 0; 
-      font-size: clamp(18px, 5vw, 22px); 
+
+    h1 {
+      margin: 0;
+      font-size: clamp(18px, 5vw, 22px);
       line-height: 1.3;
     }
-    
-    .small { 
-      color: var(--muted); 
+
+    .small {
+      color: var(--muted);
       font-size: clamp(12px, 3vw, 13px);
       line-height: 1.4;
     }
-  
+
     .btn {
       background: var(--accent);
       border: none;
@@ -77,9 +78,9 @@
       align-items: center;
       justify-content: center;
     }
-    
-    .btn:hover { 
-      transform: scale(1.05); 
+
+    .btn:hover {
+      transform: scale(1.05);
     }
 
     .btn.secondary {
@@ -87,10 +88,10 @@
       border: 1px solid var(--glass);
       color: var(--muted);
     }
-    
-    .btn.secondary:hover { 
-      color: #fff; 
-      border-color: #888; 
+
+    .btn.secondary:hover {
+      color: #fff;
+      border-color: #888;
     }
 
     .filters {
@@ -116,10 +117,11 @@
       font-size: 14px;
     }
 
-    input, select {
+    input,
+    select {
       padding: 8px 12px;
       border-radius: 8px;
-      border: 1px solid rgba(255,255,255,0.1);
+      border: 1px solid rgba(255, 255, 255, 0.1);
       background: #0f1b26;
       color: white;
       min-width: 150px;
@@ -160,26 +162,27 @@
       border-radius: 10px;
       overflow: hidden;
     }
-  
-    th, td {
+
+    th,
+    td {
       padding: 12px 8px;
       text-align: center;
-      border-bottom: 1px solid rgba(255,255,255,0.05);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
       font-size: 13px;
     }
-  
-    th { 
-      background: rgba(255,255,255,0.05);
+
+    th {
+      background: rgba(255, 255, 255, 0.05);
       color: var(--muted);
       font-weight: 600;
     }
 
     .session-details {
-      background: rgba(255,255,255,0.02);
+      background: rgba(255, 255, 255, 0.02);
       border-radius: 8px;
       padding: 15px;
       margin: 10px 0;
-      border: 1px solid rgba(255,255,255,0.05);
+      border: 1px solid rgba(255, 255, 255, 0.05);
     }
 
     .session-table {
@@ -197,21 +200,23 @@
         flex-direction: column;
         align-items: stretch;
       }
-      
+
       .filter-group {
         justify-content: space-between;
       }
-      
+
       table {
         font-size: 11px;
       }
-      
-      th, td {
+
+      th,
+      td {
         padding: 8px 4px;
       }
     }
   </style>
 </head>
+
 <body>
   <div class="container">
     <header>
@@ -227,11 +232,7 @@
 
     <!-- الفلترة -->
     <div class="filters">
-      <div class="filter-group">
-        <label for="dateFilter">اختر تاريخ:</label>
-        <input type="date" id="dateFilter">
-      </div>
-      
+
       <div class="filter-group">
         <label for="viewType">طريقة العرض:</label>
         <select id="viewType">
@@ -241,8 +242,6 @@
         </select>
       </div>
 
-      <button class="btn" id="applyFilter">🔍 تطبيق الفلتر</button>
-      <button class="btn secondary" id="clearFilter">🗑️ مسح الفلتر</button>
     </div>
 
     <!-- الإحصائيات -->
@@ -318,10 +317,10 @@
     // العناصر
     const goToMain = document.getElementById('goToMain');
     const exportAllBtn = document.getElementById('exportAllBtn');
-    const dateFilter = document.getElementById('dateFilter');
+    // const dateFilter = document.getElementById('dateFilter'); // Removed date filter
     const viewType = document.getElementById('viewType');
-    const applyFilter = document.getElementById('applyFilter');
-    const clearFilter = document.getElementById('clearFilter');
+    // const applyFilter = document.getElementById('applyFilter'); // Removed apply filter button
+    // const clearFilter = document.getElementById('clearFilter'); // Removed clear filter button
     const shiftsList = document.getElementById('shiftsList');
     const sessionsList = document.getElementById('sessionsList');
     const totalShifts = document.getElementById('totalShifts');
@@ -338,10 +337,10 @@
     function init() {
       loadShiftReports();
       loadAllSessions();
-      
+
       // تعيين تاريخ اليوم كافتراضي
-      const today = new Date().toISOString().split('T')[0];
-      dateFilter.value = today;
+      // const today = new Date().toISOString().split('T')[0];
+      // dateFilter.value = today; // Removed date filter
     }
 
     // دالة جلب تقارير الشيفتات
@@ -349,7 +348,7 @@
       try {
         const shiftsQuery = query(collection(db, 'shiftReports'), orderBy('timestamp', 'desc'));
         const snapshot = await getDocs(shiftsQuery);
-        
+
         allShiftReports = [];
         snapshot.forEach(doc => {
           allShiftReports.push({
@@ -357,7 +356,7 @@
             ...doc.data()
           });
         });
-        
+
         applyFilters();
       } catch (error) {
         console.error('خطأ في جلب تقارير الشيفتات:', error);
@@ -371,7 +370,7 @@
       try {
         const sessionsQuery = query(collection(db, 'sessions'), orderBy('createdAt', 'desc'));
         const snapshot = await getDocs(sessionsQuery);
-        
+
         allSessions = [];
         snapshot.forEach(doc => {
           allSessions.push({
@@ -379,7 +378,7 @@
             ...doc.data()
           });
         });
-        
+
         applyFilters();
       } catch (error) {
         console.error('خطأ في جلب الجلسات:', error);
@@ -390,26 +389,26 @@
 
     // دالة تطبيق الفلتر
     function applyFilters() {
-      const selectedDate = dateFilter.value;
+      // const selectedDate = dateFilter.value; // Removed date filter
       const selectedView = viewType.value;
-      
+
       let filteredShifts = [...allShiftReports];
       let filteredSessions = [...allSessions];
-      
+
       // فلترة بالتاريخ
-      if (selectedDate) {
-        filteredShifts = filteredShifts.filter(shift => 
-          shift.date === selectedDate || shift.timestamp?.includes(selectedDate)
-        );
-        
-        filteredSessions = filteredSessions.filter(session => 
-          session.date === selectedDate || session.createdAt?.includes(selectedDate)
-        );
-      }
-      
+      // if (selectedDate) { // Removed date filter logic
+      //   filteredShifts = filteredShifts.filter(shift => 
+      //     shift.date === selectedDate || shift.timestamp?.includes(selectedDate)
+      //   );
+
+      //   filteredSessions = filteredSessions.filter(session => 
+      //     session.date === selectedDate || session.createdAt?.includes(selectedDate)
+      //   );
+      // }
+
       // تحديث الإحصائيات
       updateStatistics(filteredShifts, filteredSessions);
-      
+
       // عرض البيانات حسب الاختيار
       if (selectedView === 'shifts') {
         renderShiftReports(filteredShifts);
@@ -434,11 +433,11 @@
       const shiftsRevenue = shifts.reduce((sum, shift) => sum + (shift.grossRevenue || 0), 0);
       const shiftsExpenses = shifts.reduce((sum, shift) => sum + (shift.totalExpenses || 0), 0);
       const shiftsNet = shiftsRevenue - shiftsExpenses;
-      
+
       // إحصائيات الجلسات
       const totalSessionsCount = sessions.length;
       const sessionsRevenue = sessions.reduce((sum, session) => sum + (Number(session.price) || 0), 0);
-      
+
       // تحديث الواجهة
       totalShifts.textContent = totalShiftsCount;
       totalSessions.textContent = totalSessionsCount;
@@ -453,7 +452,7 @@
         shiftsList.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--muted);">لا توجد تقارير شيفتات</div>';
         return;
       }
-      
+
       let html = '';
       shifts.forEach(shift => {
         html += `
@@ -497,7 +496,7 @@
           </div>
         `;
       });
-      
+
       shiftsList.innerHTML = html;
     }
 
@@ -507,16 +506,16 @@
         sessionsList.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 20px; color: var(--muted);">لا توجد جلسات</td></tr>';
         return;
       }
-      
+
       let html = '';
       sessions.forEach(session => {
-        const drinksTxt = Array.isArray(session.drinks) 
+        const drinksTxt = Array.isArray(session.drinks)
           ? session.drinks.map(d => `${d.name}×${d.qty}`).join(', ')
           : (session.drinks || '-');
-        
+
         const startTime = session.startISO ? new Date(session.startISO).toLocaleTimeString('ar-EG') : '-';
         const endTime = session.endISO ? new Date(session.endISO).toLocaleTimeString('ar-EG') : '-';
-        
+
         html += `
           <tr>
             <td>${session.date || '-'}</td>
@@ -531,72 +530,71 @@
           </tr>
         `;
       });
-      
+
       sessionsList.innerHTML = html;
     }
 
     // دالة تصدير كل البيانات
     function exportAllData() {
-      const selectedDate = dateFilter.value;
+      // const selectedDate = dateFilter.value; // Removed date filter
       const rows = [
         ['تقرير شامل - Bianco Timer'],
-        ['التاريخ', selectedDate || 'كل التواريخ'],
+        // ['التاريخ', selectedDate || 'كل التواريخ'], // Removed date filter
         ['وقت التصدير', new Date().toLocaleString('ar-EG')],
         [''],
         ['تقارير الشيفتات'],
         ['المستخدم', 'التاريخ', 'الجلسات', 'الإيرادات', 'المصروفات', 'الصافي', 'ملاحظات']
       ];
-      
+
       // إضافة تقارير الشيفتات
       allShiftReports.forEach(shift => {
-        if (!selectedDate || shift.date === selectedDate || shift.timestamp?.includes(selectedDate)) {
-          rows.push([
-            shift.userName || shift.userEmail,
-            shift.date,
-            shift.completedSessions || 0,
-            shift.grossRevenue || 0,
-            shift.totalExpenses || 0,
-            shift.netRevenue || 0,
-            shift.notes || ''
-          ]);
-        }
+        // if (!selectedDate || shift.date === selectedDate || shift.timestamp?.includes(selectedDate)) { // Removed date filter
+        rows.push([
+          shift.userName || shift.userEmail,
+          shift.date,
+          shift.completedSessions || 0,
+          shift.grossRevenue || 0,
+          shift.totalExpenses || 0,
+          shift.netRevenue || 0,
+          shift.notes || ''
+        ]);
+        // } // Removed date filter
       });
-      
+
       rows.push(['']);
       rows.push(['الجلسات المفصلة']);
       rows.push(['التاريخ', 'الجهاز', 'النوع', 'من', 'إلى', 'المدة', 'الطلبات', 'السعر', 'أنشئ بواسطة']);
-      
+
       // إضافة الجلسات
       allSessions.forEach(session => {
-        if (!selectedDate || session.date === selectedDate || session.createdAt?.includes(selectedDate)) {
-          const drinksTxt = Array.isArray(session.drinks) 
-            ? session.drinks.map(d => `${d.name}×${d.qty}`).join(' | ')
-            : (session.drinks || '-');
-          
-          const startTime = session.startISO ? new Date(session.startISO).toLocaleTimeString('ar-EG') : '-';
-          const endTime = session.endISO ? new Date(session.endISO).toLocaleTimeString('ar-EG') : '-';
-          
-          rows.push([
-            session.date || '-',
-            session.deviceLabel || '-',
-            session.mode === 'double' ? 'زوجي' : 'فردي',
-            startTime,
-            endTime,
-            session.duration || '-',
-            drinksTxt,
-            session.price || 0,
-            session.createdBy || '-'
-          ]);
-        }
+        // if (!selectedDate || session.date === selectedDate || session.createdAt?.includes(selectedDate)) { // Removed date filter
+        const drinksTxt = Array.isArray(session.drinks)
+          ? session.drinks.map(d => `${d.name}×${d.qty}`).join(' | ')
+          : (session.drinks || '-');
+
+        const startTime = session.startISO ? new Date(session.startISO).toLocaleTimeString('ar-EG') : '-';
+        const endTime = session.endISO ? new Date(session.endISO).toLocaleTimeString('ar-EG') : '-';
+
+        rows.push([
+          session.date || '-',
+          session.deviceLabel || '-',
+          session.mode === 'double' ? 'زوجي' : 'فردي',
+          startTime,
+          endTime,
+          session.duration || '-',
+          drinksTxt,
+          session.price || 0,
+          session.createdBy || '-'
+        ]);
       });
-      
+
       // إنشاء الملف
       const csv = rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
       const bom = "\uFEFF";
       const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = `full_report_${selectedDate || 'all'}_${new Date().getTime()}.csv`;
+      a.download = `full_report_all_${new Date().getTime()}.csv`; // Updated filename
       a.click();
       URL.revokeObjectURL(a.href);
     }
@@ -607,12 +605,13 @@
     });
 
     exportAllBtn.addEventListener('click', exportAllData);
-    applyFilter.addEventListener('click', applyFilters);
-    clearFilter.addEventListener('click', () => {
-      dateFilter.value = '';
-      viewType.value = 'shifts';
-      applyFilters();
-    });
+    viewType.addEventListener('change', applyFilters); // Changed from applyFilter button click to viewType change
+    // applyFilter.addEventListener('click', applyFilters); // Removed apply filter button
+    // clearFilter.addEventListener('click', () => { // Removed clear filter button
+    //   dateFilter.value = '';
+    //   viewType.value = 'shifts';
+    //   applyFilters();
+    // });
 
     // التحقق من تسجيل الدخول
     onAuthStateChanged(auth, user => {
@@ -624,4 +623,5 @@
     });
   </script>
 </body>
+
 </html>
