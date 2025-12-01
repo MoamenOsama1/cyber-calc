@@ -2201,6 +2201,250 @@
     // Run cleanup on page load
     cleanupMarkedSessions();
 
+
+
+    // 🔥 نظام المزامنة المباشرة الشامل
+    function setupComprehensiveRealTimeSync() {
+      console.log('🚀 بدء نظام المزامنة المباشرة الشامل...');
+
+      // 1️⃣ الاستماع للجلسات المكتملة الجديدة في الوقت الحقيقي
+      const sessionsQuery = query(collection(db, 'sessions'), orderBy('createdAt', 'desc'));
+      onSnapshot(sessionsQuery, (snapshot) => {
+        showSyncIndicator();
+        const storage = getStorage();
+        let hasChanges = false;
+
+        snapshot.docChanges().forEach((change) => {
+          const firebaseSession = { id: change.doc.id, ...change.doc.data() };
+          const sessionDate = firebaseSession.date || todayKey();
+
+          if (!storage[sessionDate]) {
+            storage[sessionDate] = { open: {}, completed: [], expenses: [] };
+          }
+
+          if (change.type === "added") {
+            // التحقق من عدم وجود نسخة مكررة
+            const isDuplicate = storage[sessionDate].completed.some(s =>
+              s.id === firebaseSession.id ||
+              (s.deviceLabel === firebaseSession.deviceLabel &&
+                s.startISO === firebaseSession.startISO &&
+                s.endISO === firebaseSession.endISO)
+            );
+
+            if (!isDuplicate) {
+              storage[sessionDate].completed.push(firebaseSession);
+              hasChanges = true;
+              console.log('🆕 جلسة جديدة من جهاز آخر:', firebaseSession.deviceLabel);
+
+              // 🔔 إشعار صوتي للجلسة الجديدة
+              playNewSessionSound();
+            }
+          }
+
+          if (change.type === "modified") {
+            const index = storage[sessionDate].completed.findIndex(s => s.id === firebaseSession.id);
+            if (index !== -1) {
+              storage[sessionDate].completed[index] = firebaseSession;
+              hasChanges = true;
+              console.log('✏️ تحديث جلسة من جهاز آخر:', firebaseSession.deviceLabel);
+            }
+          }
+        });
+
+        if (hasChanges) {
+          setStorage(storage);
+          initLocal();
+          renderDevices();
+
+          // تحديث الإيراد اليومي وتشغيل الصوت
+          updateTodayRevenueWithSound();
+          showNotification('🔄 تم تحديث الجلسات من أجهزة أخرى');
+        }
+        hideSyncIndicator();
+      });
+
+      // 2️⃣ الاستماع للمصروفات الجديدة في الوقت الحقيقي
+      const expensesRef = collection(db, 'dailyExpenses');
+      const expensesQuery = query(expensesRef, where("date", "==", todayKey()));
+
+      onSnapshot(expensesQuery, (snapshot) => {
+        const storage = getStorage();
+        let hasChanges = false;
+
+        snapshot.docChanges().forEach((change) => {
+          const expense = { id: change.doc.id, ...change.doc.data() };
+
+          if (!storage[todayKey()]) {
+            storage[todayKey()] = { open: {}, completed: [], expenses: [] };
+          }
+
+          if (change.type === "added") {
+            const isDuplicate = storage[todayKey()].expenses.some(e =>
+              e.id === expense.id ||
+              (e.name === expense.name && e.amount === expense.amount && e.date === expense.date)
+            );
+
+            if (!isDuplicate) {
+              storage[todayKey()].expenses.push(expense);
+              hasChanges = true;
+              console.log('💸 مصروف جديد من جهاز آخر:', expense.name);
+
+              // 🔔 إشعار صوتي للمصروف الجديد
+              playNewExpenseSound();
+            }
+          }
+        });
+
+        if (hasChanges) {
+          setStorage(storage);
+          initLocal();
+          renderExpenses();
+
+          // تحديث الإيراد اليومي وتشغيل الصوت
+          updateTodayRevenueWithSound();
+          showNotification('💸 تم تحديث المصروفات من أجهزة أخرى');
+        }
+      });
+
+      // 3️⃣ الاستماع للتحديثات الإدارية في الوقت الحقيقي
+      const adminUpdatesQuery = query(collection(db, 'sessionUpdates'), orderBy('updatedAt', 'desc'));
+      onSnapshot(adminUpdatesQuery, (snapshot) => {
+        const storage = getStorage();
+        let hasChanges = false;
+
+        snapshot.docChanges().forEach((change) => {
+          const update = change.doc.data();
+
+          if (change.type === "added") {
+            if (update.updateType === 'session_edit' && !update.isDeleted) {
+              Object.keys(storage).forEach(date => {
+                storage[date].completed = storage[date].completed.map(session => {
+                  const matches =
+                    (update.sessionId && session.id === update.sessionId) ||
+                    (session.deviceLabel === update.originalDeviceLabel &&
+                      session.startISO === update.originalStartISO);
+
+                  if (matches) {
+                    hasChanges = true;
+                    return {
+                      ...session,
+                      deviceLabel: update.deviceLabel || session.deviceLabel,
+                      price: update.price !== undefined ? update.price : session.price,
+                      drinks: update.drinks || session.drinks,
+                      mode: update.mode || session.mode,
+                      duration: update.duration || session.duration,
+                      updatedByAdmin: true,
+                      lastUpdate: new Date().toISOString()
+                    };
+                  }
+                  return session;
+                });
+              });
+            }
+          }
+        });
+
+        if (hasChanges) {
+          setStorage(storage);
+          initLocal();
+          renderDevices();
+          showNotification('🔄 تم تحديث الجلسات من الإدارة');
+        }
+      });
+
+      console.log('✅ تم تفعيل المزامنة المباشرة الشاملة');
+    }
+
+    // 🔊 وظائف الصوت
+    function playNewSessionSound() {
+      try {
+        const audio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==');
+        audio.volume = 0.3;
+        audio.play().catch(e => console.log('❌ خطأ في تشغيل الصوت:', e));
+      } catch (e) {
+        console.log('⚠️ لا يمكن تشغيل الصوت');
+      }
+    }
+
+    function playNewExpenseSound() {
+      try {
+        // صوت نقدي بسيط
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.frequency.value = 800;
+        oscillator.type = 'sine';
+        gainNode.gain.value = 0.1;
+
+        oscillator.start();
+        setTimeout(() => oscillator.stop(), 200);
+      } catch (e) {
+        console.log('⚠️ لا يمكن تشغيل الصوت النقدي');
+      }
+    }
+
+    function playMoneySound(amount) {
+      try {
+        // صوت للمال حسب المبلغ
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        // ارتفاع الصوت حسب المبلغ
+        const baseFreq = 500;
+        const amountFactor = Math.min(amount / 100, 2); // زيادة التردد مع زيادة المبلغ
+        oscillator.frequency.value = baseFreq + (amountFactor * 200);
+
+        oscillator.type = 'sine';
+        gainNode.gain.value = 0.15;
+
+        oscillator.start();
+        setTimeout(() => {
+          gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.5);
+          setTimeout(() => oscillator.stop(), 500);
+        }, 100);
+      } catch (e) {
+        console.log('⚠️ لا يمكن تشغيل صوت المال');
+      }
+    }
+
+    // 💰 تحديث الإيراد اليومي مع الصوت
+    function updateTodayRevenueWithSound() {
+      const oldRevenue = Number(todayRevenueEl.textContent.replace(' ج', '')) || 0;
+
+      // حساب الإيراد الجديد
+      let totalRevenue = 0;
+      completedSessionsToday.forEach(s => totalRevenue += Number(s.price || 0));
+
+      // تطبيق التقريب
+      const roundedTotal = roundToNearestFive(totalRevenue);
+      const newRevenue = Number(roundedTotal.toFixed(0));
+
+      // تحديث الواجهة
+      todayRevenueEl.textContent = `${newRevenue} ج`;
+
+      // تشغيل صوت إذا زاد الإيراد
+      if (newRevenue > oldRevenue) {
+        const increase = newRevenue - oldRevenue;
+        playMoneySound(increase);
+
+        // إشعار مرئي
+        todayRevenueEl.style.color = '#00c853';
+        todayRevenueEl.style.fontSize = '1.2em';
+        setTimeout(() => {
+          todayRevenueEl.style.color = '';
+          todayRevenueEl.style.fontSize = '';
+        }, 1000);
+      }
+    }
+
     // دالة تنظيف الجلسات المكررة يدوياً
     function cleanDuplicateSessions() {
       const s = getStorage();
@@ -2384,8 +2628,7 @@
       expenseAmount.value = '1';
       modalExpense.classList.add('active');
     });
-
-    confirmAddExpense.addEventListener('click', () => {
+    confirmAddExpense.addEventListener('click', async () => {
       const name = expenseName.value.trim();
       const amount = Number(expenseAmount.value);
 
@@ -2399,18 +2642,27 @@
         return;
       }
 
-      expensesToday.push({
+      const expenseData = {
         name,
         amount,
-        date: new Date().toISOString()
-      });
+        date: todayKey(),
+        createdAt: new Date().toISOString(),
+        createdBy: auth.currentUser ? auth.currentUser.email : 'unknown'
+      };
 
+      // حفظ محلي
+      expensesToday.push(expenseData);
       persistLocal();
       renderExpenses();
-      modalExpense.classList.remove('active');
-    });
 
-    cancelAddExpense.addEventListener('click', () => {
+      // حفظ في Firebase للمزامنة
+      try {
+        await addDoc(collection(db, "dailyExpenses"), expenseData);
+        console.log("✅ تم حفظ المصروف في Firebase للمزامنة");
+      } catch (error) {
+        console.error("❌ خطأ في حفظ المصروف في Firebase:", error);
+      }
+
       modalExpense.classList.remove('active');
     });
 
@@ -2641,7 +2893,7 @@
       const s = openSessions[id];
       if (!s) return alert('الجلسة غير موجودة');
 
-      // Mark session for deletion to prevent reopening
+      // Mark session for deletion
       s.markedForDeletion = true;
       openSessions[id] = s;
       persistLocal();
@@ -2652,10 +2904,9 @@
       const rate = RATES[s.rateType][s.mode];
       const price = Number((((mins / 60) * rate) + drinksTotal).toFixed(2));
 
-      // تطبيق التقريب على السعر النهائي قبل الحفظ
+      // تطبيق التقريب
       const roundedPrice = roundToNearestFive(price);
 
-      // إنشاء معرف فريد للجلسة
       const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
       const finished = {
@@ -2671,16 +2922,14 @@
         rateType: s.rateType,
         createdAt: new Date().toISOString(),
         createdBy: auth.currentUser ? auth.currentUser.email : 'unknown',
-        date: todayKey(),
-        markedForDeletion: true // Mark as deleted
+        date: todayKey()
       };
 
-      // التحقق من عدم وجود جلسة مكررة قبل الإضافة
+      // التحقق من عدم وجود جلسة مكررة
       const isDuplicate = completedSessionsToday.some(existingSession =>
         existingSession.deviceLabel === finished.deviceLabel &&
         existingSession.startISO === finished.startISO &&
-        existingSession.endISO === finished.endISO &&
-        existingSession.price === finished.price
+        existingSession.endISO === finished.endISO
       );
 
       if (isDuplicate) {
@@ -2691,28 +2940,39 @@
       }
 
       completedSessionsToday.push(finished);
-      delete openSessions[id]; // Remove from open sessions
+      delete openSessions[id];
       persistLocal();
 
       try {
-        // Remove from Firebase open sessions
+        // Remove from open sessions
         await removeOpenSessionFromFirebase(id);
 
-        // Save completed session to Firebase
-        await addDoc(collection(db, "sessions"), finished);
+        // Save to completed sessions with sync flag
+        const docRef = await addDoc(collection(db, "sessions"), {
+          ...finished,
+          syncVersion: 2, // إصدار المزامنة
+          deviceId: id,
+          timestamp: new Date().toISOString()
+        });
 
-        console.log("✅ تم إنهاء الجلسة وحفظها في Firebase بنجاح");
+        console.log("✅ تم حفظ الجلسة في Firebase للجميع");
+
+        // 🔔 إرسال إشعار إلى الأجهزة الأخرى
+        await sendSessionNotification(finished);
 
         renderDevices();
         modalEnd.classList.remove('active');
 
-        alert('تم إنهاء الجلسة. المجموع: ' + roundedPrice + ' ج');
+        // تحديث الإيراد مع الصوت
+        updateTodayRevenueWithSound();
+
+        alert('💸 تم إنهاء الجلسة. المجموع: ' + roundedPrice + ' ج');
 
       } catch (error) {
         console.error("❌ خطأ أثناء حفظ الجلسة:", error);
-        alert('❌ حدث خطأ أثناء حفظ الجلسة في Firebase: ' + error.message);
+        alert('❌ حدث خطأ أثناء حفظ الجلسة في السحابة');
 
-        // Rollback on error
+        // Rollback
         if (!openSessions[id]) {
           openSessions[id] = s;
           delete s.markedForDeletion;
