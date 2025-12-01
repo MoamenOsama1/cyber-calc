@@ -740,25 +740,30 @@
       });
     }
 
-   async function getExpensesFromFirebase() {
-    try {
-        const expensesQuery = query(collection(db, 'expenses'), orderBy('createdAt', 'desc'));
-        const snapshot = await getDocs(expensesQuery);
-        
+    function getExpensesFromLocalStorage() {
+      try {
+        const storage = JSON.parse(localStorage.getItem('biancoSessionsLocal') || '{}');
         const expenses = [];
-        snapshot.forEach(doc => {
-            expenses.push({
-                id: doc.id,
-                ...doc.data()
+
+        // جمع المصروفات من كل الأيام
+        Object.keys(storage).forEach(date => {
+          if (storage[date].expenses) {
+            storage[date].expenses.forEach(expense => {
+              expenses.push({
+                ...expense,
+                date: date,
+                createdBy: 'محلي'
+              });
             });
+          }
         });
-        
+
         return expenses;
-    } catch (error) {
-        console.error('خطأ في جلب المصروفات من Firebase:', error);
+      } catch (error) {
+        console.error('خطأ في جلب المصروفات:', error);
         return [];
+      }
     }
-}
 
     function populateDates() {
       // Date filter removed
