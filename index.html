@@ -1749,11 +1749,70 @@ function setupCompletedSessionsSync() {
     });
 }
 
+// 🔄 مزامنة المصروفات من Firebase
+function setupExpensesSync() {
+    const expensesQuery = query(collection(db, 'expenses'), orderBy('createdAt', 'desc'));
+    
+    onSnapshot(expensesQuery, (snapshot) => {
+        console.log('🔄 تحديث المصروفات من Firebase...');
+        const storage = getStorage();
+        let hasChanges = false;
+        
+        snapshot.forEach((doc) => {
+            const firebaseExpense = { id: doc.id, ...doc.data() };
+            const expenseDate = firebaseExpense.date || todayKey();
+            
+            if (!storage[expenseDate]) {
+                storage[expenseDate] = { open: {}, completed: [], expenses: [] };
+            }
+            
+            // التحقق من عدم وجود المصروف مسبقاً
+            const existingIndex = storage[expenseDate].expenses.findIndex(
+                e => e.id === firebaseExpense.id || 
+                (e.name === firebaseExpense.name && 
+                 e.amount === firebaseExpense.amount &&
+                 e.date === firebaseExpense.date)
+            );
+            
+            if (existingIndex === -1) {
+                storage[expenseDate].expenses.push(firebaseExpense);
+                hasChanges = true;
+                console.log('➕ مصروف جديد من Firebase:', firebaseExpense.name);
+            }
+        });
+        
+        if (hasChanges) {
+            setStorage(storage);
+            
+            // تحديث المتغيرات المحلية
+            const t = todayKey();
+            expensesToday = storage[t]?.expenses || [];
+            
+            renderExpenses();
+            updateRevenueSummary();
+            showNotification('🔄 تم تحديث المصروفات من السحابة');
+        }
+    });
+}
 
 
 
-
-
+// دالة حفظ المصروف في Firebase
+async function saveExpenseToFirebase(expense) {
+    try {
+        const expenseWithMetadata = {
+            ...expense,
+            createdAt: new Date().toISOString(),
+            createdBy: auth.currentUser?.email || 'unknown',
+            date: todayKey()
+        };
+        
+        await addDoc(collection(db, 'expenses'), expenseWithMetadata);
+        console.log('✅ تم حفظ المصروف في Firebase:', expense.name);
+    } catch (error) {
+        console.error('❌ خطأ في حفظ المصروف:', error);
+    }
+}
 
 
     // AI
@@ -2458,34 +2517,35 @@ function setupCompletedSessionsSync() {
       modalExpense.classList.add('active');
     });
 
-    confirmAddExpense.addEventListener('click', () => {
-      const name = expenseName.value.trim();
-      const amount = Number(expenseAmount.value);
-
-      if (!name) {
+   confirmAddExpense.addEventListener('click', async () => {
+    const name = expenseName.value.trim();
+    const amount = Number(expenseAmount.value);
+    
+    if (!name) {
         alert('يرجى إدخال اسم المصروف');
         return;
-      }
-
-      if (!amount || amount <= 0) {
+    }
+    
+    if (!amount || amount <= 0) {
         alert('يرجى إدخال مبلغ صحيح');
         return;
-      }
-
-      expensesToday.push({
+    }
+    
+    const expense = {
         name,
         amount,
         date: new Date().toISOString()
-      });
-
-      persistLocal();
-      renderExpenses();
-      modalExpense.classList.remove('active');
-    });
-
-    cancelAddExpense.addEventListener('click', () => {
-      modalExpense.classList.remove('active');
-    });
+    };
+    
+    expensesToday.push(expense);
+    
+    // 🔥 حفظ المصروف في Firebase
+    await saveExpenseToFirebase(expense);
+    
+    persistLocal();
+    renderExpenses();
+    modalExpense.classList.remove('active');
+});
 
     // حذف المصروفات
     document.addEventListener('click', (e) => {
@@ -2875,19 +2935,20 @@ function setupCompletedSessionsSync() {
     });
 
     // init
-    (function init() {
+   (function init() {
     todayStr.textContent = new Date().toLocaleDateString('ar-EG');
     
     initLocal();
     
-    // 🔥 إضافة مزامنة الجلسات المكتملة
-    setupCompletedSessionsSync();
-    setupAdminUpdatesListener();
-    setupOpenSessionsSync();
+    // 🔥 تفعيل جميع أنظمة المزامنة
+    setupCompletedSessionsSync();     // مزامنة الجلسات المكتملة
+    setupExpensesSync();              // مزامنة المصروفات
+    setupAdminUpdatesListener();      // مزامنة تحديثات الأدمن
+    setupOpenSessionsSync();          // مزامنة الجلسات المفتوحة
     
     renderDevices();
     
-    console.log('✅ تم تهيئة النظام بنجاح');
+    console.log('✅ تم تهيئة جميع أنظمة المزامنة');
 })();
 
       // نظام حماية البيانات - يمنع الحذف التلقائي
